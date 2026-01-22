@@ -1,0 +1,165 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+
+/**
+ * POST /api/analytics/track
+ * Track analytics events for A/B testing and general analytics
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { events, workspaceSlug, pageId } = body;
+
+    if (!events || !Array.isArray(events) || events.length === 0) {
+      return NextResponse.json({ error: 'Events array is required' }, { status: 400 });
+    }
+
+    if (!workspaceSlug || !pageId) {
+      return NextResponse.json(
+        { error: 'Workspace slug and page ID are required' },
+        { status: 400 }
+      );
+    }
+
+    // Verify page exists
+    const page = await prisma.page.findUnique({
+      where: { id: pageId },
+      select: {
+        id: true,
+        workspaceId: true,
+      },
+    });
+
+    if (!page) {
+      return NextResponse.json({ error: 'Page not found' }, { status: 404 });
+    }
+
+    // Process events in batches
+    const sessions: Map<string, any> = new Map();
+    const analyticsEvents: any[] = [];
+
+    for (const event of events) {
+      const { sessionId, variantId, eventType, eventName, eventData, ...eventProps } = event;
+
+      // Get or create session
+      let session = sessions.get(sessionId);
+
+      if (!session) {
+        // Check if session exists in database
+        const existingSession = await prisma.analyticsSession.findUnique({
+          where: { sessionId },
+        });
+
+        if (existingSession) {
+          session = existingSession;
+        } else {
+          // Create new session
+          const visitorId = eventData?.visitorId || `visitor_${Date.now()}`;
+          const userAgent = request.headers.get('user-agent') || undefined;
+
+          session = await prisma.analyticsSession.create({
+            data: {
+              sessionId,
+              visitorId,
+              pageId,
+              workspaceId: page.workspaceId,
+              variantId: variantId || null,
+              referrer: eventData?.referrer || null,
+              utmSource: eventData?.utmSource || null,
+              utmMedium: eventData?.utmMedium || null,
+              utmCampaign: eventData?.utmCampaign || null,
+              userAgent,
+              startedAt: new Date(),
+            },
+          });
+        }
+
+        sessions.set(sessionId, session);
+      }
+
+      // Create analytics event
+      analyticsEvents.push({
+        eventType,
+        eventName,
+        eventData: eventData || {},
+        sessionId: session.id,
+        variantId: variantId || null,
+        elementId: eventProps.elementId || null,
+        elementType: eventProps.elementType || null,
+        elementText: eventProps.elementText || null,
+        xPosition: eventProps.xPosition || null,
+        yPosition: eventProps.yPosition || null,
+        scrollDepth: eventProps.scrollDepth || null,
+        isConversion: eventProps.isConversion || false,
+        conversionValue: eventProps.conversionValue || null,
+        timestamp: eventProps.timestamp ? new Date(eventProps.timestamp) : new Date(),
+      });
+    }
+
+    // Bulk insert analytics events
+    if (analyticsEvents.length > 0) {
+      await prisma.analyticsEvent.createMany({
+        data: analyticsEvents,
+      });
+    }
+
+    // Update variant metrics for conversions
+    const variantConversions: Map<string, number> = new Map();
+    const variantImpressions: Map<string, number> = new Map();
+
+    for (const event of events) {
+      if (event.variantId) {
+        // Count impression
+        variantImpressions.set(
+          event.variantId,
+          (variantImpressions.get(event.variantId) || 0) + 1
+        );
+
+        // Count conversion
+        if (event.isConversion) {
+          variantConversions.set(
+            event.variantId,
+            (variantConversions.get(event.variantId) || 0) + 1
+          );
+        }
+      }
+    }
+
+    // Update variant metrics
+    for (const [variantId, impressions] of variantImpressions) {
+      const conversions = variantConversions.get(variantId) || 0;
+
+      await prisma.pageVariant.update({
+        where: { id: variantId },
+        data: {
+          impressions: { increment: impressions },
+          conversions: { increment: conversions },
+        },
+      });
+
+      // Recalculate conversion rate
+      const variant = await prisma.pageVariant.findUnique({
+        where: { id: variantId },
+      });
+
+      if (variant) {
+        const conversionRate = variant.impressions > 0
+          ? variant.conversions / variant.impressions
+          : 0;
+
+        await prisma.pageVariant.update({
+          where: { id: variantId },
+          data: { conversionRate },
+        });
+      }
+    }
+
+    return NextResponse.json({ success: true, eventsProcessed: events.length });
+  } catch (error) {
+    console.error('Failed to track analytics events:', error);
+    return NextResponse.json(
+      { error: 'Failed to track analytics events' },
+      { status: 500 }
+    );
+  }
+}
