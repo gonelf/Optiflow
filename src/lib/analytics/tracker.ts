@@ -46,7 +46,7 @@ export interface TrackerConfig {
  * Analytics Tracker Class
  */
 export class AnalyticsTracker {
-  private config: Required<TrackerConfig>;
+  private config: Required<Omit<TrackerConfig, 'variantId'>> & { variantId?: string };
   private eventQueue: TrackingEvent[] = [];
   private batchTimer: NodeJS.Timeout | null = null;
   private sessionStartTime: number;
