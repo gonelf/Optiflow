@@ -1,0 +1,514 @@
+// OptiFlow Database Schema
+// PostgreSQL via Supabase
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// AUTH & WORKSPACE MANAGEMENT
+// ============================================================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  avatarUrl     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  workspaces    WorkspaceMember[]
+  pages         Page[]
+  sessions      Session[]
+  apiKeys       ApiKey[]
+
+  @@index([email])
+}
+
+model Workspace {
+  id            String    @id @default(cuid())
+  name          String
+  slug          String    @unique
+  plan          PlanType  @default(FREE)
+  stripeCustomerId String?
+  stripeSubscriptionId String?
+  domain        String?   // Custom domain
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  members       WorkspaceMember[]
+  pages         Page[]
+  templates     Template[]
+  integrations  Integration[]
+  analytics     AnalyticsSession[]
+
+  @@index([slug])
+}
+
+model WorkspaceMember {
+  id          String   @id @default(cuid())
+  role        Role     @default(MEMBER)
+  userId      String
+  workspaceId String
+  joinedAt    DateTime @default(now())
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId])
+  @@index([userId])
+  @@index([workspaceId])
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+enum PlanType {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+// ============================================================================
+// PAGE BUILDER & COMPONENTS
+// ============================================================================
+
+model Page {
+  id            String      @id @default(cuid())
+  title         String
+  slug          String
+  description   String?
+  status        PageStatus  @default(DRAFT)
+  isTemplate    Boolean     @default(false)
+
+  // Metadata
+  seoTitle      String?
+  seoDescription String?
+  ogImage       String?
+  favicon       String?
+  customHead    String?     @db.Text
+
+  // Ownership
+  workspaceId   String
+  authorId      String
+
+  // Publishing
+  publishedAt   DateTime?
+  publishedUrl  String?
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  workspace     Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  author        User        @relation(fields: [authorId], references: [id])
+  components    Component[]
+  variants      PageVariant[]
+  abTests       ABTest[]
+  analytics     AnalyticsSession[]
+
+  @@unique([workspaceId, slug])
+  @@index([workspaceId])
+  @@index([authorId])
+  @@index([status])
+}
+
+model Component {
+  id            String      @id @default(cuid())
+  pageId        String
+  variantId     String?     // If part of A/B variant
+
+  // Component Definition
+  type          ComponentType
+  name          String
+  order         Int         // Display order on page
+
+  // Content (JSON schema)
+  config        Json        // Component-specific config
+  styles        Json        // Tailwind classes + custom styles
+  content       Json        // Text, images, links, etc.
+
+  // AI Metadata
+  aiPrompt      String?     @db.Text
+  aiGenerated   Boolean     @default(false)
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  page          Page        @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  variant       PageVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@index([pageId])
+  @@index([variantId])
+  @@index([type])
+}
+
+enum ComponentType {
+  HERO
+  CTA
+  PRICING
+  FEATURES
+  TESTIMONIALS
+  FAQ
+  FORM
+  NEWSLETTER
+  HEADER
+  FOOTER
+  CUSTOM
+}
+
+enum PageStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model Template {
+  id            String      @id @default(cuid())
+  name          String
+  description   String?
+  category      TemplateCategory
+  thumbnail     String?
+  isPremium     Boolean     @default(false)
+
+  // Template Content (serialized page structure)
+  structure     Json        @db.JsonB
+
+  workspaceId   String?     // Null = global template
+  workspace     Workspace?  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  usageCount    Int         @default(0)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([category])
+  @@index([workspaceId])
+}
+
+enum TemplateCategory {
+  HERO
+  LANDING_PAGE
+  PRICING
+  DEMO
+  FUNNEL
+  WAITLIST
+  COMING_SOON
+}
+
+// ============================================================================
+// A/B TESTING
+// ============================================================================
+
+model ABTest {
+  id            String      @id @default(cuid())
+  name          String
+  description   String?
+  pageId        String
+
+  // Test Configuration
+  status        TestStatus  @default(DRAFT)
+  trafficSplit  Json        // { "control": 50, "variant_a": 25, "variant_b": 25 }
+  startDate     DateTime?
+  endDate       DateTime?
+
+  // Goals & Metrics
+  primaryGoal   String      // e.g., "form_submit", "button_click"
+  conversionEvent String
+
+  // Statistical Config
+  minimumSampleSize Int     @default(1000)
+  confidenceLevel Float     @default(0.95)
+
+  // Results
+  winningVariantId String?
+  declaredAt    DateTime?
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  page          Page        @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  variants      PageVariant[]
+  winningVariant PageVariant? @relation("WinningVariant", fields: [winningVariantId], references: [id])
+
+  @@index([pageId])
+  @@index([status])
+}
+
+model PageVariant {
+  id            String      @id @default(cuid())
+  name          String
+  description   String?
+  isControl     Boolean     @default(false)
+
+  abTestId      String
+  pageId        String
+
+  // Variant-specific components
+  components    Component[]
+
+  // Metrics (denormalized for performance)
+  impressions   Int         @default(0)
+  conversions   Int         @default(0)
+  conversionRate Float      @default(0)
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  abTest        ABTest      @relation(fields: [abTestId], references: [id], onDelete: Cascade)
+  page          Page        @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  events        AnalyticsEvent[]
+  wonTests      ABTest[]    @relation("WinningVariant")
+
+  @@index([abTestId])
+  @@index([pageId])
+}
+
+enum TestStatus {
+  DRAFT
+  RUNNING
+  PAUSED
+  COMPLETED
+  ARCHIVED
+}
+
+// ============================================================================
+// ANALYTICS & TRACKING
+// ============================================================================
+
+model AnalyticsSession {
+  id            String      @id @default(cuid())
+  sessionId     String      @unique
+
+  // Visitor Info
+  visitorId     String      // Fingerprint/anonymous ID
+  userId        String?     // If authenticated
+
+  // Page Context
+  pageId        String
+  workspaceId   String
+  variantId     String?     // A/B variant shown
+
+  // Session Metadata
+  referrer      String?
+  utmSource     String?
+  utmMedium     String?
+  utmCampaign   String?
+
+  // Device/Browser
+  userAgent     String?
+  browser       String?
+  os            String?
+  device        String?
+  country       String?
+  city          String?
+
+  // Session Metrics
+  startedAt     DateTime    @default(now())
+  endedAt       DateTime?
+  duration      Int?        // seconds
+
+  // Relations
+  page          Page        @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  workspace     Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user          User?       @relation(fields: [userId], references: [id])
+  events        AnalyticsEvent[]
+
+  @@index([sessionId])
+  @@index([visitorId])
+  @@index([pageId])
+  @@index([workspaceId])
+  @@index([startedAt])
+}
+
+model AnalyticsEvent {
+  id            String      @id @default(cuid())
+
+  // Event Details
+  eventType     EventType
+  eventName     String
+  eventData     Json?       // Custom event properties
+
+  // Context
+  sessionId     String
+  variantId     String?
+
+  // Element Tracking
+  elementId     String?
+  elementType   String?     // button, link, form, etc.
+  elementText   String?
+
+  // Position Tracking (for heatmaps)
+  xPosition     Int?
+  yPosition     Int?
+  scrollDepth   Int?        // percentage
+
+  // Conversion Tracking
+  isConversion  Boolean     @default(false)
+  conversionValue Float?    // Revenue if applicable
+
+  timestamp     DateTime    @default(now())
+
+  // Relations
+  session       AnalyticsSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  variant       PageVariant?     @relation(fields: [variantId], references: [id])
+
+  @@index([sessionId])
+  @@index([eventType])
+  @@index([timestamp])
+  @@index([isConversion])
+}
+
+enum EventType {
+  PAGE_VIEW
+  CLICK
+  FORM_SUBMIT
+  SCROLL
+  TIME_ON_PAGE
+  CONVERSION
+  CUSTOM
+}
+
+// ============================================================================
+// AI & PERSONALIZATION
+// ============================================================================
+
+model AIOptimization {
+  id            String      @id @default(cuid())
+  type          OptimizationType
+
+  // Input
+  prompt        String      @db.Text
+  context       Json?       // Page context, user data, etc.
+
+  // Output
+  suggestions   Json        @db.JsonB // Generated variants, SEO, etc.
+  applied       Boolean     @default(false)
+
+  // Metadata
+  model         String      // e.g., "gpt-4"
+  tokensUsed    Int?
+
+  createdAt     DateTime    @default(now())
+
+  @@index([type])
+  @@index([createdAt])
+}
+
+enum OptimizationType {
+  VARIANT_GENERATION
+  SEO_OPTIMIZATION
+  CONTENT_PERSONALIZATION
+  HEADLINE_SUGGESTIONS
+  CTA_OPTIMIZATION
+}
+
+model PersonalizationRule {
+  id            String      @id @default(cuid())
+  name          String
+
+  // Targeting
+  segment       Json        // Visitor criteria
+  priority      Int         @default(0)
+
+  // Action
+  action        PersonalizationAction
+  config        Json        // What to change
+
+  isActive      Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([isActive])
+}
+
+enum PersonalizationAction {
+  SWAP_COMPONENT
+  CHANGE_TEXT
+  CHANGE_IMAGE
+  REDIRECT
+  SHOW_BANNER
+}
+
+// ============================================================================
+// INTEGRATIONS
+// ============================================================================
+
+model Integration {
+  id            String          @id @default(cuid())
+  workspaceId   String
+  type          IntegrationType
+
+  // Config
+  name          String
+  config        Json            // API keys, settings, etc.
+  isActive      Boolean         @default(true)
+
+  // Sync Status
+  lastSyncAt    DateTime?
+  lastError     String?
+
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  workspace     Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([type])
+}
+
+enum IntegrationType {
+  STRIPE
+  HUBSPOT
+  SALESFORCE
+  MAILCHIMP
+  ZAPIER
+  WEBHOOK
+  GOOGLE_ANALYTICS
+  FACEBOOK_PIXEL
+}
+
+// ============================================================================
+// SYSTEM
+// ============================================================================
+
+model ApiKey {
+  id            String      @id @default(cuid())
+  key           String      @unique
+  name          String
+  userId        String
+  lastUsedAt    DateTime?
+  expiresAt     DateTime?
+
+  createdAt     DateTime    @default(now())
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([key])
+  @@index([userId])
+}
+
+model Session {
+  id            String      @id @default(cuid())
+  userId        String
+  token         String      @unique
+  expiresAt     DateTime
+  createdAt     DateTime    @default(now())
+
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+}
