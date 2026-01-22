@@ -23,10 +23,11 @@ model User {
   updatedAt     DateTime  @updatedAt
 
   // Relations
-  workspaces    WorkspaceMember[]
-  pages         Page[]
-  sessions      Session[]
-  apiKeys       ApiKey[]
+  workspaces        WorkspaceMember[]
+  pages             Page[]
+  sessions          Session[]
+  apiKeys           ApiKey[]
+  analyticsSessions AnalyticsSession[]
 
   @@index([email])
 }
