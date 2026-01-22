@@ -1,3 +1,11 @@
+import Link from 'next/link'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'OptiFlow - No-Code Marketing Site Builder',
+  description: 'Build, test, and optimize marketing pages without code. Integrated A/B testing and real-time analytics.',
+}
+
 export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-24">
@@ -7,18 +15,18 @@ export default function Home() {
           No-Code SaaS Marketing Site Builder with Native A/B Testing & Analytics
         </p>
         <div className="flex gap-4 justify-center">
-          <a
+          <Link
             href="/login"
-            className="rounded-md bg-primary px-6 py-3 text-primary-foreground hover:opacity-90"
+            className="inline-block rounded-md bg-primary px-6 py-3 text-primary-foreground hover:opacity-90 transition-opacity"
           >
             Get Started
-          </a>
-          <a
+          </Link>
+          <Link
             href="/docs"
-            className="rounded-md border border-border px-6 py-3 hover:bg-accent"
+            className="inline-block rounded-md border border-border px-6 py-3 hover:bg-accent transition-colors"
           >
             Documentation
-          </a>
+          </Link>
         </div>
       </div>
     </main>

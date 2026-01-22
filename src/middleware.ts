@@ -26,5 +26,10 @@ export default withAuth(
 )
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login', '/signup'],
+  matcher: [
+    // Apply middleware only to specific routes
+    '/(dashboard|api/workspaces)/:path*',
+    '/login',
+    '/signup',
+  ],
 }
