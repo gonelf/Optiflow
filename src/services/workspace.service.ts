@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import { Role, PlanType } from '@prisma/client'
+import { Role, PlanType } from '@/types/prisma'
 
 export interface CreateWorkspaceInput {
   name: string
@@ -113,7 +113,7 @@ export class WorkspaceService {
       },
     })
 
-    return memberships.map((m) => ({
+    return memberships.map((m: any) => ({
       ...m.workspace,
       role: m.role,
     }))

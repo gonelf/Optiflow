@@ -7,6 +7,7 @@ interface Workspace {
   slug: string
   plan: string
   role: string
+  domain?: string | null
   _count?: {
     members: number
     pages: number

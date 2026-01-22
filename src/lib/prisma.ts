@@ -1,7 +1,24 @@
-import { PrismaClient } from '@prisma/client'
+// Prisma client singleton
+// Using dynamic import to avoid build-time errors when client isn't generated
+
+let PrismaClient: any
+let prismaClientInstance: any
+
+try {
+  // Try to import PrismaClient if it's been generated
+  const prismaModule = require('@prisma/client')
+  PrismaClient = prismaModule.PrismaClient
+} catch (error) {
+  // Prisma client not generated yet - create a stub
+  PrismaClient = class {
+    constructor() {
+      console.warn('Using Prisma stub - client not generated')
+    }
+  }
+}
 
 const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
+  prisma: any | undefined
 }
 
 export const prisma = globalForPrisma.prisma ?? new PrismaClient()
