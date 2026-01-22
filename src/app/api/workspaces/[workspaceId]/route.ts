@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { WorkspaceService } from '@/services/workspace.service'
-import { Role } from '@/types/prisma'
+import type { Role } from '@prisma/client'
 import { z } from 'zod'
 
 const updateWorkspaceSchema = z.object({
