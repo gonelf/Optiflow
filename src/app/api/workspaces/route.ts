@@ -25,6 +25,29 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
     }
 
+    const { searchParams } = new URL(req.url)
+    const slug = searchParams.get('slug')
+
+    // If slug is provided, fetch specific workspace
+    if (slug) {
+      logger.info('Fetching workspace by slug', { slug })
+
+      const workspace = await WorkspaceService.findBySlug(slug)
+
+      if (!workspace) {
+        return NextResponse.json({ message: 'Workspace not found' }, { status: 404 })
+      }
+
+      // Verify user has access
+      const hasMembership = workspace.members.some((m: any) => m.userId === session.user.id)
+      if (!hasMembership) {
+        return NextResponse.json({ message: 'Access denied' }, { status: 403 })
+      }
+
+      return NextResponse.json({ workspace })
+    }
+
+    // Otherwise, fetch all user workspaces
     logger.info('Fetching workspaces for user', { userId: session.user.id })
 
     const workspaces = await WorkspaceService.findUserWorkspaces(session.user.id)
