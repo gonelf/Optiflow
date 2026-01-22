@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import type { Role, PlanType } from '@prisma/client'
+import { Role, PlanType } from '@prisma/client'
 
 export interface CreateWorkspaceInput {
   name: string
