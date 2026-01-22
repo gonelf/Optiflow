@@ -9,7 +9,7 @@ import bcrypt from 'bcrypt'
 export const authOptions: NextAuthOptions = {
   // Use PrismaAdapter only if DATABASE_URL is available
   ...(process.env.DATABASE_URL ? { adapter: PrismaAdapter(prisma) } : {}),
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || 'fallback-secret-for-build-only',
   providers: [
     CredentialsProvider({
       name: 'credentials',
