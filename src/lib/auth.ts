@@ -7,7 +7,9 @@ import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcrypt'
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  // Use PrismaAdapter only if DATABASE_URL is available
+  ...(process.env.DATABASE_URL ? { adapter: PrismaAdapter(prisma) } : {}),
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
       name: 'credentials',

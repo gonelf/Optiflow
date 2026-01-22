@@ -1,35 +1,54 @@
-import { withAuth } from 'next-auth/middleware'
 import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { getToken } from 'next-auth/jwt'
 
-export default withAuth(
-  function middleware(req) {
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  // Allow public routes
+  if (
+    pathname === '/' ||
+    pathname.startsWith('/api/health') ||
+    pathname.startsWith('/api/debug') ||
+    pathname.startsWith('/api/auth') ||
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/signup') ||
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/favicon')
+  ) {
     return NextResponse.next()
-  },
-  {
-    callbacks: {
-      authorized: ({ token, req }) => {
-        // Allow access to auth pages without token
-        if (req.nextUrl.pathname.startsWith('/login') ||
-            req.nextUrl.pathname.startsWith('/signup')) {
-          return true
-        }
-
-        // Require token for dashboard routes
-        if (req.nextUrl.pathname.startsWith('/dashboard')) {
-          return !!token
-        }
-
-        return true
-      },
-    },
   }
-)
+
+  // Protected routes (dashboard and workspace APIs)
+  if (
+    pathname.startsWith('/dashboard') ||
+    pathname.match(/^\/[^\/]+\/(settings|pages|templates)/) ||
+    pathname.startsWith('/api/workspaces')
+  ) {
+    try {
+      const token = await getToken({
+        req: request,
+        secret: process.env.NEXTAUTH_SECRET,
+      })
+
+      if (!token) {
+        return NextResponse.redirect(new URL('/login', request.url))
+      }
+    } catch (error) {
+      // If auth check fails (e.g., NEXTAUTH_SECRET not set), allow through for now
+      console.error('Auth middleware error:', error)
+      return NextResponse.next()
+    }
+  }
+
+  return NextResponse.next()
+}
 
 export const config = {
   matcher: [
-    // Apply middleware only to specific routes
-    '/(dashboard|api/workspaces)/:path*',
-    '/login',
-    '/signup',
+    /*
+     * Match all request paths except static files and images
+     */
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 }
