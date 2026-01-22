@@ -43,10 +43,17 @@ export interface TrackerConfig {
 }
 
 /**
+ * Internal config type with required defaults but optional variantId
+ */
+type ResolvedTrackerConfig = Required<Omit<TrackerConfig, 'variantId'>> & {
+  variantId?: string;
+};
+
+/**
  * Analytics Tracker Class
  */
 export class AnalyticsTracker {
-  private config: Required<TrackerConfig>;
+  private config: ResolvedTrackerConfig;
   private eventQueue: TrackingEvent[] = [];
   private batchTimer: NodeJS.Timeout | null = null;
   private sessionStartTime: number;
