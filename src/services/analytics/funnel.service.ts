@@ -77,7 +77,6 @@ export class ConversionFunnelService {
             eventType: true,
             elementId: true,
             createdAt: true,
-            visitorId: true,
           },
         },
       },

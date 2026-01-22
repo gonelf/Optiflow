@@ -194,19 +194,25 @@ export class CohortAnalysisService {
     // Get conversions for cohort visitors
     const conversions = await prisma.analyticsEvent.findMany({
       where: {
-        visitorId: {
-          in: cohortVisitors,
+        session: {
+          visitorId: {
+            in: cohortVisitors,
+          },
         },
         isConversion: true,
       },
       select: {
         id: true,
         conversionValue: true,
-        visitorId: true,
+        session: {
+          select: {
+            visitorId: true,
+          },
+        },
       },
     });
 
-    const uniqueConverters = new Set(conversions.map(c => c.visitorId));
+    const uniqueConverters = new Set(conversions.map(c => c.session.visitorId));
     const totalConversions = conversions.length;
     const conversionRate = cohortSize > 0 ? (uniqueConverters.size / cohortSize) * 100 : 0;
 

@@ -161,7 +161,11 @@ export class HeatmapService {
       },
       select: {
         scrollDepth: true,
-        visitorId: true,
+        session: {
+          select: {
+            visitorId: true,
+          },
+        },
       },
     });
 
@@ -170,9 +174,9 @@ export class HeatmapService {
     scrollEvents.forEach(event => {
       if (event.scrollDepth === null) return;
 
-      const currentMax = visitorMaxDepth.get(event.visitorId) || 0;
+      const currentMax = visitorMaxDepth.get(event.session.visitorId) || 0;
       if (event.scrollDepth > currentMax) {
-        visitorMaxDepth.set(event.visitorId, event.scrollDepth);
+        visitorMaxDepth.set(event.session.visitorId, event.scrollDepth);
       }
     });
 
@@ -267,7 +271,11 @@ export class HeatmapService {
       },
       select: {
         scrollDepth: true,
-        visitorId: true,
+        session: {
+          select: {
+            visitorId: true,
+          },
+        },
       },
     });
 
@@ -275,9 +283,9 @@ export class HeatmapService {
     const visitorMaxDepth = new Map<string, number>();
     scrollEvents.forEach(event => {
       if (event.scrollDepth === null) return;
-      const currentMax = visitorMaxDepth.get(event.visitorId) || 0;
+      const currentMax = visitorMaxDepth.get(event.session.visitorId) || 0;
       if (event.scrollDepth > currentMax) {
-        visitorMaxDepth.set(event.visitorId, event.scrollDepth);
+        visitorMaxDepth.set(event.session.visitorId, event.scrollDepth);
       }
     });
 
@@ -336,7 +344,11 @@ export class HeatmapService {
       select: {
         elementId: true,
         elementText: true,
-        visitorId: true,
+        session: {
+          select: {
+            visitorId: true,
+          },
+        },
       },
     });
 
@@ -362,7 +374,7 @@ export class HeatmapService {
 
       const stats = elementStats.get(event.elementId)!;
       stats.clicks++;
-      stats.visitors.add(event.visitorId);
+      stats.visitors.add(event.session.visitorId);
     });
 
     return Array.from(elementStats.values())

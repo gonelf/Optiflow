@@ -205,7 +205,6 @@ export class AnalyticsDashboardService {
           select: {
             eventType: true,
             isConversion: true,
-            visitorId: true,
           },
         },
       },
@@ -241,7 +240,7 @@ export class AnalyticsDashboardService {
       session.events.forEach(event => {
         if (event.eventType === EventType.PAGE_VIEW) {
           stats.pageviews++;
-          stats.uniqueVisitors.add(event.visitorId);
+          stats.uniqueVisitors.add(session.visitorId);
         }
         if (event.isConversion) {
           stats.conversions++;
