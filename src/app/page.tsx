@@ -6,6 +6,8 @@ export const metadata: Metadata = {
   description: 'Build, test, and optimize marketing pages without code. Integrated A/B testing and real-time analytics.',
 }
 
+export const dynamic = 'force-dynamic'
+
 export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-24">
