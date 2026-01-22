@@ -1,21 +1,8 @@
-import Link from 'next/link'
-import { headers } from 'next/headers'
 import { logger } from '@/lib/logger'
 
-export const dynamic = 'force-dynamic'
-
 export default function NotFound() {
-  // Log 404 errors with request details
-  const headersList = headers()
-  const pathname = headersList.get('x-pathname') || 'unknown'
-  const referer = headersList.get('referer') || 'direct'
-  const userAgent = headersList.get('user-agent') || 'unknown'
-
-  logger.warn('404 Page Not Found', {
-    pathname,
-    referer,
-    userAgent: userAgent.substring(0, 100), // Truncate for brevity
-  })
+  // Log 404 errors
+  logger.warn('404 Page Not Found')
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-4">
@@ -25,12 +12,12 @@ export default function NotFound() {
         <p className="mb-8 text-muted-foreground">
           The page you&apos;re looking for doesn&apos;t exist.
         </p>
-        <Link
+        <a
           href="/"
           className="inline-block rounded-md bg-primary px-6 py-3 text-primary-foreground hover:opacity-90 transition-opacity"
         >
           Go Home
-        </Link>
+        </a>
       </div>
     </div>
   )

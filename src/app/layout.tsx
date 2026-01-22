@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { Providers } from '@/lib/providers'
 import { Toaster } from '@/components/ui/toaster'
+import { logger } from '@/lib/logger'
 
 export const metadata: Metadata = {
   title: 'OptiFlow - No-Code SaaS Marketing Site Builder',
@@ -14,9 +15,11 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  logger.debug('Rendering root layout')
+
   return (
-    <html lang="en">
-      <body className="font-sans antialiased">
+    <html lang="en" suppressHydrationWarning>
+      <body className="font-sans antialiased" suppressHydrationWarning>
         <Providers>
           {children}
           <Toaster />
