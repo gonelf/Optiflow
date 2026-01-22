@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Plus, Play, Pause, Trophy, BarChart } from 'lucide-react';
@@ -32,11 +32,7 @@ export default function ABTestsPage() {
   const [tests, setTests] = useState<ABTest[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchTests();
-  }, []);
-
-  const fetchTests = async () => {
+  const fetchTests = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/ab-tests?workspaceSlug=${workspaceSlug}`);
@@ -49,7 +45,11 @@ export default function ABTestsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [workspaceSlug]);
+
+  useEffect(() => {
+    fetchTests();
+  }, [fetchTests]);
 
   const getStatusColor = (status: ABTest['status']) => {
     switch (status) {

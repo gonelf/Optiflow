@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -64,11 +64,7 @@ export default function PagesListPage() {
 
   const workspaceSlug = params.workspaceSlug as string;
 
-  useEffect(() => {
-    fetchPages();
-  }, []);
-
-  const fetchPages = async () => {
+  const fetchPages = useCallback(async () => {
     try {
       setIsLoading(true);
 
@@ -95,7 +91,11 @@ export default function PagesListPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [workspaceSlug, toast]);
+
+  useEffect(() => {
+    fetchPages();
+  }, [fetchPages]);
 
   const handleCreatePage = async () => {
     if (!newPageTitle || !newPageSlug) {

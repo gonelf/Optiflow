@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Play, Pause, Trophy, AlertCircle } from 'lucide-react';
@@ -52,15 +52,7 @@ export default function ABTestDetailPage() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
 
-  useEffect(() => {
-    if (testId !== 'new') {
-      fetchTest();
-    } else {
-      setLoading(false);
-    }
-  }, [testId]);
-
-  const fetchTest = async () => {
+  const fetchTest = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/ab-tests/${testId}`);
@@ -73,7 +65,15 @@ export default function ABTestDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [testId]);
+
+  useEffect(() => {
+    if (testId !== 'new') {
+      fetchTest();
+    } else {
+      setLoading(false);
+    }
+  }, [testId, fetchTest]);
 
   const updateTestStatus = async (newStatus: ABTestDetail['status']) => {
     try {

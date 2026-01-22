@@ -145,7 +145,7 @@ export default function GoalSelector({
         <h4 className="font-medium text-sm text-gray-900 mb-2">How it works</h4>
         <p className="text-xs text-gray-600">
           The primary goal defines what success looks like for this test. The conversion
-          event specifies the exact user action we're tracking. Choose the combination that
+          event specifies the exact user action we&apos;re tracking. Choose the combination that
           best aligns with your business objectives.
         </p>
       </div>
