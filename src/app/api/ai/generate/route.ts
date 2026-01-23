@@ -24,10 +24,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if OpenAI API key is configured
-    if (!process.env.OPENAI_API_KEY) {
+    // Check if at least one AI service is configured
+    if (!process.env.GEMINI_API_KEY && !process.env.OPENAI_API_KEY) {
       return NextResponse.json(
-        { error: 'OpenAI API key not configured' },
+        {
+          error: 'No AI services configured',
+          hint: 'Please configure GEMINI_API_KEY (free tier) or OPENAI_API_KEY in your environment variables'
+        },
         { status: 500 }
       );
     }
@@ -55,6 +58,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       page: generatedPage,
+      meta: {
+        generatedBy: generatedPage.generatedBy,
+        timestamp: new Date().toISOString(),
+      },
     });
   } catch (error) {
     console.error('AI generation error:', error);
@@ -67,9 +74,19 @@ export async function POST(req: NextRequest) {
     }
 
     if (error instanceof Error) {
+      // Check if it's a rate limit error
+      const isRateLimit = error.message.toLowerCase().includes('rate limit') ||
+                          error.message.toLowerCase().includes('quota');
+
       return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
+        {
+          error: error.message,
+          isRateLimit,
+          hint: isRateLimit
+            ? 'All AI providers have hit their rate limits. Please try again later or configure additional API keys.'
+            : 'Failed to generate page. Please check your input and try again.'
+        },
+        { status: isRateLimit ? 429 : 500 }
       );
     }
 

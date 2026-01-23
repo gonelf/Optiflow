@@ -1,9 +1,9 @@
 /**
  * AI Generator Service
- * Handles AI-powered page and component generation
+ * Handles AI-powered page and component generation with multi-model fallback
  */
 
-import { getOpenAIService, ChatMessage } from './openai.service';
+import { getMultiModelService } from './multi-model.service';
 import { generatePagePrompt, generateComponentPrompt, generateOptimizationPrompt } from '@/lib/ai/prompts';
 
 export interface GeneratePageInput {
@@ -26,6 +26,7 @@ export interface GeneratedPage {
   components: GeneratedComponent[];
   seoTitle?: string;
   seoDescription?: string;
+  generatedBy?: string; // Which AI provider was used
 }
 
 export interface OptimizationSuggestion {
@@ -41,33 +42,26 @@ export class AIGeneratorService {
    * Generate a complete page based on user input
    */
   static async generatePage(input: GeneratePageInput): Promise<GeneratedPage> {
-    const openai = getOpenAIService();
+    const multiModel = getMultiModelService();
 
     const systemPrompt = generatePagePrompt(input);
-    const messages: ChatMessage[] = [
-      {
-        role: 'system',
-        content: systemPrompt,
-      },
-      {
-        role: 'user',
-        content: `Generate a ${input.pageType || 'landing'} page with the following description: ${input.description}`,
-      },
-    ];
+    const userPrompt = `Generate a ${input.pageType || 'landing'} page with the following description: ${input.description}`;
 
-    const response = await openai.createChatCompletion(messages, {
+    const result = await multiModel.generateContent(userPrompt, {
+      systemInstruction: systemPrompt,
       temperature: 0.8,
       maxTokens: 3000,
     });
 
-    const content = response.choices[0]?.message?.content;
-    if (!content) {
-      throw new Error('Failed to generate page content');
-    }
-
     try {
-      const generatedPage = JSON.parse(content);
-      return this.validateAndFormatPage(generatedPage);
+      const generatedPage = JSON.parse(result.content);
+      const validatedPage = this.validateAndFormatPage(generatedPage);
+
+      // Add metadata about which provider was used
+      return {
+        ...validatedPage,
+        generatedBy: result.provider,
+      };
     } catch (error) {
       throw new Error('Failed to parse generated page JSON');
     }
@@ -79,25 +73,23 @@ export class AIGeneratorService {
   static async generatePageStreaming(
     input: GeneratePageInput,
     onChunk: (chunk: string) => void
-  ): Promise<void> {
-    const openai = getOpenAIService();
+  ): Promise<{ provider: string }> {
+    const multiModel = getMultiModelService();
 
     const systemPrompt = generatePagePrompt(input);
-    const messages: ChatMessage[] = [
-      {
-        role: 'system',
-        content: systemPrompt,
-      },
-      {
-        role: 'user',
-        content: `Generate a ${input.pageType || 'landing'} page with the following description: ${input.description}`,
-      },
-    ];
+    const userPrompt = `Generate a ${input.pageType || 'landing'} page with the following description: ${input.description}`;
 
-    await openai.createStreamingCompletion(messages, onChunk, {
-      temperature: 0.8,
-      maxTokens: 3000,
-    });
+    const result = await multiModel.generateStreaming(
+      userPrompt,
+      onChunk,
+      {
+        systemInstruction: systemPrompt,
+        temperature: 0.8,
+        maxTokens: 3000,
+      }
+    );
+
+    return { provider: result.provider };
   }
 
   /**
@@ -107,32 +99,19 @@ export class AIGeneratorService {
     componentType: string,
     context: string
   ): Promise<GeneratedComponent> {
-    const openai = getOpenAIService();
+    const multiModel = getMultiModelService();
 
     const systemPrompt = generateComponentPrompt(componentType);
-    const messages: ChatMessage[] = [
-      {
-        role: 'system',
-        content: systemPrompt,
-      },
-      {
-        role: 'user',
-        content: `Generate a ${componentType} component with this context: ${context}`,
-      },
-    ];
+    const userPrompt = `Generate a ${componentType} component with this context: ${context}`;
 
-    const response = await openai.createChatCompletion(messages, {
+    const result = await multiModel.generateContent(userPrompt, {
+      systemInstruction: systemPrompt,
       temperature: 0.7,
       maxTokens: 1500,
     });
 
-    const content = response.choices[0]?.message?.content;
-    if (!content) {
-      throw new Error('Failed to generate component');
-    }
-
     try {
-      return JSON.parse(content);
+      return JSON.parse(result.content);
     } catch (error) {
       throw new Error('Failed to parse generated component JSON');
     }
@@ -148,32 +127,19 @@ export class AIGeneratorService {
     },
     goal: string
   ): Promise<OptimizationSuggestion[]> {
-    const openai = getOpenAIService();
+    const multiModel = getMultiModelService();
 
     const systemPrompt = generateOptimizationPrompt();
-    const messages: ChatMessage[] = [
-      {
-        role: 'system',
-        content: systemPrompt,
-      },
-      {
-        role: 'user',
-        content: `Optimize this ${currentContent.type}: "${currentContent.content}". Goal: ${goal}`,
-      },
-    ];
+    const userPrompt = `Optimize this ${currentContent.type}: "${currentContent.content}". Goal: ${goal}`;
 
-    const response = await openai.createChatCompletion(messages, {
+    const result = await multiModel.generateContent(userPrompt, {
+      systemInstruction: systemPrompt,
       temperature: 0.7,
       maxTokens: 2000,
     });
 
-    const content = response.choices[0]?.message?.content;
-    if (!content) {
-      throw new Error('Failed to generate optimizations');
-    }
-
     try {
-      const suggestions = JSON.parse(content);
+      const suggestions = JSON.parse(result.content);
       return Array.isArray(suggestions) ? suggestions : [suggestions];
     } catch (error) {
       throw new Error('Failed to parse optimization suggestions');
@@ -187,31 +153,19 @@ export class AIGeneratorService {
     originalHeadline: string,
     count: number = 5
   ): Promise<string[]> {
-    const openai = getOpenAIService();
+    const multiModel = getMultiModelService();
 
-    const messages: ChatMessage[] = [
-      {
-        role: 'system',
-        content: 'You are an expert copywriter who creates compelling, conversion-focused headlines. Generate variations that are clear, benefit-driven, and action-oriented.',
-      },
-      {
-        role: 'user',
-        content: `Generate ${count} headline variations for A/B testing. Original headline: "${originalHeadline}". Return only a JSON array of strings.`,
-      },
-    ];
+    const systemPrompt = 'You are an expert copywriter who creates compelling, conversion-focused headlines. Generate variations that are clear, benefit-driven, and action-oriented.';
+    const userPrompt = `Generate ${count} headline variations for A/B testing. Original headline: "${originalHeadline}". Return only a JSON array of strings.`;
 
-    const response = await openai.createChatCompletion(messages, {
+    const result = await multiModel.generateContent(userPrompt, {
+      systemInstruction: systemPrompt,
       temperature: 0.9,
       maxTokens: 500,
     });
 
-    const content = response.choices[0]?.message?.content;
-    if (!content) {
-      throw new Error('Failed to generate headlines');
-    }
-
     try {
-      return JSON.parse(content);
+      return JSON.parse(result.content);
     } catch (error) {
       throw new Error('Failed to parse headline variants');
     }
@@ -228,31 +182,19 @@ export class AIGeneratorService {
     description: string;
     keywords: string[];
   }> {
-    const openai = getOpenAIService();
+    const multiModel = getMultiModelService();
 
-    const messages: ChatMessage[] = [
-      {
-        role: 'system',
-        content: 'You are an SEO expert. Generate optimized meta tags for maximum search visibility.',
-      },
-      {
-        role: 'user',
-        content: `Generate SEO metadata for this content: ${pageContent}${keywords ? `. Target keywords: ${keywords.join(', ')}` : ''}. Return JSON with title (60 chars max), description (160 chars max), and keywords array.`,
-      },
-    ];
+    const systemPrompt = 'You are an SEO expert. Generate optimized meta tags for maximum search visibility.';
+    const userPrompt = `Generate SEO metadata for this content: ${pageContent}${keywords ? `. Target keywords: ${keywords.join(', ')}` : ''}. Return JSON with title (60 chars max), description (160 chars max), and keywords array.`;
 
-    const response = await openai.createChatCompletion(messages, {
+    const result = await multiModel.generateContent(userPrompt, {
+      systemInstruction: systemPrompt,
       temperature: 0.5,
       maxTokens: 300,
     });
 
-    const content = response.choices[0]?.message?.content;
-    if (!content) {
-      throw new Error('Failed to generate SEO metadata');
-    }
-
     try {
-      return JSON.parse(content);
+      return JSON.parse(result.content);
     } catch (error) {
       throw new Error('Failed to parse SEO metadata');
     }
@@ -277,5 +219,38 @@ export class AIGeneratorService {
       seoTitle: generatedPage.seoTitle,
       seoDescription: generatedPage.seoDescription,
     };
+  }
+
+  /**
+   * Get AI service health status
+   */
+  static async getServiceStatus(): Promise<{
+    available: string[];
+    failed: string[];
+  }> {
+    const multiModel = getMultiModelService();
+    const providers = multiModel.getAvailableProviders();
+
+    const available: string[] = [];
+    const failed: string[] = [];
+
+    for (const provider of providers) {
+      const isHealthy = await multiModel.checkProviderHealth(provider);
+      if (isHealthy) {
+        available.push(provider);
+      } else {
+        failed.push(provider);
+      }
+    }
+
+    return { available, failed };
+  }
+
+  /**
+   * Get fallback history (for debugging)
+   */
+  static getFallbackHistory(): any[] {
+    const multiModel = getMultiModelService();
+    return multiModel.getFallbackHistory();
   }
 }
