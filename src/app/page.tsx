@@ -140,7 +140,7 @@ export default function Home() {
             Stop Duct-Taping Your Growth Stack
           </h2>
           <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-            Most no-code builders (Webflow, Framer, Wix) let you create beautiful sites—but then you're stuck juggling
+            Most no-code builders (Webflow, Framer, Wix) let you create beautiful sites—but then you&apos;re stuck juggling
             <strong className="text-foreground"> separate A/B testing tools</strong> (VWO, Optimizely),
             <strong className="text-foreground"> analytics platforms</strong> (Google Analytics, Mixpanel), and
             <strong className="text-foreground"> endless integrations</strong>.
@@ -170,7 +170,7 @@ export default function Home() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-3xl md:text-5xl font-bold mb-6">
-              Everything You Need, Nothing You Don't
+              Everything You Need, Nothing You Don&apos;t
             </h2>
             <p className="text-lg text-muted-foreground">
               OptiFlow combines visual page building with native experimentation and analytics—all in one seamless workflow
@@ -392,7 +392,7 @@ export default function Home() {
                   ))}
                 </div>
                 <p className="text-muted-foreground mb-4">
-                  "We increased trial signups by 34% in the first month. The native A/B testing saved us from juggling three different tools."
+                  &quot;We increased trial signups by 34% in the first month. The native A/B testing saved us from juggling three different tools.&quot;
                 </p>
               </div>
               <div className="flex items-center">
@@ -416,7 +416,7 @@ export default function Home() {
                   ))}
                 </div>
                 <p className="text-muted-foreground mb-4">
-                  "Finally! A builder that doesn't make me context-switch to run experiments. Our iteration speed has tripled."
+                  &quot;Finally! A builder that doesn&apos;t make me context-switch to run experiments. Our iteration speed has tripled.&quot;
                 </p>
               </div>
               <div className="flex items-center">
@@ -440,7 +440,7 @@ export default function Home() {
                   ))}
                 </div>
                 <p className="text-muted-foreground mb-4">
-                  "The integrated analytics are a game-changer. We see exactly which variants drive revenue, not just clicks."
+                  &quot;The integrated analytics are a game-changer. We see exactly which variants drive revenue, not just clicks.&quot;
                 </p>
               </div>
               <div className="flex items-center">

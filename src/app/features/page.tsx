@@ -340,7 +340,7 @@ export default function FeaturesPage() {
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold mb-4">Integrated Analytics & Insights</h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                See what's working with real-time dashboards and SaaS-specific metrics
+                See what&apos;s working with real-time dashboards and SaaS-specific metrics
               </p>
             </div>
 

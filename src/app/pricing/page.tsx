@@ -398,7 +398,7 @@ export default function PricingPage() {
                   <HelpCircle className="h-5 w-5 text-primary mr-3 mt-1 flex-shrink-0" />
                   <div>
                     <h3 className="font-semibold mb-2">What happens if I exceed my visitor limit?</h3>
-                    <p className="text-muted-foreground">We'll notify you when you're approaching your limit. You can upgrade your plan anytime, or we'll automatically pause new sessions until the next billing cycle to avoid surprise charges.</p>
+                    <p className="text-muted-foreground">We&apos;ll notify you when you&apos;re approaching your limit. You can upgrade your plan anytime, or we&apos;ll automatically pause new sessions until the next billing cycle to avoid surprise charges.</p>
                   </div>
                 </div>
               </Card>
@@ -408,7 +408,7 @@ export default function PricingPage() {
                   <HelpCircle className="h-5 w-5 text-primary mr-3 mt-1 flex-shrink-0" />
                   <div>
                     <h3 className="font-semibold mb-2">Can I change plans later?</h3>
-                    <p className="text-muted-foreground">Absolutely! You can upgrade or downgrade at any time. When upgrading, you'll get immediate access to new features. When downgrading, changes take effect at the next billing cycle.</p>
+                    <p className="text-muted-foreground">Absolutely! You can upgrade or downgrade at any time. When upgrading, you&apos;ll get immediate access to new features. When downgrading, changes take effect at the next billing cycle.</p>
                   </div>
                 </div>
               </Card>
