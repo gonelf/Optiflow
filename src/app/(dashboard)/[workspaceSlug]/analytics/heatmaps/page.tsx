@@ -16,7 +16,7 @@ interface HeatmapsPageProps {
 
 interface Page {
   id: string;
-  name: string;
+  title: string;
 }
 
 export default function HeatmapsPage({ params }: HeatmapsPageProps) {
@@ -77,7 +77,7 @@ export default function HeatmapsPage({ params }: HeatmapsPageProps) {
             >
               {pages.map((page) => (
                 <option key={page.id} value={page.id}>
-                  {page.name}
+                  {page.title}
                 </option>
               ))}
             </select>

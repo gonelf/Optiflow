@@ -364,6 +364,7 @@ export class CohortAnalysisService {
               },
               select: {
                 id: true,
+
               },
             },
           },
