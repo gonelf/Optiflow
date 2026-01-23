@@ -210,7 +210,10 @@ export class ConversionFunnelService {
         },
         ...(pageId ? { pageId } : {}),
       },
-      include: {
+      select: {
+        utmSource: true,
+        utmMedium: true,
+        visitorId: true,
         events: {
           orderBy: {
             timestamp: 'asc',
@@ -218,19 +221,8 @@ export class ConversionFunnelService {
           select: {
             eventType: true,
             elementId: true,
-            session: {
-              select: {
-                visitorId: true,
-              },
-            },
           },
         },
-      },
-      select: {
-        utmSource: true,
-        utmMedium: true,
-        visitorId: true,
-        events: true,
       },
     });
 
