@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const formattedTests = tests.map((test) => ({
+    const formattedTests = tests.map((test: any) => ({
       id: test.id,
       name: test.name,
       description: test.description,
@@ -169,7 +169,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Update traffic split with even distribution
-    const variantIds = test.variants.map((v) => v.id);
+    const variantIds = test.variants.map((v: any) => v.id);
     const trafficSplit = createEvenSplit(variantIds);
 
     await prisma.aBTest.update({

@@ -1,5 +1,7 @@
 import { prisma } from '@/lib/prisma'
-import { Role, PlanType } from '@prisma/client'
+// import { Role, PlanType } from '@prisma/client'
+type Role = 'OWNER' | 'ADMIN' | 'MEMBER' | 'VIEWER';
+type PlanType = 'FREE' | 'PRO' | 'ENTERPRISE';
 
 export interface CreateWorkspaceInput {
   name: string
@@ -29,11 +31,11 @@ export class WorkspaceService {
       data: {
         name: data.name,
         slug: data.slug,
-        plan: PlanType.FREE,
+        plan: 'FREE' as PlanType,
         members: {
           create: {
             userId: data.userId,
-            role: Role.OWNER,
+            role: 'OWNER' as Role,
           },
         },
       },
@@ -164,16 +166,16 @@ export class WorkspaceService {
     userId: string,
     requiredRole: Role
   ): Promise<boolean> {
-    const roleHierarchy = {
-      [Role.VIEWER]: 1,
-      [Role.MEMBER]: 2,
-      [Role.ADMIN]: 3,
-      [Role.OWNER]: 4,
+    const roleHierarchy: Record<Role, number> = {
+      'VIEWER': 1,
+      'MEMBER': 2,
+      'ADMIN': 3,
+      'OWNER': 4,
     }
 
     const userRole = await this.getUserRole(workspaceId, userId)
     if (!userRole) return false
 
-    return roleHierarchy[userRole] >= roleHierarchy[requiredRole]
+    return roleHierarchy[userRole as Role] >= roleHierarchy[requiredRole]
   }
 }

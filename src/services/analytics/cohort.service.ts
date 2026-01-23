@@ -106,7 +106,7 @@ export class CohortAnalysisService {
       distinct: ['visitorId'],
     });
 
-    const cohortVisitors = new Set(cohortSessions.map(s => s.visitorId));
+    const cohortVisitors = new Set(cohortSessions.map((s: { visitorId: string }) => s.visitorId));
     const cohortSize = cohortVisitors.size;
 
     // For each period, count how many cohort visitors returned
@@ -188,7 +188,7 @@ export class CohortAnalysisService {
       distinct: ['visitorId'],
     });
 
-    const cohortVisitors = Array.from(new Set(cohortSessions.map(s => s.visitorId)));
+    const cohortVisitors = Array.from(new Set(cohortSessions.map((s: { visitorId: string }) => s.visitorId)));
     const cohortSize = cohortVisitors.length;
 
     // Get conversions for cohort visitors
@@ -212,15 +212,15 @@ export class CohortAnalysisService {
       },
     });
 
-    const uniqueConverters = new Set(conversions.map(c => c.session.visitorId));
+    const uniqueConverters = new Set(conversions.map((c: any) => c.session.visitorId));
     const totalConversions = conversions.length;
     const conversionRate = cohortSize > 0 ? (uniqueConverters.size / cohortSize) * 100 : 0;
 
     const conversionValues = conversions
-      .filter(c => c.conversionValue !== null)
-      .map(c => c.conversionValue as number);
+      .filter((c: any) => c.conversionValue !== null)
+      .map((c: any) => c.conversionValue as number);
 
-    const totalRevenue = conversionValues.reduce((sum, val) => sum + val, 0);
+    const totalRevenue = conversionValues.reduce((sum: number, val: number) => sum + val, 0);
     const avgConversionValue = conversionValues.length > 0
       ? totalRevenue / conversionValues.length
       : 0;
@@ -264,7 +264,7 @@ export class CohortAnalysisService {
       take: 10, // Top 10 sources
     });
 
-    return sources.map((source, index) => ({
+    return sources.map((source: any, index: number) => ({
       id: `cohort-source-${index}`,
       name: `${source.utmSource || 'Direct'} / ${source.utmMedium || 'None'}`,
       type: 'traffic_source' as const,
@@ -309,7 +309,7 @@ export class CohortAnalysisService {
       take: 10,
     });
 
-    return countries.map((country, index) => ({
+    return countries.map((country: any, index: number) => ({
       id: `cohort-geo-${index}`,
       name: country.country || 'Unknown',
       type: 'geo' as const,
@@ -374,12 +374,12 @@ export class CohortAnalysisService {
           },
         });
 
-        const uniqueVisitors = new Set(sessions.map(s => s.visitorId));
-        const conversions = sessions.flatMap(s => s.events);
-        const uniqueConverters = new Set(conversions.map(c => c.session.visitorId));
+        const uniqueVisitors = new Set(sessions.map((s: any) => s.visitorId));
+        const conversions = sessions.flatMap((s: any) => s.events);
+        const uniqueConverters = new Set(conversions.map((c: any) => c.session.visitorId));
 
         const avgSessionDuration = sessions.length > 0
-          ? sessions.reduce((sum, s) => sum + (s.duration || 0), 0) / sessions.length
+          ? sessions.reduce((sum: number, s: any) => sum + (s.duration || 0), 0) / sessions.length
           : 0;
 
         return {

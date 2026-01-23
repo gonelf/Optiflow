@@ -4,7 +4,8 @@
  */
 
 import { prisma } from '@/lib/prisma';
-import { EventType } from '@prisma/client';
+// import { EventType } from '@prisma/client';
+type EventType = 'PAGE_VIEW' | 'CLICK' | 'FORM_SUBMIT' | 'SCROLL' | 'TIME_ON_PAGE' | 'CONVERSION';
 
 export interface FunnelStep {
   id: string;
@@ -92,8 +93,8 @@ export class ConversionFunnelService {
       const stepCompletions = new Set<string>();
       const completionTimes: number[] = [];
 
-      sessions.forEach(session => {
-        const matchingEvents = session.events.filter(event => {
+      sessions.forEach((session: any) => {
+        const matchingEvents = session.events.filter((event: any) => {
           const typeMatches = event.eventType === step.eventType;
           const elementMatches = !step.elementId || event.elementId === step.elementId;
           return typeMatches && elementMatches;
@@ -147,9 +148,9 @@ export class ConversionFunnelService {
     completedVisitors.forEach(visitorId => {
       if (funnelStartTime.has(visitorId)) {
         const startTime = funnelStartTime.get(visitorId)!;
-        const sessionWithCompletion = sessions.find(s =>
+        const sessionWithCompletion = sessions.find((s: any) =>
           s.visitorId === visitorId &&
-          s.events.some(e =>
+          s.events.some((e: any) =>
             e.eventType === funnelSteps[funnelSteps.length - 1].eventType &&
             (!funnelSteps[funnelSteps.length - 1].elementId ||
               e.elementId === funnelSteps[funnelSteps.length - 1].elementId)
@@ -157,7 +158,7 @@ export class ConversionFunnelService {
         );
 
         if (sessionWithCompletion) {
-          const completionEvent = sessionWithCompletion.events.find(e =>
+          const completionEvent = sessionWithCompletion.events.find((e: any) =>
             e.eventType === funnelSteps[funnelSteps.length - 1].eventType &&
             (!funnelSteps[funnelSteps.length - 1].elementId ||
               e.elementId === funnelSteps[funnelSteps.length - 1].elementId)
@@ -234,7 +235,7 @@ export class ConversionFunnelService {
       completed: Set<string>;
     }>();
 
-    sessions.forEach(session => {
+    sessions.forEach((session: any) => {
       const source = session.utmSource || 'Direct';
       const medium = session.utmMedium || 'None';
       const key = `${source}|${medium}`;
@@ -251,7 +252,7 @@ export class ConversionFunnelService {
       const stats = sourceStats.get(key)!;
 
       // Check if visitor started funnel (completed first step)
-      const firstStepCompleted = session.events.some(e =>
+      const firstStepCompleted = session.events.some((e: any) =>
         e.eventType === funnelSteps[0].eventType &&
         (!funnelSteps[0].elementId || e.elementId === funnelSteps[0].elementId)
       );
@@ -260,8 +261,8 @@ export class ConversionFunnelService {
         stats.started.add(session.visitorId);
 
         // Check if visitor completed all steps
-        const allStepsCompleted = funnelSteps.every(step =>
-          session.events.some(e =>
+        const allStepsCompleted = funnelSteps.every((step: FunnelStep) =>
+          session.events.some((e: any) =>
             e.eventType === step.eventType &&
             (!step.elementId || e.elementId === step.elementId)
           )
@@ -298,25 +299,25 @@ export class ConversionFunnelService {
           {
             id: 'step-1',
             name: 'Page View',
-            eventType: EventType.PAGE_VIEW,
+            eventType: 'PAGE_VIEW' as EventType,
             order: 1,
           },
           {
             id: 'step-2',
             name: 'Click CTA',
-            eventType: EventType.CLICK,
+            eventType: 'CLICK' as EventType,
             order: 2,
           },
           {
             id: 'step-3',
             name: 'Form Submit',
-            eventType: EventType.FORM_SUBMIT,
+            eventType: 'FORM_SUBMIT' as EventType,
             order: 3,
           },
           {
             id: 'step-4',
             name: 'Conversion',
-            eventType: EventType.CONVERSION,
+            eventType: 'CONVERSION' as EventType,
             order: 4,
           },
         ],
@@ -327,19 +328,19 @@ export class ConversionFunnelService {
           {
             id: 'step-1',
             name: 'Landing Page View',
-            eventType: EventType.PAGE_VIEW,
+            eventType: 'PAGE_VIEW' as EventType,
             order: 1,
           },
           {
             id: 'step-2',
             name: 'Scroll to Form',
-            eventType: EventType.SCROLL,
+            eventType: 'SCROLL' as EventType,
             order: 2,
           },
           {
             id: 'step-3',
             name: 'Form Submit',
-            eventType: EventType.FORM_SUBMIT,
+            eventType: 'FORM_SUBMIT' as EventType,
             order: 3,
           },
         ],
@@ -350,27 +351,27 @@ export class ConversionFunnelService {
           {
             id: 'step-1',
             name: 'Product Page View',
-            eventType: EventType.PAGE_VIEW,
+            eventType: 'PAGE_VIEW' as EventType,
             order: 1,
           },
           {
             id: 'step-2',
             name: 'Add to Cart',
-            eventType: EventType.CLICK,
+            eventType: 'CLICK' as EventType,
             elementId: 'add-to-cart',
             order: 2,
           },
           {
             id: 'step-3',
             name: 'Checkout',
-            eventType: EventType.CLICK,
+            eventType: 'CLICK' as EventType,
             elementId: 'checkout',
             order: 3,
           },
           {
             id: 'step-4',
             name: 'Purchase',
-            eventType: EventType.CONVERSION,
+            eventType: 'CONVERSION' as EventType,
             order: 4,
           },
         ],

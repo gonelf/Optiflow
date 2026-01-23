@@ -54,7 +54,7 @@ export async function POST(
     }
 
     // Verify winning variant exists
-    const winningVariant = test.variants.find((v) => v.id === winningVariantId);
+    const winningVariant = test.variants.find((v: any) => v.id === winningVariantId);
     if (!winningVariant) {
       return NextResponse.json(
         { error: 'Winning variant not found' },
