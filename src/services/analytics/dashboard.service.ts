@@ -192,7 +192,7 @@ export class AnalyticsDashboardService {
         page: {
           select: {
             id: true,
-            name: true,
+            title: true,
           },
         },
         events: {
@@ -223,7 +223,7 @@ export class AnalyticsDashboardService {
       if (!session.page) return;
 
       const pageId = session.page.id;
-      const pageName = session.page.name;
+      const pageName = session.page.title;
 
       if (!pageStats.has(pageId)) {
         pageStats.set(pageId, {
@@ -428,7 +428,7 @@ export class AnalyticsDashboardService {
           select: {
             eventType: true,
             isConversion: true,
-            createdAt: true,
+            timestamp: true,
           },
         },
       },

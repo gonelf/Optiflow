@@ -70,13 +70,13 @@ export class ConversionFunnelService {
       include: {
         events: {
           orderBy: {
-            createdAt: 'asc',
+            timestamp: 'asc',
           },
           select: {
             id: true,
             eventType: true,
             elementId: true,
-            createdAt: true,
+            timestamp: true,
           },
         },
       },
@@ -104,10 +104,10 @@ export class ConversionFunnelService {
 
           // Calculate time from funnel start
           if (i === 0) {
-            funnelStartTime.set(session.visitorId, matchingEvents[0].createdAt);
+            funnelStartTime.set(session.visitorId, matchingEvents[0].timestamp);
           } else if (funnelStartTime.has(session.visitorId)) {
             const startTime = funnelStartTime.get(session.visitorId)!;
-            const completionTime = matchingEvents[0].createdAt;
+            const completionTime = matchingEvents[0].timestamp;
             const timeDiff = (completionTime.getTime() - startTime.getTime()) / 1000; // seconds
             completionTimes.push(timeDiff);
           }
@@ -164,7 +164,7 @@ export class ConversionFunnelService {
           );
 
           if (completionEvent) {
-            const timeDiff = (completionEvent.createdAt.getTime() - startTime.getTime()) / 1000;
+            const timeDiff = (completionEvent.timestamp.getTime() - startTime.getTime()) / 1000;
             completionTimes.push(timeDiff);
           }
         }
@@ -210,23 +210,19 @@ export class ConversionFunnelService {
         },
         ...(pageId ? { pageId } : {}),
       },
-      include: {
-        events: {
-          orderBy: {
-            createdAt: 'asc',
-          },
-          select: {
-            eventType: true,
-            elementId: true,
-            visitorId: true,
-          },
-        },
-      },
       select: {
         utmSource: true,
         utmMedium: true,
         visitorId: true,
-        events: true,
+        events: {
+          orderBy: {
+            timestamp: 'asc',
+          },
+          select: {
+            eventType: true,
+            elementId: true,
+          },
+        },
       },
     });
 

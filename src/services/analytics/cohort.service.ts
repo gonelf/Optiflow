@@ -364,7 +364,11 @@ export class CohortAnalysisService {
               },
               select: {
                 id: true,
-                visitorId: true,
+                session: {
+                  select: {
+                    visitorId: true,
+                  },
+                },
               },
             },
           },
@@ -372,7 +376,7 @@ export class CohortAnalysisService {
 
         const uniqueVisitors = new Set(sessions.map(s => s.visitorId));
         const conversions = sessions.flatMap(s => s.events);
-        const uniqueConverters = new Set(conversions.map(c => c.visitorId));
+        const uniqueConverters = new Set(conversions.map(c => c.session.visitorId));
 
         const avgSessionDuration = sessions.length > 0
           ? sessions.reduce((sum, s) => sum + (s.duration || 0), 0) / sessions.length
