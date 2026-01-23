@@ -428,7 +428,7 @@ export class AnalyticsDashboardService {
           select: {
             eventType: true,
             isConversion: true,
-            createdAt: true,
+            timestamp: true,
           },
         },
       },
