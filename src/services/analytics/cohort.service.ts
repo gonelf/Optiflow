@@ -364,11 +364,7 @@ export class CohortAnalysisService {
               },
               select: {
                 id: true,
-                session: {
-                  select: {
-                    visitorId: true,
-                  },
-                },
+
               },
             },
           },
@@ -376,7 +372,13 @@ export class CohortAnalysisService {
 
         const uniqueVisitors = new Set(sessions.map(s => s.visitorId));
         const conversions = sessions.flatMap(s => s.events);
-        const uniqueConverters = new Set(conversions.map(c => c.session.visitorId));
+
+        // distinct visitors who have at least one conversion event
+        const uniqueConverters = new Set(
+          sessions
+            .filter(s => s.events.length > 0)
+            .map(s => s.visitorId)
+        );
 
         const avgSessionDuration = sessions.length > 0
           ? sessions.reduce((sum, s) => sum + (s.duration || 0), 0) / sessions.length
