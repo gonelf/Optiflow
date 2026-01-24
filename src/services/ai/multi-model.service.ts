@@ -1,8 +1,8 @@
 /**
  * Multi-Model AI Service
- * Implements automatic fallback between different Gemini models
- * Priority: gemini-1.5-flash -> gemini-1.5-pro -> gemini-1.0-pro
- * All models stay in the free tier!
+ * Implements automatic fallback between different Gemini 2.x models
+ * Priority: gemini-2.0-flash-exp -> gemini-2.5-flash -> gemini-2.0-flash
+ * All models stay in the free tier! (Gemini 1.x models are deprecated)
  */
 
 import { GeminiService } from './gemini.service';
@@ -326,27 +326,28 @@ export class MultiModelService {
 }
 
 /**
- * Create default multi-model service with Gemini fallback chain
+ * Create default multi-model service with Gemini 2.x fallback chain
+ * Using only current, supported models (1.x models are deprecated)
  */
 export function createDefaultMultiModelService(): MultiModelService {
   const configs: AIModelConfig[] = [
     {
       provider: 'gemini',
-      model: 'gemini-1.5-flash',
-      name: 'Gemini 1.5 Flash',
-      priority: 1, // Try first - fastest, best free tier
+      model: 'gemini-2.0-flash-exp',
+      name: 'Gemini 2.0 Flash (Experimental)',
+      priority: 1, // Try first - experimental, usually has higher free tier
     },
     {
       provider: 'gemini',
-      model: 'gemini-1.5-pro',
-      name: 'Gemini 1.5 Pro',
-      priority: 2, // Fallback - more capable, still free
+      model: 'gemini-2.5-flash',
+      name: 'Gemini 2.5 Flash',
+      priority: 2, // Fallback - stable and capable
     },
     {
       provider: 'gemini',
-      model: 'gemini-1.0-pro',
-      name: 'Gemini 1.0 Pro',
-      priority: 3, // Last resort - older but reliable
+      model: 'gemini-2.0-flash',
+      name: 'Gemini 2.0 Flash',
+      priority: 3, // Last resort - stable fallback
     },
   ];
 

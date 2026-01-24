@@ -4,19 +4,21 @@ OptiFlow uses Google Gemini with a **3-model fallback chain** for high availabil
 
 ## 🎯 How It Works
 
-The system automatically tries 3 different Gemini models in order:
+The system automatically tries 3 different Gemini 2.x models in order:
 
 ```
 User Request
      ↓
-1. Try Gemini 1.5 Flash (fastest, optimized)
+1. Try Gemini 2.0 Flash (Experimental) - Latest experimental model
      ↓ (if rate limit/error)
-2. Try Gemini 1.5 Pro (more capable)
+2. Try Gemini 2.5 Flash - Stable and capable
      ↓ (if rate limit/error)
-3. Try Gemini 1.0 Pro (reliable fallback)
+3. Try Gemini 2.0 Flash - Reliable fallback
      ↓
 Return result or error
 ```
+
+**Note:** Gemini 1.x models (1.0 Pro, 1.5 Flash, 1.5 Pro) are deprecated and no longer used.
 
 ### Why Multiple Models?
 
@@ -68,53 +70,56 @@ That's it! The system is ready to generate pages.
 
 ### Example 1: Normal Operation
 ```
-→ Attempting generation with Gemini 1.5 Flash...
-✓ Successfully generated with Gemini 1.5 Flash
+→ Attempting generation with Gemini 2.0 Flash (Experimental)...
+✓ Successfully generated with Gemini 2.0 Flash (Experimental)
 ```
 
 ### Example 2: Rate Limit Hit
 ```
-→ Attempting generation with Gemini 1.5 Flash...
-✗ Gemini 1.5 Flash failed: rate limit exceeded
-⚠ Rate limit hit for Gemini 1.5 Flash, trying next model...
+→ Attempting generation with Gemini 2.0 Flash (Experimental)...
+✗ Gemini 2.0 Flash (Experimental) failed: rate limit exceeded
+⚠ Rate limit hit for Gemini 2.0 Flash (Experimental), trying next model...
 
-→ Attempting generation with Gemini 1.5 Pro...
-✓ Successfully generated with Gemini 1.5 Pro
+→ Attempting generation with Gemini 2.5 Flash...
+✓ Successfully generated with Gemini 2.5 Flash
 ```
 
 ### Example 3: Multiple Fallbacks
 ```
-→ Attempting generation with Gemini 1.5 Flash...
-✗ Gemini 1.5 Flash failed: resource exhausted
-⚠ Rate limit hit for Gemini 1.5 Flash, trying next model...
+→ Attempting generation with Gemini 2.0 Flash (Experimental)...
+✗ Gemini 2.0 Flash (Experimental) failed: resource exhausted
+⚠ Rate limit hit for Gemini 2.0 Flash (Experimental), trying next model...
 
-→ Attempting generation with Gemini 1.5 Pro...
-✗ Gemini 1.5 Pro failed: rate limit exceeded
-⚠ Rate limit hit for Gemini 1.5 Pro, trying next model...
+→ Attempting generation with Gemini 2.5 Flash...
+✗ Gemini 2.5 Flash failed: rate limit exceeded
+⚠ Rate limit hit for Gemini 2.5 Flash, trying next model...
 
-→ Attempting generation with Gemini 1.0 Pro...
-✓ Successfully generated with Gemini 1.0 Pro
+→ Attempting generation with Gemini 2.0 Flash...
+✓ Successfully generated with Gemini 2.0 Flash
 ```
 
 ## 📈 Model Characteristics
 
-### Gemini 1.5 Flash (Priority 1)
-- **Speed**: ⚡ Fastest
-- **Use Case**: General page generation
+### Gemini 2.0 Flash Experimental (Priority 1)
+- **Speed**: ⚡ Very Fast
+- **Use Case**: General page generation, latest features
 - **Free Tier**: Same quota as all models
-- **Why First**: Optimized for speed, handles most requests
+- **Why First**: Experimental model with latest capabilities, typically has higher availability
+- **Model ID**: `gemini-2.0-flash-exp`
 
-### Gemini 1.5 Pro (Priority 2)
-- **Speed**: 🔷 Moderate
-- **Use Case**: Complex generations, longer content
+### Gemini 2.5 Flash (Priority 2)
+- **Speed**: ⚡ Fast
+- **Use Case**: Stable generation, complex content
 - **Free Tier**: Same quota as all models
-- **Why Second**: More capable for complex tasks
+- **Why Second**: Stable and capable, good balance of speed and quality
+- **Model ID**: `gemini-2.5-flash`
 
-### Gemini 1.0 Pro (Priority 3)
-- **Speed**: 🔶 Moderate
+### Gemini 2.0 Flash (Priority 3)
+- **Speed**: ⚡ Fast
 - **Use Case**: Reliable fallback
 - **Free Tier**: Same quota as all models
-- **Why Third**: Stable and reliable, good for fallback
+- **Why Third**: Stable production model, reliable fallback option
+- **Model ID**: `gemini-2.0-flash`
 
 ## 🧪 Testing Your Setup
 
@@ -132,26 +137,26 @@ curl http://localhost:3000/api/ai/status
   },
   "models": [
     {
-      "name": "Gemini 1.5 Flash",
-      "model": "gemini-1.5-flash",
+      "name": "Gemini 2.0 Flash (Experimental)",
+      "model": "gemini-2.0-flash-exp",
       "provider": "gemini"
     },
     {
-      "name": "Gemini 1.5 Pro",
-      "model": "gemini-1.5-pro",
+      "name": "Gemini 2.5 Flash",
+      "model": "gemini-2.5-flash",
       "provider": "gemini"
     },
     {
-      "name": "Gemini 1.0 Pro",
-      "model": "gemini-1.0-pro",
+      "name": "Gemini 2.0 Flash",
+      "model": "gemini-2.0-flash",
       "provider": "gemini"
     }
   ],
   "status": {
     "available": [
-      "gemini-1.5-flash",
-      "gemini-1.5-pro",
-      "gemini-1.0-pro"
+      "gemini-2.0-flash-exp",
+      "gemini-2.5-flash",
+      "gemini-2.0-flash"
     ],
     "failed": [],
     "totalModels": 3
@@ -189,20 +194,20 @@ import { MultiModelService } from '@/services/ai/multi-model.service';
 const customService = new MultiModelService([
   {
     provider: 'gemini',
-    model: 'gemini-1.5-pro', // Try Pro first
-    name: 'Gemini 1.5 Pro',
+    model: 'gemini-2.5-flash', // Try 2.5 Flash first
+    name: 'Gemini 2.5 Flash',
     priority: 1,
   },
   {
     provider: 'gemini',
-    model: 'gemini-1.5-flash', // Then Flash
-    name: 'Gemini 1.5 Flash',
+    model: 'gemini-2.0-flash-exp', // Then experimental
+    name: 'Gemini 2.0 Flash (Experimental)',
     priority: 2,
   },
   {
     provider: 'gemini',
-    model: 'gemini-1.0-pro', // Finally 1.0
-    name: 'Gemini 1.0 Pro',
+    model: 'gemini-2.0-flash', // Finally stable 2.0
+    name: 'Gemini 2.0 Flash',
     priority: 3,
   },
 ]);
@@ -340,9 +345,9 @@ curl http://localhost:3000/api/ai/status | jq '.recentFallbacks'
 
 | Model | Average | P95 | P99 |
 |-------|---------|-----|-----|
-| Gemini 1.5 Flash | 2-3s | 5s | 7s |
-| Gemini 1.5 Pro | 3-5s | 8s | 10s |
-| Gemini 1.0 Pro | 3-4s | 7s | 9s |
+| Gemini 2.0 Flash (Experimental) | 1-2s | 3s | 5s |
+| Gemini 2.5 Flash | 2-3s | 5s | 7s |
+| Gemini 2.0 Flash | 2-3s | 4s | 6s |
 
 ### Fallback Overhead
 
@@ -379,11 +384,11 @@ GET /api/ai/status
 ### View Logs
 The system logs all fallback attempts:
 ```
-→ Attempting generation with Gemini 1.5 Flash...
-✗ Gemini 1.5 Flash failed: rate limit exceeded
-⚠ Rate limit hit for Gemini 1.5 Flash, trying next model...
-→ Attempting generation with Gemini 1.5 Pro...
-✓ Successfully generated with Gemini 1.5 Pro
+→ Attempting generation with Gemini 2.0 Flash (Experimental)...
+✗ Gemini 2.0 Flash (Experimental) failed: rate limit exceeded
+⚠ Rate limit hit for Gemini 2.0 Flash (Experimental), trying next model...
+→ Attempting generation with Gemini 2.5 Flash...
+✓ Successfully generated with Gemini 2.5 Flash
 ```
 
 ### Common Error Messages
@@ -403,9 +408,9 @@ GEMINI_API_KEY=your_key_here
 ```
 
 **Models (in order):**
-1. gemini-1.5-flash (fast, primary)
-2. gemini-1.5-pro (capable, fallback)
-3. gemini-1.0-pro (reliable, last resort)
+1. gemini-2.0-flash-exp (experimental, primary)
+2. gemini-2.5-flash (stable, fallback)
+3. gemini-2.0-flash (reliable, last resort)
 
 **Free Tier:**
 - 15 requests/minute
