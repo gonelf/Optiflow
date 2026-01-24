@@ -1,13 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { WebhookService } from '@/services/integrations/webhook.service';
+import { WebhookService, type WebhookEvent } from '@/services/integrations/webhook.service';
 import { z } from 'zod';
+
+const webhookEventSchema = z.enum([
+  'page.published',
+  'page.unpublished',
+  'conversion.created',
+  'ab_test.started',
+  'ab_test.completed',
+  'ab_test.winner_declared',
+  'form.submitted',
+  'payment.succeeded',
+  'payment.failed',
+]);
 
 const createWebhookSchema = z.object({
   workspaceId: z.string(),
   url: z.string().url(),
-  events: z.array(z.string()),
+  events: z.array(webhookEventSchema),
   secret: z.string().optional(),
 });
 
@@ -58,7 +70,12 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const validatedData = createWebhookSchema.parse(body);
 
-    const webhook = await WebhookService.createWebhook(validatedData);
+    const webhook = await WebhookService.createWebhook({
+      workspaceId: validatedData.workspaceId,
+      url: validatedData.url,
+      events: validatedData.events as WebhookEvent[],
+      secret: validatedData.secret,
+    });
 
     return NextResponse.json({ webhook }, { status: 201 });
   } catch (error) {

@@ -162,7 +162,7 @@ export class MultiModelService {
 
         // Extract system instruction if present
         const systemMsg = messages.find((m) => m.role === 'system');
-        const chatMessages = messages.filter((m) => m.role !== 'system');
+        const chatMessages = messages.filter((m) => m.role !== 'system') as { role: 'user' | 'assistant'; content: string }[];
 
         const content = await service.generateContentWithHistory(
           chatMessages,

@@ -33,21 +33,25 @@ export class StripeService {
 
   constructor(config: StripeConfig) {
     this.stripe = new Stripe(config.apiKey, {
-      apiVersion: '2024-12-18.acacia',
+      apiVersion: '2025-02-24.acacia',
     });
     this.webhookSecret = config.webhookSecret;
   }
 
   /**
    * Create a payment link for a product/service
+   * Note: Uses checkout sessions as payment links require pre-created prices in newer API versions
    */
   async createPaymentLink(params: {
     amount: number; // in cents
     currency: string;
     description: string;
     metadata?: Record<string, string>;
+    successUrl?: string;
+    cancelUrl?: string;
   }): Promise<string> {
-    const paymentLink = await this.stripe.paymentLinks.create({
+    const session = await this.stripe.checkout.sessions.create({
+      mode: 'payment',
       line_items: [
         {
           price_data: {
@@ -61,9 +65,11 @@ export class StripeService {
         },
       ],
       metadata: params.metadata,
+      success_url: params.successUrl || 'https://example.com/success',
+      cancel_url: params.cancelUrl || 'https://example.com/cancel',
     });
 
-    return paymentLink.url;
+    return session.url || '';
   }
 
   /**

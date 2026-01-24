@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
           error: error.message,
           isRateLimit,
           hint: isRateLimit
-            ? 'All Gemini models have hit their rate limits. The system tried 3 different models (Flash, Pro, 1.0). Please wait a few minutes for rate limits to reset.'
+            ? 'All Gemini models have hit their rate limits. The system tried 3 different Gemini 2.x models (2.0 Flash Experimental, 2.5 Flash, 2.0 Flash). Please wait a few minutes for rate limits to reset.'
             : 'Failed to generate page. Please check your input and try again.'
         },
         { status: isRateLimit ? 429 : 500 }
