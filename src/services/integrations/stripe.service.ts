@@ -207,9 +207,10 @@ export class StripeService {
           data: {
             sessionId: analyticsSession.id,
             eventType: 'CONVERSION',
+            eventName: 'Stripe Payment',
             isConversion: true,
             conversionValue: params.amount / 100, // Convert cents to dollars
-            metadata: {
+            eventData: {
               stripeCustomerId: params.customerId,
               stripeSessionId: params.sessionId,
               currency: params.currency,
