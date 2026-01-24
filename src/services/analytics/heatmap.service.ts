@@ -4,7 +4,7 @@
  */
 
 import { prisma } from '@/lib/prisma';
-import { EventType } from '@prisma/client';
+// import { EventType } from '@prisma/client';
 
 export interface ClickDataPoint {
   x: number;
@@ -54,7 +54,7 @@ export class HeatmapService {
             lte: defaultEndDate,
           },
         },
-        eventType: EventType.CLICK,
+        eventType: 'CLICK',
         xPosition: {
           not: null,
         },
@@ -80,7 +80,7 @@ export class HeatmapService {
       elementTexts: Set<string>;
     }>();
 
-    clickEvents.forEach(event => {
+    clickEvents.forEach((event: any) => {
       if (event.xPosition === null || event.yPosition === null) return;
 
       // Find existing cluster within radius
@@ -154,7 +154,7 @@ export class HeatmapService {
             lte: defaultEndDate,
           },
         },
-        eventType: EventType.SCROLL,
+        eventType: 'SCROLL',
         scrollDepth: {
           not: null,
         },
@@ -171,7 +171,7 @@ export class HeatmapService {
 
     // Get max scroll depth per visitor
     const visitorMaxDepth = new Map<string, number>();
-    scrollEvents.forEach(event => {
+    scrollEvents.forEach((event: any) => {
       if (event.scrollDepth === null) return;
 
       const currentMax = visitorMaxDepth.get(event.session.visitorId) || 0;
@@ -264,7 +264,7 @@ export class HeatmapService {
             lte: defaultEndDate,
           },
         },
-        eventType: EventType.SCROLL,
+        eventType: 'SCROLL',
         scrollDepth: {
           not: null,
         },
@@ -281,7 +281,7 @@ export class HeatmapService {
 
     // Calculate max scroll per visitor
     const visitorMaxDepth = new Map<string, number>();
-    scrollEvents.forEach(event => {
+    scrollEvents.forEach((event: any) => {
       if (event.scrollDepth === null) return;
       const currentMax = visitorMaxDepth.get(event.session.visitorId) || 0;
       if (event.scrollDepth > currentMax) {
@@ -336,7 +336,7 @@ export class HeatmapService {
             lte: defaultEndDate,
           },
         },
-        eventType: EventType.CLICK,
+        eventType: 'CLICK',
         elementId: {
           not: null,
         },
@@ -360,7 +360,7 @@ export class HeatmapService {
       visitors: Set<string>;
     }>();
 
-    clickEvents.forEach(event => {
+    clickEvents.forEach((event: any) => {
       if (!event.elementId) return;
 
       if (!elementStats.has(event.elementId)) {

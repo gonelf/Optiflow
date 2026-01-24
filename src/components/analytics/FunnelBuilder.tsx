@@ -11,7 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FunnelStep } from '@/services/analytics/funnel.service';
-import { EventType } from '@prisma/client';
+// import { EventType } from '@prisma/client';
+type EventType = 'PAGE_VIEW' | 'CLICK' | 'FORM_SUBMIT' | 'SCROLL' | 'TIME_ON_PAGE' | 'CONVERSION';
 
 interface FunnelBuilderProps {
   onAnalyze: (steps: FunnelStep[]) => void;
@@ -22,7 +23,7 @@ export function FunnelBuilder({ onAnalyze }: FunnelBuilderProps) {
     {
       id: 'step-1',
       name: 'Page View',
-      eventType: EventType.PAGE_VIEW,
+      eventType: 'PAGE_VIEW' as EventType,
       order: 1,
     },
   ]);
@@ -31,7 +32,7 @@ export function FunnelBuilder({ onAnalyze }: FunnelBuilderProps) {
     const newStep: FunnelStep = {
       id: `step-${steps.length + 1}`,
       name: `Step ${steps.length + 1}`,
-      eventType: EventType.CLICK,
+      eventType: 'CLICK' as EventType,
       order: steps.length + 1,
     };
     setSteps([...steps, newStep]);
@@ -61,18 +62,18 @@ export function FunnelBuilder({ onAnalyze }: FunnelBuilderProps) {
     {
       name: 'Basic Conversion',
       steps: [
-        { id: 'step-1', name: 'Page View', eventType: EventType.PAGE_VIEW, order: 1 },
-        { id: 'step-2', name: 'Click CTA', eventType: EventType.CLICK, order: 2 },
-        { id: 'step-3', name: 'Form Submit', eventType: EventType.FORM_SUBMIT, order: 3 },
-        { id: 'step-4', name: 'Conversion', eventType: EventType.CONVERSION, order: 4 },
+        { id: 'step-1', name: 'Page View', eventType: 'PAGE_VIEW' as EventType, order: 1 },
+        { id: 'step-2', name: 'Click CTA', eventType: 'CLICK' as EventType, order: 2 },
+        { id: 'step-3', name: 'Form Submit', eventType: 'FORM_SUBMIT' as EventType, order: 3 },
+        { id: 'step-4', name: 'Conversion', eventType: 'CONVERSION' as EventType, order: 4 },
       ],
     },
     {
       name: 'Lead Generation',
       steps: [
-        { id: 'step-1', name: 'Landing Page', eventType: EventType.PAGE_VIEW, order: 1 },
-        { id: 'step-2', name: 'Scroll to Form', eventType: EventType.SCROLL, order: 2 },
-        { id: 'step-3', name: 'Submit Form', eventType: EventType.FORM_SUBMIT, order: 3 },
+        { id: 'step-1', name: 'Landing Page', eventType: 'PAGE_VIEW' as EventType, order: 1 },
+        { id: 'step-2', name: 'Scroll to Form', eventType: 'SCROLL' as EventType, order: 2 },
+        { id: 'step-3', name: 'Submit Form', eventType: 'FORM_SUBMIT' as EventType, order: 3 },
       ],
     },
   ];
@@ -133,12 +134,12 @@ export function FunnelBuilder({ onAnalyze }: FunnelBuilderProps) {
                   onChange={(e) => updateStep(index, 'eventType', e.target.value as EventType)}
                   className="w-full h-9 px-3 border rounded-md text-sm bg-white"
                 >
-                  <option value={EventType.PAGE_VIEW}>Page View</option>
-                  <option value={EventType.CLICK}>Click</option>
-                  <option value={EventType.FORM_SUBMIT}>Form Submit</option>
-                  <option value={EventType.SCROLL}>Scroll</option>
-                  <option value={EventType.CONVERSION}>Conversion</option>
-                  <option value={EventType.CUSTOM}>Custom</option>
+                  <option value="PAGE_VIEW">Page View</option>
+                  <option value="CLICK">Click</option>
+                  <option value="FORM_SUBMIT">Form Submit</option>
+                  <option value="SCROLL">Scroll</option>
+                  <option value="CONVERSION">Conversion</option>
+                  <option value="TIME_ON_PAGE">Time on Page</option>
                 </select>
               </div>
 

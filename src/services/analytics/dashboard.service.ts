@@ -4,7 +4,7 @@
  */
 
 import { prisma } from '@/lib/prisma';
-import { EventType } from '@prisma/client';
+// import { EventType } from '@prisma/client';
 
 export interface DashboardMetrics {
   currentVisitors: number;
@@ -106,7 +106,7 @@ export class AnalyticsDashboardService {
           },
           ...(pageId ? { pageId } : {}),
         },
-        eventType: EventType.PAGE_VIEW,
+        eventType: 'PAGE_VIEW',
       },
     });
 
@@ -126,7 +126,7 @@ export class AnalyticsDashboardService {
     });
 
     // Unique visitors
-    const uniqueVisitorIds = new Set(sessions.map(s => s.visitorId));
+    const uniqueVisitorIds = new Set(sessions.map((s: any) => s.visitorId));
     const uniqueVisitors = uniqueVisitorIds.size;
 
     // Calculate bounce rate (sessions with only 1 pageview)
@@ -136,7 +136,7 @@ export class AnalyticsDashboardService {
         id: true,
         events: {
           where: {
-            eventType: EventType.PAGE_VIEW,
+            eventType: 'PAGE_VIEW',
           },
           select: {
             id: true,
@@ -145,11 +145,11 @@ export class AnalyticsDashboardService {
       },
     });
 
-    const bouncedSessions = sessionsWithEvents.filter(s => s.events.length <= 1).length;
+    const bouncedSessions = sessionsWithEvents.filter((s: any) => s.events.length <= 1).length;
     const bounceRate = sessions.length > 0 ? (bouncedSessions / sessions.length) * 100 : 0;
 
     // Calculate average session duration
-    const totalDuration = sessions.reduce((sum, s) => sum + (s.duration || 0), 0);
+    const totalDuration = sessions.reduce((sum: number, s: any) => sum + (s.duration || 0), 0);
     const avgSessionDuration = sessions.length > 0 ? totalDuration / sessions.length : 0;
 
     // Calculate conversion rate
@@ -198,7 +198,7 @@ export class AnalyticsDashboardService {
         events: {
           where: {
             OR: [
-              { eventType: EventType.PAGE_VIEW },
+              { eventType: 'PAGE_VIEW' },
               { isConversion: true },
             ],
           },
@@ -219,7 +219,7 @@ export class AnalyticsDashboardService {
       conversions: number;
     }>();
 
-    sessions.forEach(session => {
+    sessions.forEach((session: any) => {
       if (!session.page) return;
 
       const pageId = session.page.id;
@@ -237,8 +237,8 @@ export class AnalyticsDashboardService {
 
       const stats = pageStats.get(pageId)!;
 
-      session.events.forEach(event => {
-        if (event.eventType === EventType.PAGE_VIEW) {
+      session.events.forEach((event: any) => {
+        if (event.eventType === 'PAGE_VIEW') {
           stats.pageviews++;
           stats.uniqueVisitors.add(session.visitorId);
         }
@@ -310,7 +310,7 @@ export class AnalyticsDashboardService {
       conversions: number;
     }>();
 
-    sessions.forEach(session => {
+    sessions.forEach((session: any) => {
       const source = session.utmSource || 'Direct';
       const medium = session.utmMedium || 'None';
       const key = `${source}|${medium}`;
@@ -382,9 +382,9 @@ export class AnalyticsDashboardService {
       take: limit,
     });
 
-    const totalVisitors = sessions.reduce((sum, s) => sum + s._count.visitorId, 0);
+    const totalVisitors = sessions.reduce((sum: number, s: any) => sum + s._count.visitorId, 0);
 
-    return sessions.map(s => ({
+    return sessions.map((s: any) => ({
       country: s.country || 'Unknown',
       city: s.city,
       visitors: s._count.visitorId,
@@ -421,7 +421,7 @@ export class AnalyticsDashboardService {
         events: {
           where: {
             OR: [
-              { eventType: EventType.PAGE_VIEW },
+              { eventType: 'PAGE_VIEW' },
               { isConversion: true },
             ],
           },
@@ -446,7 +446,7 @@ export class AnalyticsDashboardService {
 
     const bucketSize = interval === 'hour' ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
 
-    sessions.forEach(session => {
+    sessions.forEach((session: any) => {
       const bucketKey = Math.floor(session.startedAt.getTime() / bucketSize) * bucketSize;
 
       if (!buckets.has(bucketKey)) {
@@ -460,8 +460,8 @@ export class AnalyticsDashboardService {
       const bucket = buckets.get(bucketKey)!;
       bucket.visitors.add(session.visitorId);
 
-      session.events.forEach(event => {
-        if (event.eventType === EventType.PAGE_VIEW) {
+      session.events.forEach((event: any) => {
+        if (event.eventType === 'PAGE_VIEW') {
           bucket.pageviews++;
         }
         if (event.isConversion) {

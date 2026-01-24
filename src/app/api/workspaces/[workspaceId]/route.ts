@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { WorkspaceService } from '@/services/workspace.service'
-import { Role } from '@prisma/client'
+// import { Role } from '@prisma/client'
+type Role = 'OWNER' | 'ADMIN' | 'MEMBER' | 'VIEWER';
 import { z } from 'zod'
 
 const updateWorkspaceSchema = z.object({
@@ -62,7 +63,7 @@ export async function PATCH(
     const hasPermission = await WorkspaceService.hasPermission(
       params.workspaceId,
       session.user.id,
-      Role.ADMIN
+      'ADMIN' as Role
     )
 
     if (!hasPermission) {
@@ -104,7 +105,7 @@ export async function DELETE(
     const hasPermission = await WorkspaceService.hasPermission(
       params.workspaceId,
       session.user.id,
-      Role.OWNER
+      'OWNER' as Role
     )
 
     if (!hasPermission) {

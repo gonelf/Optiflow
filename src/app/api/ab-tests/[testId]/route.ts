@@ -48,8 +48,8 @@ export async function GET(
     }
 
     // Calculate statistics
-    const controlVariant = test.variants.find((v) => v.isControl);
-    const testVariants = test.variants.filter((v) => !v.isControl);
+    const controlVariant = test.variants.find((v: any) => v.isControl);
+    const testVariants = test.variants.filter((v: any) => !v.isControl);
 
     let statistics = null;
 
@@ -60,7 +60,7 @@ export async function GET(
           conversions: controlVariant.conversions,
           impressions: controlVariant.impressions,
         },
-        testVariants.map((v) => ({
+        testVariants.map((v: any) => ({
           id: v.id,
           conversions: v.conversions,
           impressions: v.impressions,
@@ -73,7 +73,7 @@ export async function GET(
 
       // Check if any variant has reached minimum sample size
       const sampleSizeReached = test.variants.some(
-        (v) => v.impressions >= test.minimumSampleSize
+        (v: any) => v.impressions >= test.minimumSampleSize
       );
 
       statistics = {
