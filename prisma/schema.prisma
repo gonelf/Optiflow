@@ -126,6 +126,9 @@ model Page {
   @@index([workspaceId])
   @@index([authorId])
   @@index([status])
+  @@index([slug, status]) // Composite for published page lookup
+  @@index([workspaceId, status]) // Composite for workspace page filtering
+  @@index([status, publishedAt]) // Composite for published page ordering
 }
 
 model Component {
@@ -157,6 +160,8 @@ model Component {
   @@index([pageId])
   @@index([variantId])
   @@index([type])
+  @@index([pageId, order]) // Composite for ordered page components
+  @@index([variantId, order]) // Composite for ordered variant components
 }
 
 enum ComponentType {
@@ -279,6 +284,8 @@ model PageVariant {
 
   @@index([abTestId])
   @@index([pageId])
+  @@index([abTestId, isControl]) // Composite for finding control variant
+  @@index([abTestId, conversionRate]) // Composite for performance comparison
 }
 
 enum TestStatus {
@@ -336,6 +343,9 @@ model AnalyticsSession {
   @@index([pageId])
   @@index([workspaceId])
   @@index([startedAt])
+  @@index([workspaceId, startedAt]) // Composite for time-range analytics
+  @@index([pageId, startedAt]) // Composite for page analytics over time
+  @@index([variantId, startedAt]) // Composite for A/B test analytics
 }
 
 model AnalyticsEvent {
@@ -374,6 +384,10 @@ model AnalyticsEvent {
   @@index([eventType])
   @@index([timestamp])
   @@index([isConversion])
+  @@index([sessionId, eventType]) // Composite for filtering events by session
+  @@index([eventType, timestamp]) // Composite for event analytics over time
+  @@index([isConversion, timestamp]) // Composite for conversion tracking
+  @@index([variantId, isConversion]) // Composite for A/B test conversions
 }
 
 enum EventType {
@@ -553,4 +567,7 @@ model WebhookDelivery {
   webhook         Webhook  @relation(fields: [webhookId], references: [id], onDelete: Cascade)
 
   @@index([webhookId])
+  @@index([webhookId, status]) // Composite for filtering deliveries by status
+  @@index([webhookId, createdAt]) // Composite for delivery history
+  @@index([status, lastAttemptAt]) // Composite for retry processing
 }
