@@ -170,20 +170,18 @@ export function sanitizeCss(css: string): string {
 /**
  * Generate a Content Security Policy hash for inline scripts/styles
  */
-export function generateCspHash(content: string, algorithm: 'sha256' | 'sha384' | 'sha512' = 'sha256'): string {
+export async function generateCspHash(content: string, algorithm: 'sha256' | 'sha384' | 'sha512' = 'sha256'): Promise<string> {
   if (typeof crypto === 'undefined') {
     throw new Error('crypto not available');
   }
 
   const encoder = new TextEncoder();
   const data = encoder.encode(content);
-  const hashBuffer = crypto.subtle.digest(algorithm.toUpperCase(), data);
+  const hashBuffer = await crypto.subtle.digest(algorithm.toUpperCase(), data);
 
-  return hashBuffer.then((hash) => {
-    const hashArray = Array.from(new Uint8Array(hash));
-    const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-    return `'${algorithm}-${hashHex}'`;
-  });
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+  return `'${algorithm}-${hashHex}'`;
 }
 
 /**
