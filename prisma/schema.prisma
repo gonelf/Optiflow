@@ -51,6 +51,7 @@ model Workspace {
   templates     Template[]
   integrations  Integration[]
   analytics     AnalyticsSession[]
+  webhooks      Webhook[]
 
   @@index([slug])
 }
@@ -514,4 +515,42 @@ model Session {
 
   @@index([token])
   @@index([userId])
+}
+
+// ============================================================================
+// WEBHOOKS
+// ============================================================================
+
+model Webhook {
+  id          String   @id @default(cuid())
+  url         String
+  events      String[]
+  secret      String?
+  active      Boolean  @default(true)
+  workspaceId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  deliveries  WebhookDelivery[]
+
+  @@index([workspaceId])
+}
+
+model WebhookDelivery {
+  id              String   @id @default(cuid())
+  webhookId       String
+  event           String
+  payload         Json
+  status          String
+  attempts        Int      @default(0)
+  lastAttemptAt   DateTime?
+  responseStatus  Int?
+  responseBody    String?  @db.Text
+  error           String?  @db.Text
+  createdAt       DateTime @default(now())
+
+  webhook         Webhook  @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId])
 }
