@@ -229,17 +229,17 @@ export class AIGeneratorService {
     failed: string[];
   }> {
     const multiModel = getMultiModelService();
-    const providers = multiModel.getAvailableProviders();
+    const models = multiModel.getAvailableModels();
 
     const available: string[] = [];
     const failed: string[] = [];
 
-    for (const provider of providers) {
-      const isHealthy = await multiModel.checkProviderHealth(provider);
+    for (const model of models) {
+      const isHealthy = await multiModel.checkModelHealth(model.model);
       if (isHealthy) {
-        available.push(provider);
+        available.push(model.model);
       } else {
-        failed.push(provider);
+        failed.push(model.model);
       }
     }
 

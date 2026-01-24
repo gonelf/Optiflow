@@ -1,19 +1,20 @@
 /**
  * Multi-Model AI Service
- * Implements automatic fallback between different AI providers
- * Priority: Gemini (free) -> OpenAI (paid) -> Other models
+ * Implements automatic fallback between different Gemini models
+ * Priority: gemini-1.5-flash -> gemini-1.5-pro -> gemini-1.0-pro
+ * All models stay in the free tier!
  */
 
 import { GeminiService } from './gemini.service';
-import { OpenAIService } from './openai.service';
 
-export type AIProvider = 'gemini' | 'openai';
+export type AIProvider = 'gemini';
 
 export interface AIModelConfig {
   provider: AIProvider;
-  model?: string;
+  model: string;
   apiKey?: string;
   priority: number; // Lower = higher priority
+  name?: string; // Friendly name for logging
 }
 
 export interface GenerationOptions {
@@ -29,50 +30,55 @@ export interface GenerationResult {
   tokensUsed?: number;
 }
 
+interface ProviderInstance {
+  config: AIModelConfig;
+  service: GeminiService;
+}
+
 export class MultiModelService {
-  private providers: Map<AIProvider, any> = new Map();
-  private modelConfigs: AIModelConfig[] = [];
-  private fallbackHistory: { provider: AIProvider; timestamp: Date; error: string }[] = [];
+  private providers: ProviderInstance[] = [];
+  private fallbackHistory: {
+    provider: AIProvider;
+    model: string;
+    timestamp: Date;
+    error: string
+  }[] = [];
 
   constructor(configs: AIModelConfig[]) {
     // Sort by priority
-    this.modelConfigs = configs.sort((a, b) => a.priority - b.priority);
+    const sortedConfigs = configs.sort((a, b) => a.priority - b.priority);
 
-    // Initialize providers
-    this.initializeProviders();
+    // Initialize all providers
+    this.initializeProviders(sortedConfigs);
   }
 
-  private initializeProviders(): void {
-    for (const config of this.modelConfigs) {
+  private initializeProviders(configs: AIModelConfig[]): void {
+    for (const config of configs) {
       try {
-        switch (config.provider) {
-          case 'gemini':
-            if (config.apiKey || process.env.GEMINI_API_KEY) {
-              this.providers.set(
-                'gemini',
-                new GeminiService({
-                  apiKey: config.apiKey || process.env.GEMINI_API_KEY || '',
-                  model: config.model || 'gemini-1.5-flash',
-                })
-              );
-            }
-            break;
+        if (config.provider === 'gemini') {
+          if (config.apiKey || process.env.GEMINI_API_KEY) {
+            const service = new GeminiService({
+              apiKey: config.apiKey || process.env.GEMINI_API_KEY || '',
+              model: config.model,
+            });
 
-          case 'openai':
-            if (config.apiKey || process.env.OPENAI_API_KEY) {
-              this.providers.set(
-                'openai',
-                new OpenAIService({
-                  apiKey: config.apiKey || process.env.OPENAI_API_KEY || '',
-                  model: config.model || 'gpt-4-turbo-preview',
-                })
-              );
-            }
-            break;
+            this.providers.push({
+              config,
+              service,
+            });
+
+            console.log(`✓ Initialized ${config.name || config.model} (Priority ${config.priority})`);
+          } else {
+            console.warn(`✗ No API key for ${config.model}`);
+          }
         }
       } catch (error) {
-        console.warn(`Failed to initialize ${config.provider}:`, error);
+        console.warn(`✗ Failed to initialize ${config.model}:`, error);
       }
+    }
+
+    if (this.providers.length === 0) {
+      console.warn('⚠ No AI providers initialized. Please set GEMINI_API_KEY environment variable.');
     }
   }
 
@@ -83,72 +89,47 @@ export class MultiModelService {
     prompt: string,
     options?: GenerationOptions
   ): Promise<GenerationResult> {
-    const errors: { provider: AIProvider; error: string }[] = [];
+    const errors: { model: string; error: string }[] = [];
 
-    for (const config of this.modelConfigs) {
-      const provider = this.providers.get(config.provider);
-      if (!provider) continue;
-
+    for (const { config, service } of this.providers) {
       try {
-        console.log(`Attempting generation with ${config.provider}...`);
+        const modelName = config.name || config.model;
+        console.log(`→ Attempting generation with ${modelName}...`);
 
-        let content: string;
+        const content = await service.generateContent(prompt, {
+          systemInstruction: options?.systemInstruction,
+          temperature: options?.temperature,
+          maxTokens: options?.maxTokens,
+        });
 
-        if (config.provider === 'gemini') {
-          content = await provider.generateContent(prompt, {
-            systemInstruction: options?.systemInstruction,
-            temperature: options?.temperature,
-            maxTokens: options?.maxTokens,
-          });
-        } else if (config.provider === 'openai') {
-          const messages = [];
-          if (options?.systemInstruction) {
-            messages.push({
-              role: 'system',
-              content: options.systemInstruction,
-            });
-          }
-          messages.push({
-            role: 'user',
-            content: prompt,
-          });
-
-          const response = await provider.createChatCompletion(messages, {
-            temperature: options?.temperature,
-            maxTokens: options?.maxTokens,
-          });
-
-          content = response.choices[0]?.message?.content || '';
-        } else {
-          throw new Error(`Unsupported provider: ${config.provider}`);
-        }
-
-        console.log(`✓ Successfully generated with ${config.provider}`);
+        console.log(`✓ Successfully generated with ${modelName}`);
 
         return {
           content,
           provider: config.provider,
-          model: config.model || 'default',
+          model: config.model,
         };
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        console.warn(`✗ ${config.provider} failed:`, errorMessage);
+        const modelName = config.name || config.model;
+        console.warn(`✗ ${modelName} failed:`, errorMessage);
 
         errors.push({
-          provider: config.provider,
+          model: config.model,
           error: errorMessage,
         });
 
         // Track fallback in history
         this.fallbackHistory.push({
           provider: config.provider,
+          model: config.model,
           timestamp: new Date(),
           error: errorMessage,
         });
 
         // Check if it's a rate limit or quota error
         if (this.isRateLimitError(errorMessage)) {
-          console.log(`Rate limit hit for ${config.provider}, trying next provider...`);
+          console.log(`⚠ Rate limit hit for ${modelName}, trying next model...`);
           continue;
         }
 
@@ -159,8 +140,8 @@ export class MultiModelService {
 
     // All providers failed
     throw new Error(
-      `All AI providers failed. Errors: ${errors
-        .map((e) => `${e.provider}: ${e.error}`)
+      `All AI models failed. Tried ${errors.length} models. Errors: ${errors
+        .map((e) => `${e.model}: ${e.error}`)
         .join('; ')}`
     );
   }
@@ -172,65 +153,52 @@ export class MultiModelService {
     messages: { role: 'user' | 'assistant' | 'system'; content: string }[],
     options?: GenerationOptions
   ): Promise<GenerationResult> {
-    const errors: { provider: AIProvider; error: string }[] = [];
+    const errors: { model: string; error: string }[] = [];
 
-    for (const config of this.modelConfigs) {
-      const provider = this.providers.get(config.provider);
-      if (!provider) continue;
-
+    for (const { config, service } of this.providers) {
       try {
-        console.log(`Attempting generation with ${config.provider}...`);
+        const modelName = config.name || config.model;
+        console.log(`→ Attempting generation with ${modelName}...`);
 
-        let content: string;
+        // Extract system instruction if present
+        const systemMsg = messages.find((m) => m.role === 'system');
+        const chatMessages = messages.filter((m) => m.role !== 'system');
 
-        if (config.provider === 'gemini') {
-          // Extract system instruction if present
-          const systemMsg = messages.find((m) => m.role === 'system');
-          const chatMessages = messages.filter((m) => m.role !== 'system');
-
-          content = await provider.generateContentWithHistory(
-            chatMessages,
-            {
-              systemInstruction: systemMsg?.content || options?.systemInstruction,
-              temperature: options?.temperature,
-              maxTokens: options?.maxTokens,
-            }
-          );
-        } else if (config.provider === 'openai') {
-          const response = await provider.createChatCompletion(messages, {
+        const content = await service.generateContentWithHistory(
+          chatMessages,
+          {
+            systemInstruction: systemMsg?.content || options?.systemInstruction,
             temperature: options?.temperature,
             maxTokens: options?.maxTokens,
-          });
+          }
+        );
 
-          content = response.choices[0]?.message?.content || '';
-        } else {
-          throw new Error(`Unsupported provider: ${config.provider}`);
-        }
-
-        console.log(`✓ Successfully generated with ${config.provider}`);
+        console.log(`✓ Successfully generated with ${modelName}`);
 
         return {
           content,
           provider: config.provider,
-          model: config.model || 'default',
+          model: config.model,
         };
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        console.warn(`✗ ${config.provider} failed:`, errorMessage);
+        const modelName = config.name || config.model;
+        console.warn(`✗ ${modelName} failed:`, errorMessage);
 
         errors.push({
-          provider: config.provider,
+          model: config.model,
           error: errorMessage,
         });
 
         this.fallbackHistory.push({
           provider: config.provider,
+          model: config.model,
           timestamp: new Date(),
           error: errorMessage,
         });
 
         if (this.isRateLimitError(errorMessage)) {
-          console.log(`Rate limit hit for ${config.provider}, trying next provider...`);
+          console.log(`⚠ Rate limit hit for ${modelName}, trying next model...`);
           continue;
         }
 
@@ -239,8 +207,8 @@ export class MultiModelService {
     }
 
     throw new Error(
-      `All AI providers failed. Errors: ${errors
-        .map((e) => `${e.provider}: ${e.error}`)
+      `All AI models failed. Tried ${errors.length} models. Errors: ${errors
+        .map((e) => `${e.model}: ${e.error}`)
         .join('; ')}`
     );
   }
@@ -253,59 +221,37 @@ export class MultiModelService {
     onChunk: (chunk: string) => void,
     options?: GenerationOptions
   ): Promise<{ provider: AIProvider; model: string }> {
-    const errors: { provider: AIProvider; error: string }[] = [];
+    const errors: { model: string; error: string }[] = [];
 
-    for (const config of this.modelConfigs) {
-      const provider = this.providers.get(config.provider);
-      if (!provider) continue;
-
+    for (const { config, service } of this.providers) {
       try {
-        console.log(`Attempting streaming with ${config.provider}...`);
+        const modelName = config.name || config.model;
+        console.log(`→ Attempting streaming with ${modelName}...`);
 
-        if (config.provider === 'gemini') {
-          await provider.generateContentStreaming(prompt, onChunk, {
-            systemInstruction: options?.systemInstruction,
-            temperature: options?.temperature,
-            maxTokens: options?.maxTokens,
-          });
-        } else if (config.provider === 'openai') {
-          const messages = [];
-          if (options?.systemInstruction) {
-            messages.push({
-              role: 'system',
-              content: options.systemInstruction,
-            });
-          }
-          messages.push({
-            role: 'user',
-            content: prompt,
-          });
+        await service.generateContentStreaming(prompt, onChunk, {
+          systemInstruction: options?.systemInstruction,
+          temperature: options?.temperature,
+          maxTokens: options?.maxTokens,
+        });
 
-          await provider.createStreamingCompletion(messages, onChunk, {
-            temperature: options?.temperature,
-            maxTokens: options?.maxTokens,
-          });
-        } else {
-          throw new Error(`Unsupported provider: ${config.provider}`);
-        }
-
-        console.log(`✓ Successfully streamed with ${config.provider}`);
+        console.log(`✓ Successfully streamed with ${modelName}`);
 
         return {
           provider: config.provider,
-          model: config.model || 'default',
+          model: config.model,
         };
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        console.warn(`✗ ${config.provider} streaming failed:`, errorMessage);
+        const modelName = config.name || config.model;
+        console.warn(`✗ ${modelName} streaming failed:`, errorMessage);
 
         errors.push({
-          provider: config.provider,
+          model: config.model,
           error: errorMessage,
         });
 
         if (this.isRateLimitError(errorMessage)) {
-          console.log(`Rate limit hit for ${config.provider}, trying next provider...`);
+          console.log(`⚠ Rate limit hit for ${modelName}, trying next model...`);
           continue;
         }
 
@@ -314,8 +260,8 @@ export class MultiModelService {
     }
 
     throw new Error(
-      `All AI providers failed for streaming. Errors: ${errors
-        .map((e) => `${e.provider}: ${e.error}`)
+      `All AI models failed for streaming. Tried ${errors.length} models. Errors: ${errors
+        .map((e) => `${e.model}: ${e.error}`)
         .join('; ')}`
     );
   }
@@ -346,42 +292,61 @@ export class MultiModelService {
   }
 
   /**
-   * Get available providers
+   * Get available models
    */
-  getAvailableProviders(): AIProvider[] {
-    return Array.from(this.providers.keys());
+  getAvailableModels(): { provider: AIProvider; model: string; name?: string }[] {
+    return this.providers.map(p => ({
+      provider: p.config.provider,
+      model: p.config.model,
+      name: p.config.name,
+    }));
   }
 
   /**
    * Check provider health
    */
-  async checkProviderHealth(provider: AIProvider): Promise<boolean> {
-    const providerInstance = this.providers.get(provider);
-    if (!providerInstance) return false;
+  async checkModelHealth(model: string): Promise<boolean> {
+    const provider = this.providers.find(p => p.config.model === model);
+    if (!provider) return false;
 
     try {
-      await providerInstance.validateApiKey();
+      await provider.service.validateApiKey();
       return true;
     } catch (error) {
       return false;
     }
   }
+
+  /**
+   * Get provider count
+   */
+  getProviderCount(): number {
+    return this.providers.length;
+  }
 }
 
 /**
- * Create default multi-model service with standard configuration
+ * Create default multi-model service with Gemini fallback chain
  */
 export function createDefaultMultiModelService(): MultiModelService {
   const configs: AIModelConfig[] = [
     {
       provider: 'gemini',
       model: 'gemini-1.5-flash',
-      priority: 1, // Try Gemini first (free tier)
+      name: 'Gemini 1.5 Flash',
+      priority: 1, // Try first - fastest, best free tier
     },
     {
-      provider: 'openai',
-      model: 'gpt-4-turbo-preview',
-      priority: 2, // Fallback to OpenAI if Gemini fails
+      provider: 'gemini',
+      model: 'gemini-1.5-pro',
+      name: 'Gemini 1.5 Pro',
+      priority: 2, // Fallback - more capable, still free
+    },
+    {
+      provider: 'gemini',
+      model: 'gemini-1.0-pro',
+      name: 'Gemini 1.0 Pro',
+      priority: 3, // Last resort - older but reliable
     },
   ];
 

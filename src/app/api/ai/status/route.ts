@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { AIGeneratorService } from '@/services/ai/generator.service';
+import { getMultiModelService } from '@/services/ai/multi-model.service';
 
 /**
  * GET /api/ai/status
@@ -14,11 +15,14 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check which AI services are configured
+    // Check if Gemini API key is configured
     const configured = {
       gemini: !!process.env.GEMINI_API_KEY,
-      openai: !!process.env.OPENAI_API_KEY,
     };
+
+    // Get available models
+    const multiModel = getMultiModelService();
+    const models = multiModel.getAvailableModels();
 
     // Check service health
     const status = await AIGeneratorService.getServiceStatus();
@@ -27,14 +31,23 @@ export async function GET(req: NextRequest) {
     const fallbackHistory = AIGeneratorService.getFallbackHistory();
     const recentFallbacks = fallbackHistory.slice(-10); // Last 10 fallbacks
 
+    // Get model count
+    const modelCount = multiModel.getProviderCount();
+
     return NextResponse.json({
       configured,
+      models: models.map(m => ({
+        name: m.name,
+        model: m.model,
+        provider: m.provider,
+      })),
       status: {
         available: status.available,
         failed: status.failed,
+        totalModels: modelCount,
       },
       recentFallbacks,
-      recommendation: getRecommendation(configured, status),
+      recommendation: getRecommendation(configured, status, modelCount),
     });
   } catch (error) {
     console.error('AI status check error:', error);
@@ -46,28 +59,29 @@ export async function GET(req: NextRequest) {
 }
 
 function getRecommendation(
-  configured: { gemini: boolean; openai: boolean },
-  status: { available: string[]; failed: string[] }
+  configured: { gemini: boolean },
+  status: { available: string[]; failed: string[] },
+  modelCount: number
 ): string {
-  if (!configured.gemini && !configured.openai) {
-    return 'No AI services configured. Please add GEMINI_API_KEY or OPENAI_API_KEY to your environment variables.';
+  if (!configured.gemini) {
+    return 'No AI service configured. Please add GEMINI_API_KEY to your environment variables. Get a free API key at https://makersuite.google.com/app/apikey';
   }
 
-  if (configured.gemini && !configured.openai) {
-    return 'Only Gemini is configured. Consider adding OpenAI as a fallback.';
-  }
-
-  if (!configured.gemini && configured.openai) {
-    return 'Only OpenAI is configured. Consider adding Gemini for free tier usage.';
+  if (modelCount === 0) {
+    return 'Failed to initialize Gemini models. Please check your GEMINI_API_KEY is valid.';
   }
 
   if (status.available.length === 0) {
-    return 'All AI services are currently unavailable. Please check your API keys and network connection.';
+    return 'All Gemini models are currently unavailable. Please check your API key and network connection, or wait for rate limits to reset.';
   }
 
   if (status.available.length === 1) {
-    return `Only ${status.available[0]} is available. The other service may have rate limits or connectivity issues.`;
+    return `Only 1 of ${modelCount} Gemini models is available. Other models may have rate limits or connectivity issues.`;
   }
 
-  return 'All configured AI services are healthy!';
+  if (status.available.length < modelCount) {
+    return `${status.available.length} of ${modelCount} Gemini models are available. Some models may have rate limits.`;
+  }
+
+  return `All ${modelCount} Gemini models are healthy! The system will automatically fallback between models if needed.`;
 }

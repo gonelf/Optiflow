@@ -24,12 +24,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if at least one AI service is configured
-    if (!process.env.GEMINI_API_KEY && !process.env.OPENAI_API_KEY) {
+    // Check if Gemini API key is configured
+    if (!process.env.GEMINI_API_KEY) {
       return NextResponse.json(
         {
-          error: 'No AI services configured',
-          hint: 'Please configure GEMINI_API_KEY (free tier) or OPENAI_API_KEY in your environment variables'
+          error: 'Gemini API key not configured',
+          hint: 'Please configure GEMINI_API_KEY in your environment variables. Get a free API key at https://makersuite.google.com/app/apikey'
         },
         { status: 500 }
       );
@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
           error: error.message,
           isRateLimit,
           hint: isRateLimit
-            ? 'All AI providers have hit their rate limits. Please try again later or configure additional API keys.'
+            ? 'All Gemini models have hit their rate limits. The system tried 3 different models (Flash, Pro, 1.0). Please wait a few minutes for rate limits to reset.'
             : 'Failed to generate page. Please check your input and try again.'
         },
         { status: isRateLimit ? 429 : 500 }
