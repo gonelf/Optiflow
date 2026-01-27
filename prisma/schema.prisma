@@ -706,6 +706,9 @@ model PageTranslation {
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
+  // Relations
+  page            Page        @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
   @@unique([pageId, locale])
   @@index([pageId])
   @@index([locale])
