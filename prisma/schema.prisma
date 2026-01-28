@@ -121,11 +121,16 @@ model Page {
   variants      PageVariant[]
   abTests       ABTest[]
   analytics     AnalyticsSession[]
+  versions      PageVersion[]
+  translations  PageTranslation[]
 
   @@unique([workspaceId, slug])
   @@index([workspaceId])
   @@index([authorId])
   @@index([status])
+  @@index([slug, status]) // Composite for published page lookup
+  @@index([workspaceId, status]) // Composite for workspace page filtering
+  @@index([status, publishedAt]) // Composite for published page ordering
 }
 
 model Component {
@@ -157,6 +162,8 @@ model Component {
   @@index([pageId])
   @@index([variantId])
   @@index([type])
+  @@index([pageId, order]) // Composite for ordered page components
+  @@index([variantId, order]) // Composite for ordered variant components
 }
 
 enum ComponentType {
@@ -279,6 +286,8 @@ model PageVariant {
 
   @@index([abTestId])
   @@index([pageId])
+  @@index([abTestId, isControl]) // Composite for finding control variant
+  @@index([abTestId, conversionRate]) // Composite for performance comparison
 }
 
 enum TestStatus {
@@ -336,6 +345,9 @@ model AnalyticsSession {
   @@index([pageId])
   @@index([workspaceId])
   @@index([startedAt])
+  @@index([workspaceId, startedAt]) // Composite for time-range analytics
+  @@index([pageId, startedAt]) // Composite for page analytics over time
+  @@index([variantId, startedAt]) // Composite for A/B test analytics
 }
 
 model AnalyticsEvent {
@@ -374,6 +386,10 @@ model AnalyticsEvent {
   @@index([eventType])
   @@index([timestamp])
   @@index([isConversion])
+  @@index([sessionId, eventType]) // Composite for filtering events by session
+  @@index([eventType, timestamp]) // Composite for event analytics over time
+  @@index([isConversion, timestamp]) // Composite for conversion tracking
+  @@index([variantId, isConversion]) // Composite for A/B test conversions
 }
 
 enum EventType {
@@ -553,4 +569,172 @@ model WebhookDelivery {
   webhook         Webhook  @relation(fields: [webhookId], references: [id], onDelete: Cascade)
 
   @@index([webhookId])
+  @@index([webhookId, status]) // Composite for filtering deliveries by status
+  @@index([webhookId, createdAt]) // Composite for delivery history
+  @@index([status, lastAttemptAt]) // Composite for retry processing
+}
+
+// ============================================================================
+// PHASE 7: ADVANCED FEATURES
+// ============================================================================
+
+// VERSION HISTORY & ROLLBACK
+model PageVersion {
+  id              String      @id @default(cuid())
+  pageId          String
+  versionNumber   Int
+
+  // Version Content
+  title           String
+  description     String?
+  content         Json        @db.JsonB // Snapshot of all components
+  metadata        Json?       // SEO, custom head, etc.
+
+  // Change Tracking
+  changeType      ChangeType  @default(MANUAL_SAVE)
+  changeSummary   String?
+  changedBy       String      // User ID
+
+  // Restore Status
+  isRestorePoint  Boolean     @default(false)
+
+  createdAt       DateTime    @default(now())
+
+  // Relations
+  page            Page        @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@unique([pageId, versionNumber])
+  @@index([pageId])
+  @@index([pageId, createdAt]) // For version history listing
+  @@index([pageId, versionNumber]) // For quick version lookup
+}
+
+enum ChangeType {
+  MANUAL_SAVE
+  AUTO_SAVE
+  PUBLISHED
+  ROLLBACK
+  COLLABORATION_MERGE
+}
+
+// REAL-TIME COLLABORATION
+model CollaborationSession {
+  id              String      @id @default(cuid())
+  pageId          String
+  userId          String
+
+  // Session Info
+  userName        String
+  userAvatar      String?
+  color           String      // Unique color for cursor/presence
+
+  // Presence
+  isActive        Boolean     @default(true)
+  lastSeenAt      DateTime    @default(now())
+
+  // Cursor Position
+  cursorX         Int?
+  cursorY         Int?
+  selectedComponentId String?
+
+  // Connection
+  socketId        String?
+
+  startedAt       DateTime    @default(now())
+  endedAt         DateTime?
+
+  @@index([pageId])
+  @@index([pageId, isActive]) // For active collaborators
+  @@index([userId])
+  @@index([socketId])
+}
+
+model PageEdit {
+  id              String      @id @default(cuid())
+  pageId          String
+  componentId     String?     // Null if page-level edit
+  userId          String
+
+  // Edit Details
+  editType        EditType
+  path            String      // JSON path to changed field
+  oldValue        Json?
+  newValue        Json?
+
+  // Conflict Resolution
+  version         Int         // Optimistic locking version
+  appliedAt       DateTime?
+  conflicted      Boolean     @default(false)
+  resolvedBy      String?     // User ID who resolved conflict
+
+  createdAt       DateTime    @default(now())
+
+  @@index([pageId])
+  @@index([pageId, createdAt]) // For edit history
+  @@index([componentId])
+  @@index([userId])
+}
+
+enum EditType {
+  COMPONENT_ADD
+  COMPONENT_UPDATE
+  COMPONENT_DELETE
+  COMPONENT_REORDER
+  PAGE_UPDATE
+  STYLE_UPDATE
+  CONTENT_UPDATE
+}
+
+// MULTI-LANGUAGE SUPPORT
+model PageTranslation {
+  id              String      @id @default(cuid())
+  pageId          String
+  locale          String      // e.g., "en", "es", "fr"
+
+  // Translated Content
+  title           String
+  description     String?
+  seoTitle        String?
+  seoDescription  String?
+  components      Json        @db.JsonB // Component translations
+
+  // Translation Status
+  status          TranslationStatus @default(DRAFT)
+  translatedBy    String?     // User ID or "AI"
+  reviewedBy      String?     // User ID
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  // Relations
+  page            Page        @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@unique([pageId, locale])
+  @@index([pageId])
+  @@index([locale])
+  @@index([status])
+}
+
+enum TranslationStatus {
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  PUBLISHED
+}
+
+model SupportedLocale {
+  id              String      @id @default(cuid())
+  workspaceId     String
+
+  // Locale Info
+  code            String      // e.g., "en", "es", "fr"
+  name            String      // e.g., "English", "Spanish"
+  isDefault       Boolean     @default(false)
+  isEnabled       Boolean     @default(true)
+
+  createdAt       DateTime    @default(now())
+
+  @@unique([workspaceId, code])
+  @@index([workspaceId])
+  @@index([workspaceId, isEnabled])
 }
