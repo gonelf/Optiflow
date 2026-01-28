@@ -70,6 +70,12 @@ export default function PagesListPage() {
 
       // Get workspace ID first
       const workspaceResponse = await fetch(`/api/workspaces?slug=${workspaceSlug}`);
+      if (workspaceResponse.status === 404) {
+        // If workspace slug is invalid (e.g. "dashboard"), redirect to root dashboard
+        router.push('/dashboard');
+        return;
+      }
+
       if (!workspaceResponse.ok) throw new Error('Failed to fetch workspace');
 
       const workspaceData = await workspaceResponse.json();
@@ -301,11 +307,10 @@ export default function PagesListPage() {
                   {page._count.components} components
                 </span>
                 <span
-                  className={`rounded-full px-2 py-0.5 ${
-                    page.status === 'PUBLISHED'
+                  className={`rounded-full px-2 py-0.5 ${page.status === 'PUBLISHED'
                       ? 'bg-green-100 text-green-700'
                       : 'bg-gray-100 text-gray-700'
-                  }`}
+                    }`}
                 >
                   {page.status}
                 </span>
