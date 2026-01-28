@@ -366,7 +366,7 @@ export async function updatePersonalizationRule(
   updates: Partial<{
     name: string;
     segment: any;
-    action: string;
+    action: 'SWAP_COMPONENT' | 'CHANGE_TEXT' | 'CHANGE_IMAGE' | 'REDIRECT' | 'SHOW_BANNER';
     config: any;
     priority: number;
     isActive: boolean;
