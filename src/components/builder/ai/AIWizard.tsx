@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Sparkles, Loader2, Rocket, Layout, Globe, ArrowRight } from 'lucide-react';
+import { Sparkles, Loader2, Rocket, Layout, Globe, ArrowRight, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function AIWizard() {
@@ -18,7 +18,11 @@ export function AIWizard() {
     const [isGenerating, setIsGenerating] = useState(false);
     const [formData, setFormData] = useState({
         workspaceName: '',
+        productName: '',
         businessDescription: '',
+        targetAudience: '',
+        keyBenefits: '',
+        pageGoal: 'Get Signups',
         brandVoice: 'Professional',
     });
 
@@ -40,6 +44,9 @@ export function AIWizard() {
             }
 
             const data = await response.json();
+
+            // Mark user as onboarded if not already
+            await fetch('/api/auth/onboarding', { method: 'POST' });
 
             toast({
                 title: 'Success!',
@@ -72,12 +79,12 @@ export function AIWizard() {
                     </div>
                     <h2 className="text-3xl font-bold mb-4">Magic is happening...</h2>
                     <p className="text-slate-500 max-w-md mx-auto leading-relaxed">
-                        Our AI is crafting your workspace, setting up your design system, and building your first landing page based on your business needs.
+                        Our AI is crafting your workspace, setting up your design system, and building your first landing page based on your product needs.
                         This usually takes about 10-20 seconds.
                     </p>
                     <div className="mt-12 flex items-center gap-2 text-primary font-medium bg-primary/5 px-4 py-2 rounded-full">
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>Analyzing business requirements...</span>
+                        <span>Analyzing product requirements...</span>
                     </div>
                 </CardContent>
             </Card>
@@ -89,27 +96,26 @@ export function AIWizard() {
             <div className="text-center space-y-2">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider mb-2">
                     <Sparkles className="h-3 w-3" />
-                    Powered by OptiFlow AI
+                    Powered by Google Gemini
                 </div>
                 <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
-                    Welcome to the future of growth
+                    Launch your vision in seconds
                 </h1>
                 <p className="text-xl text-slate-500 max-w-2xl mx-auto">
-                    Let’s set up your workspace and launch your first experiment in seconds.
+                    Answer a few questions and our AI will build your workspace and first page.
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 max-w-3xl mx-auto mb-8">
-                {[1, 2, 3].map((s) => (
+            <div className="grid grid-cols-5 gap-4 max-w-3xl mx-auto mb-8">
+                {[1, 2, 3, 4, 5].map((s) => (
                     <div
                         key={s}
                         className={cn(
-                            "h-1.5 rounded-full transition-all duration-300 col-span-1",
+                            "h-1.5 rounded-full transition-all duration-300",
                             step >= s ? "bg-primary shadow-[0_0_8px_rgba(59,130,246,0.5)]" : "bg-slate-200"
                         )}
                     />
                 ))}
-                <div className={cn("h-1.5 rounded-full transition-all duration-300 bg-slate-200", step === 3 && "bg-slate-200")} />
             </div>
 
             <Card className="border-none shadow-2xl bg-white/80 backdrop-blur-sm relative overflow-hidden">
@@ -154,36 +160,45 @@ export function AIWizard() {
                     <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                         <CardHeader>
                             <div className="h-12 w-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
-                                <Layout className="h-6 w-6 text-purple-600" />
+                                <Rocket className="h-6 w-6 text-purple-600" />
                             </div>
-                            <CardTitle className="text-2xl">What are we building?</CardTitle>
+                            <CardTitle className="text-2xl">Tell us about your product</CardTitle>
                             <CardDescription>
-                                Describe your business or the specific page you need. Our AI will handle the rest.
+                                What are you building? And who is it for?
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="desc">Business Description</Label>
+                                <Label htmlFor="productName">Product Name</Label>
+                                <Input
+                                    id="productName"
+                                    placeholder="e.g. OptiFlow"
+                                    value={formData.productName}
+                                    onChange={(e) => setFormData({ ...formData, productName: e.target.value })}
+                                    className="text-base focus-visible:ring-primary/30"
+                                    autoFocus
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="desc">Detailed Description</Label>
                                 <Textarea
                                     id="desc"
                                     placeholder="e.g. A modern CRM for boutique creative agencies. We want to emphasize ease of use and visual project tracking."
-                                    rows={4}
+                                    rows={3}
                                     value={formData.businessDescription}
                                     onChange={(e) => setFormData({ ...formData, businessDescription: e.target.value })}
                                     className="text-base focus-visible:ring-primary/30 resize-none"
-                                    autoFocus
                                 />
-                                <p className="text-xs text-slate-400">Be as specific as possible for better results.</p>
                             </div>
                         </CardContent>
                         <CardFooter className="flex justify-between gap-4">
                             <Button variant="ghost" onClick={prevStep} className="py-6 h-auto px-8">Back</Button>
                             <Button
                                 onClick={nextStep}
-                                disabled={formData.businessDescription.length < 10}
-                                className="group px-8 py-6 h-auto text-lg bg-slate-900 hover:bg-slate-800"
+                                disabled={!formData.productName || formData.businessDescription.length < 10}
+                                className="group px-8 py-6 h-auto text-lg"
                             >
-                                Refine Style
+                                Target Audience
                                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                             </Button>
                         </CardFooter>
@@ -193,8 +208,97 @@ export function AIWizard() {
                 {step === 3 && (
                     <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                         <CardHeader>
+                            <div className="h-12 w-12 bg-orange-100 rounded-xl flex items-center justify-center mb-4">
+                                <Users className="h-6 w-6 text-orange-600" />
+                            </div>
+                            <CardTitle className="text-2xl">Who is your ideal customer?</CardTitle>
+                            <CardDescription>
+                                Describe your target audience so we can tailor the copy.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="audience">Target Audience</Label>
+                                <Input
+                                    id="audience"
+                                    placeholder="e.g. Freelance designers, SaaS founders with < 10 employees"
+                                    value={formData.targetAudience}
+                                    onChange={(e) => setFormData({ ...formData, targetAudience: e.target.value })}
+                                    className="text-base focus-visible:ring-primary/30"
+                                    autoFocus
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="benefits">Key Benefits (comma separated)</Label>
+                                <Textarea
+                                    id="benefits"
+                                    placeholder="e.g. Real-time updates, No-code builder, Native A/B testing"
+                                    rows={2}
+                                    value={formData.keyBenefits}
+                                    onChange={(e) => setFormData({ ...formData, keyBenefits: e.target.value })}
+                                    className="text-base focus-visible:ring-primary/30 resize-none"
+                                />
+                            </div>
+                        </CardContent>
+                        <CardFooter className="flex justify-between gap-4">
+                            <Button variant="ghost" onClick={prevStep} className="py-6 h-auto px-8">Back</Button>
+                            <Button
+                                onClick={nextStep}
+                                disabled={!formData.targetAudience || !formData.keyBenefits}
+                                className="group px-8 py-6 h-auto text-lg"
+                            >
+                                Set Goals
+                                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                            </Button>
+                        </CardFooter>
+                    </div>
+                )}
+
+                {step === 4 && (
+                    <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                        <CardHeader>
+                            <div className="h-12 w-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
+                                <Layout className="h-6 w-6 text-green-600" />
+                            </div>
+                            <CardTitle className="text-2xl">What is the main goal?</CardTitle>
+                            <CardDescription>
+                                We will optimize the layout and CTAs for this objective.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid grid-cols-2 gap-3">
+                                {['Get Signups', 'Book Demos', 'Direct Sale', 'Waitlist'].map((goal) => (
+                                    <button
+                                        key={goal}
+                                        onClick={() => setFormData({ ...formData, pageGoal: goal })}
+                                        className={cn(
+                                            "p-4 rounded-xl border-2 text-left transition-all hover:border-primary/50",
+                                            formData.pageGoal === goal ? "border-primary bg-primary/5 ring-4 ring-primary/10" : "border-slate-100 bg-white"
+                                        )}
+                                    >
+                                        <span className="font-bold text-slate-900 block">{goal}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </CardContent>
+                        <CardFooter className="flex justify-between gap-4">
+                            <Button variant="ghost" onClick={prevStep} className="py-6 h-auto px-8">Back</Button>
+                            <Button
+                                onClick={nextStep}
+                                className="group px-8 py-6 h-auto text-lg"
+                            >
+                                Refine Style
+                                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                            </Button>
+                        </CardFooter>
+                    </div>
+                )}
+
+                {step === 5 && (
+                    <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                        <CardHeader>
                             <div className="h-12 w-12 bg-amber-100 rounded-xl flex items-center justify-center mb-4">
-                                <Rocket className="h-6 w-6 text-amber-600" />
+                                <Sparkles className="h-6 w-6 text-amber-600" />
                             </div>
                             <CardTitle className="text-2xl">Almost there!</CardTitle>
                             <CardDescription>
@@ -238,7 +342,15 @@ export function AIWizard() {
             </Card>
 
             <p className="text-center text-sm text-slate-400">
-                Skip wizard and <button className="text-slate-600 font-medium hover:underline">create manually</button>
+                Skip wizard and <button
+                    onClick={async () => {
+                        await fetch('/api/auth/onboarding', { method: 'POST' });
+                        router.push('/dashboard');
+                    }}
+                    className="text-slate-600 font-medium hover:underline"
+                >
+                    create manually
+                </button>
             </p>
         </div>
     );

@@ -73,90 +73,105 @@ async function main() {
     });
 
     // 4. Create a Sample Page
-    const page = await prisma.page.create({
-        data: {
-            title: 'Sample Landing Page',
-            slug: 'sample-page',
-            description: 'A sample page demonstrating Phase 8 elements',
-            workspaceId: workspace.id,
-            authorId: user.id,
+    const pageData = {
+        title: 'Sample Landing Page',
+        slug: 'sample-page',
+        description: 'A sample page demonstrating Phase 8 elements',
+        workspaceId: workspace.id,
+        authorId: user.id,
+    };
+
+    const page = await prisma.page.upsert({
+        where: {
+            workspaceId_slug: {
+                workspaceId: workspace.id,
+                slug: 'sample-page',
+            },
         },
+        update: pageData,
+        create: pageData,
     });
 
-    // 5. Create Sample Elements
-    // Container
-    const container = await prisma.element.create({
-        data: {
-            pageId: page.id,
-            type: 'CONTAINER',
-            name: 'Main Container',
-            order: 0,
-            depth: 0,
-            path: '',
-            content: {},
-            styles: {
-                base: {
-                    padding: '40px',
-                    backgroundColor: '#f8fafc',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '24px',
-                },
-            },
-        },
+    // 5. Create Sample Elements (Check if they already exist to be idempotent)
+    const existingElements = await prisma.element.findMany({
+        where: { pageId: page.id },
     });
 
-    // Hero Text inside container
-    await prisma.element.create({
-        data: {
-            pageId: page.id,
-            parentId: container.id,
-            type: 'TEXT',
-            name: 'Hero Headline',
-            order: 0,
-            depth: 1,
-            path: container.id,
-            content: {
-                text: 'Build faster with Primitives',
-                tag: 'h1',
-            },
-            styles: {
-                base: {
-                    fontSize: '48px',
-                    fontWeight: '800',
-                    color: '#1e293b',
-                    textAlign: 'center',
+    if (existingElements.length === 0) {
+        // Container
+        const container = await prisma.element.create({
+            data: {
+                pageId: page.id,
+                type: 'CONTAINER',
+                name: 'Main Container',
+                order: 0,
+                depth: 0,
+                path: '',
+                content: {},
+                styles: {
+                    base: {
+                        padding: '40px',
+                        backgroundColor: '#f8fafc',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '24px',
+                    },
                 },
             },
-        },
-    });
+        });
 
-    // Button inside container
-    await prisma.element.create({
-        data: {
-            pageId: page.id,
-            parentId: container.id,
-            type: 'BUTTON',
-            name: 'CTA Button',
-            order: 1,
-            depth: 1,
-            path: container.id,
-            content: {
-                text: 'Get Started',
-                variant: 'primary',
-            },
-            styles: {
-                base: {
-                    padding: '12px 24px',
-                    borderRadius: '8px',
-                    backgroundColor: '#3b82f6',
-                    color: '#ffffff',
-                    fontWeight: '600',
+        // Hero Text inside container
+        await prisma.element.create({
+            data: {
+                pageId: page.id,
+                parentId: container.id,
+                type: 'TEXT',
+                name: 'Hero Headline',
+                order: 0,
+                depth: 1,
+                path: container.id,
+                content: {
+                    text: 'Build faster with Primitives',
+                    tag: 'h1',
+                },
+                styles: {
+                    base: {
+                        fontSize: '48px',
+                        fontWeight: '800',
+                        color: '#1e293b',
+                        textAlign: 'center',
+                    },
                 },
             },
-        },
-    });
+        });
+
+        // Button inside container
+        await prisma.element.create({
+            data: {
+                pageId: page.id,
+                parentId: container.id,
+                type: 'BUTTON',
+                name: 'CTA Button',
+                order: 1,
+                depth: 1,
+                path: container.id,
+                content: {
+                    text: 'Get Started',
+                    variant: 'primary',
+                },
+                styles: {
+                    base: {
+                        padding: '12px 24px',
+                        borderRadius: '8px',
+                        backgroundColor: '#3b82f6',
+                        color: '#ffffff',
+                        fontWeight: '600',
+                    },
+                },
+            },
+        });
+    }
 
     console.log('Seed completed successfully!');
 }

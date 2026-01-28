@@ -65,12 +65,19 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id
+        // Get onboarded status for existing users or new ones
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { onboarded: true },
+        })
+        token.onboarded = dbUser?.onboarded ?? false
       }
       return token
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string
+        session.user.onboarded = token.onboarded as boolean
       }
       return session
     },

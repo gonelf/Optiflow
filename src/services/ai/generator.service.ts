@@ -7,10 +7,13 @@ import { getMultiModelService } from './multi-model.service';
 import { generatePagePrompt, generateComponentPrompt, generateOptimizationPrompt } from '@/lib/ai/prompts';
 
 export interface GeneratePageInput {
+  productName?: string;
   description: string;
   industry?: string;
   targetAudience?: string;
   brandVoice?: string;
+  keyBenefits?: string;
+  pageGoal?: string;
   pageType?: 'landing' | 'pricing' | 'about' | 'contact' | 'blog' | 'product';
 }
 

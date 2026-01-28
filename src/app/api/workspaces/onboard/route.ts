@@ -9,7 +9,11 @@ import { z } from 'zod';
 
 const onboardSchema = z.object({
     workspaceName: z.string().min(1),
+    productName: z.string().min(1),
     businessDescription: z.string().min(10),
+    targetAudience: z.string().min(1),
+    keyBenefits: z.string().min(1),
+    pageGoal: z.string(),
     brandVoice: z.string(),
 });
 
@@ -23,7 +27,15 @@ export async function POST(req: NextRequest) {
 
         const userId = session.user.id;
         const body = await req.json();
-        const { workspaceName, businessDescription, brandVoice } = onboardSchema.parse(body);
+        const {
+            workspaceName,
+            productName,
+            businessDescription,
+            targetAudience,
+            keyBenefits,
+            pageGoal,
+            brandVoice
+        } = onboardSchema.parse(body);
 
         logger.info('Starting AI Onboarding flow', { userId, workspaceName });
 
@@ -47,7 +59,11 @@ export async function POST(req: NextRequest) {
         logger.info('Generating AI page for onboarding', { workspaceId: workspace.id });
 
         const generatedContent = await AIGeneratorService.generatePage({
+            productName,
             description: businessDescription,
+            targetAudience,
+            keyBenefits,
+            pageGoal,
             brandVoice,
             pageType: 'landing',
         });

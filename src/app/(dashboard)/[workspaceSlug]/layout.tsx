@@ -20,7 +20,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   ]
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex min-h-screen bg-background">
       {/* Sidebar */}
       <aside className="w-64 border-r bg-card">
         <div className="flex h-full flex-col">
