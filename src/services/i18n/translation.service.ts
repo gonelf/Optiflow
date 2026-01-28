@@ -47,7 +47,14 @@ export async function getSupportedLocales(
     ],
   });
 
-  return locales.map(locale => ({
+  return locales.map((locale: {
+    id: string;
+    workspaceId: string;
+    code: string;
+    name: string;
+    isDefault: boolean;
+    isEnabled: boolean;
+  }) => ({
     id: locale.id,
     workspaceId: locale.workspaceId,
     code: locale.code,
@@ -209,7 +216,21 @@ export async function getPageTranslations(
     orderBy: { locale: 'asc' },
   });
 
-  return translations.map(translation => ({
+  return translations.map((translation: {
+    id: string;
+    pageId: string;
+    locale: string;
+    title: string;
+    description: string | null;
+    seoTitle: string | null;
+    seoDescription: string | null;
+    components: unknown;
+    status: string;
+    translatedBy: string | null;
+    reviewedBy: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }) => ({
     id: translation.id,
     pageId: translation.pageId,
     locale: translation.locale,
@@ -251,10 +272,14 @@ export async function autoTranslatePage(
   // TODO: Integrate with AI translation service (OpenAI, Google Translate, etc.)
   // For now, we'll create a placeholder translation
 
-  const translatedComponents = page.components.map(comp => ({
+  const translatedComponents = page.components.map((comp: {
+    id: string;
+    content: unknown;
+    [key: string]: unknown;
+  }) => ({
     ...comp,
     content: {
-      ...(typeof comp.content === 'object' && comp.content !== null ? comp.content : {}),
+      ...(typeof comp.content === 'object' && comp.content !== null ? comp.content as Record<string, unknown> : {}),
       // Placeholder: In production, this would be translated by AI
       _translated: true,
       _targetLocale: targetLocale,

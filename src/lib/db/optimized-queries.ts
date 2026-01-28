@@ -84,7 +84,7 @@ export async function getAnalyticsSessionsWithEvents(
     limit?: number;
   }
 ) {
-  const where: Prisma.AnalyticsSessionWhereInput = {
+  const where: Record<string, unknown> = {
     workspaceId,
     startedAt: {
       gte: startDate,
@@ -172,7 +172,7 @@ export async function getWorkspacePages(
     offset?: number;
   }
 ) {
-  const where: Prisma.PageWhereInput = {
+  const where: Record<string, unknown> = {
     workspaceId,
   };
 
@@ -321,7 +321,7 @@ export async function getWebhookDeliveries(
     limit?: number;
   }
 ) {
-  const where: Prisma.WebhookDeliveryWhereInput = {
+  const where: Record<string, unknown> = {
     webhookId,
   };
 
@@ -341,7 +341,7 @@ export async function getWebhookDeliveries(
  * Optimized for template gallery
  */
 export async function getTemplatesWithStats(category?: string) {
-  const where: Prisma.TemplateWhereInput = {};
+  const where: Record<string, unknown> = {};
 
   if (category) {
     where.category = category as any;
@@ -377,7 +377,7 @@ export async function incrementVariantMetrics(
       },
     });
   } else {
-    return prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const variant = await tx.pageVariant.update({
         where: { id: variantId },
         data: {
