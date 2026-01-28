@@ -14,37 +14,47 @@ interface Workspace {
   }
 }
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json())
+const fetcher = async (url: string) => {
+  const res = await fetch(url)
+  if (!res.ok) {
+    const error = new Error('An error occurred while fetching the data.')
+    // Attach extra info to the error object.
+    const info = await res.json()
+    // @ts-ignore
+    error.status = res.status
+    // @ts-ignore
+    error.info = info
+    throw error
+  }
+  return res.json()
+}
 
 export function useWorkspace(workspaceSlug?: string) {
-  const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(null)
-
   // Fetch all workspaces
   const {
     data: workspacesData,
     error,
     mutate,
+    isLoading: isAllWorkspacesLoading,
   } = useSWR<{ workspaces: Workspace[] }>('/api/workspaces', fetcher)
 
-  // Fetch specific workspace
+  // Derive current workspace from list
+  const currentWorkspace = workspacesData?.workspaces
+    ? workspaceSlug
+      ? workspacesData.workspaces.find((w) => w.slug === workspaceSlug) || null
+      : workspacesData.workspaces[0] || null
+    : null
+
+  // Fetch specific workspace details
   const {
     data: workspaceData,
     error: workspaceError,
     mutate: mutateWorkspace,
+    isLoading: isWorkspaceDetailsLoading,
   } = useSWR(
     currentWorkspace?.id ? `/api/workspaces/${currentWorkspace.id}` : null,
     fetcher
   )
-
-  useEffect(() => {
-    if (workspacesData?.workspaces && workspaceSlug) {
-      const workspace = workspacesData.workspaces.find((w) => w.slug === workspaceSlug)
-      setCurrentWorkspace(workspace || null)
-    } else if (workspacesData?.workspaces && !workspaceSlug) {
-      // Default to first workspace if no slug provided
-      setCurrentWorkspace(workspacesData.workspaces[0] || null)
-    }
-  }, [workspacesData, workspaceSlug])
 
   const createWorkspace = async (data: { name: string; slug: string }) => {
     const response = await fetch('/api/workspaces', {
@@ -99,8 +109,8 @@ export function useWorkspace(workspaceSlug?: string) {
     currentWorkspace,
     workspace: workspaceData?.workspace,
     role: workspaceData?.role,
-    isLoading: !error && !workspacesData,
-    isError: error || workspaceError,
+    isLoading: isAllWorkspacesLoading || (!!currentWorkspace && isWorkspaceDetailsLoading),
+    isError: !!error || !!workspaceError,
     createWorkspace,
     updateWorkspace,
     deleteWorkspace,

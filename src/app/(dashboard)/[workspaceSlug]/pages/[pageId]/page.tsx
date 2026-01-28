@@ -39,8 +39,16 @@ export default function BuilderPage() {
   // Load page data
   useEffect(() => {
     const loadPageData = async () => {
+      const pageId = params.pageId as string;
+      const workspaceSlug = params.workspaceSlug as string;
+
+      // Handle "new" case by redirecting to pages list
+      if (pageId === 'new') {
+        router.replace(`/${workspaceSlug}/pages`);
+        return;
+      }
+
       try {
-        const pageId = params.pageId as string;
 
         // Fetch page data from API
         const response = await fetch(`/api/pages/${pageId}`);

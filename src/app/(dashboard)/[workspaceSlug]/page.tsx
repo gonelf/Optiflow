@@ -1,16 +1,28 @@
 'use client'
 
-import { useParams } from 'next/navigation'
+import { useEffect } from 'react'
+import { useParams, useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useWorkspace } from '@/hooks/use-workspace'
 
 export default function WorkspaceDashboard() {
   const params = useParams()
+  const router = useRouter()
   const workspaceSlug = params.workspaceSlug as string
-  const { currentWorkspace, isLoading } = useWorkspace(workspaceSlug)
+  const { currentWorkspace, isLoading, isError } = useWorkspace(workspaceSlug)
+
+  useEffect(() => {
+    if (!isLoading && !isError && !currentWorkspace) {
+      router.replace('/dashboard')
+    }
+  }, [isLoading, isError, currentWorkspace, router])
 
   if (isLoading) {
     return <div>Loading...</div>
+  }
+
+  if (!currentWorkspace) {
+    return null
   }
 
   return (
@@ -77,7 +89,7 @@ export default function WorkspaceDashboard() {
                 Build a landing page with our drag-and-drop editor
               </p>
             </div>
-            <a href={`/${workspaceSlug}/pages/new`} className="text-primary hover:underline">
+            <a href={`/${workspaceSlug}/pages`} className="text-primary hover:underline">
               Get Started
             </a>
           </div>
@@ -89,7 +101,7 @@ export default function WorkspaceDashboard() {
               </p>
             </div>
             <a
-              href={`/${workspaceSlug}/settings/team`}
+              href={`/${workspaceSlug}/settings`}
               className="text-primary hover:underline"
             >
               Invite

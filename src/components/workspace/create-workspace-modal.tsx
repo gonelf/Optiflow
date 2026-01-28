@@ -98,7 +98,7 @@ export function CreateWorkspaceModal({ open, onOpenChange }: CreateWorkspaceModa
                 value={formData.slug}
                 onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                 disabled={isLoading}
-                pattern="[a-z0-9-]+"
+                pattern="[a-z0-9\-]+"
                 required
               />
               <p className="text-xs text-muted-foreground">

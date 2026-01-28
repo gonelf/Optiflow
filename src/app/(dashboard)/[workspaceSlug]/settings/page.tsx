@@ -109,7 +109,7 @@ export default function WorkspaceSettings() {
                 value={formData.slug}
                 onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                 disabled={!isAdmin || isLoading}
-                pattern="[a-z0-9-]+"
+                pattern="[a-z0-9\-]+"
                 required
               />
               <p className="text-xs text-muted-foreground">
