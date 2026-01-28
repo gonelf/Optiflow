@@ -29,7 +29,7 @@ export function OnboardingBanner() {
         } else {
             setIsVisible(false);
         }
-    }, [session, workspaces, isLoading, isDismissed]);
+    }, [session, workspaces, isLoading, isDismissed, pathname]);
 
     if (!isVisible) return null;
 

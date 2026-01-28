@@ -5,7 +5,7 @@
  * Displays current visitors and key metrics with auto-refresh
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { DashboardMetrics } from '@/services/analytics/dashboard.service';
 
@@ -24,7 +24,7 @@ export function RealtimeMetrics({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchMetrics = async () => {
+  const fetchMetrics = useCallback(async () => {
     try {
       const params = new URLSearchParams({
         workspaceSlug,
@@ -49,7 +49,7 @@ export function RealtimeMetrics({
     } finally {
       setLoading(false);
     }
-  };
+  }, [workspaceSlug, pageId]);
 
   useEffect(() => {
     // Initial fetch
@@ -59,7 +59,7 @@ export function RealtimeMetrics({
     const interval = setInterval(fetchMetrics, refreshInterval);
 
     return () => clearInterval(interval);
-  }, [workspaceSlug, pageId, refreshInterval]);
+  }, [fetchMetrics, refreshInterval]);
 
   if (loading && !metrics) {
     return (

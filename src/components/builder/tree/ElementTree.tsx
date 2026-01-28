@@ -17,7 +17,7 @@ export function ElementTree() {
   const { elements, buildElementTree } = useElementStore();
 
   // Build tree structure
-  const tree = useMemo(() => buildElementTree(), [elements]);
+  const tree = useMemo(() => buildElementTree(), [buildElementTree]);
 
   // Filter tree based on search
   const filteredTree = useMemo(() => {

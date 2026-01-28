@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Clock, RotateCcw, GitBranch, Tag } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -30,11 +30,8 @@ export function VersionHistory({ pageId, onRollback }: VersionHistoryProps) {
   const [loading, setLoading] = useState(true);
   const [selectedVersion, setSelectedVersion] = useState<number | null>(null);
 
-  useEffect(() => {
-    fetchVersionHistory();
-  }, [pageId]);
 
-  const fetchVersionHistory = async () => {
+  const fetchVersionHistory = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/versions/${pageId}`);
@@ -50,7 +47,11 @@ export function VersionHistory({ pageId, onRollback }: VersionHistoryProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pageId]);
+
+  useEffect(() => {
+    fetchVersionHistory();
+  }, [fetchVersionHistory]);
 
   const handleRollback = async (versionNumber: number) => {
     if (!confirm(`Are you sure you want to rollback to version ${versionNumber}?`)) {
@@ -144,9 +145,8 @@ export function VersionHistory({ pageId, onRollback }: VersionHistoryProps) {
           {versions.map((version, index) => (
             <div
               key={version.id}
-              className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
-                selectedVersion === version.versionNumber ? 'bg-blue-50' : ''
-              }`}
+              className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${selectedVersion === version.versionNumber ? 'bg-blue-50' : ''
+                }`}
               onClick={() => setSelectedVersion(version.versionNumber)}
             >
               <div className="flex items-start justify-between gap-4">

@@ -58,21 +58,27 @@ export function Image({
 
   if (isExternal) {
     // Use regular img tag for external images
+    // Use Next.js Image with unoptimized for external images to keep optimization warnings away
+    // while still allowing external URLs
     return (
-      <img
+      <div
         data-element-id={element.id}
         data-element-type={element.type}
-        src={content.src}
-        alt={content.alt || ''}
-        title={content.title}
-        loading={content.loading || 'lazy'}
-        sizes={content.sizes}
-        srcSet={content.srcSet}
         className={element.className}
-        style={styleObject}
+        style={{ position: 'relative', ...styleObject }}
         onClick={isBuilder ? onClick : undefined}
-        {...element.attributes}
-      />
+      >
+        <NextImage
+          src={content.src}
+          alt={content.alt || ''}
+          title={content.title}
+          fill
+          unoptimized
+          sizes={content.sizes || '100vw'}
+          style={{ objectFit: 'contain' }}
+          {...element.attributes}
+        />
+      </div>
     );
   }
 
