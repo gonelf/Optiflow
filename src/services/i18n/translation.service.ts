@@ -254,7 +254,7 @@ export async function autoTranslatePage(
   const translatedComponents = page.components.map(comp => ({
     ...comp,
     content: {
-      ...comp.content,
+      ...(typeof comp.content === 'object' && comp.content !== null ? comp.content : {}),
       // Placeholder: In production, this would be translated by AI
       _translated: true,
       _targetLocale: targetLocale,
