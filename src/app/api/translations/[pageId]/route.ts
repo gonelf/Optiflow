@@ -100,7 +100,12 @@ export async function POST(
 
     // Create/update translation
     const translation = await upsertPageTranslation(pageId, data.locale, {
-      ...data,
+      title: data.title,
+      description: data.description,
+      seoTitle: data.seoTitle,
+      seoDescription: data.seoDescription,
+      components: data.components,
+      status: data.status,
       translatedBy: session.user.id,
     });
 
