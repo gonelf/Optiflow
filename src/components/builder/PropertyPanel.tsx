@@ -1,6 +1,7 @@
 'use client';
 
 import { useBuilderStore } from '@/store/builder.store';
+import { ElementStyles } from '@/types/styles';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -17,16 +18,40 @@ import { FAQProperties } from './properties/FAQProperties';
 import { FormProperties } from './properties/FormProperties';
 import { NewsletterProperties } from './properties/NewsletterProperties';
 
-export function PropertyPanel() {
-  const { getSelectedComponent, selectComponent, updateComponent } = useBuilderStore();
-  const selectedComponent = getSelectedComponent();
+// Phase 8 Style Panels
+import {
+  BoxModelEditor,
+  LayoutPanel,
+  TypographyPanel,
+  SizingPanel,
+  BorderPanel,
+  BackgroundPanel
+} from './style-panel';
 
-  if (!selectedComponent) {
+export function PropertyPanel() {
+  const {
+    getSelectedComponent,
+    getSelectedElement,
+    selectComponent,
+    selectElement,
+    updateComponent,
+    updateElement,
+    viewport
+  } = useBuilderStore();
+
+  const selectedComponent = getSelectedComponent();
+  const selectedElement = getSelectedElement();
+  const currentBreakpoint = viewport.breakpoint;
+
+  const isElement = !!selectedElement;
+  const item = selectedElement || selectedComponent;
+
+  if (!item) {
     return (
       <div className="w-80 border-l bg-gray-50 p-6">
         <div className="flex h-full items-center justify-center">
           <div className="text-center text-sm text-muted-foreground">
-            <p>Select a component</p>
+            <p>Select an element or component</p>
             <p className="mt-1">to edit its properties</p>
           </div>
         </div>
@@ -34,7 +59,25 @@ export function PropertyPanel() {
     );
   }
 
-  const renderProperties = () => {
+  const handleStyleChange = (updates: Partial<ElementStyles>) => {
+    if (!selectedElement) return;
+
+    const currentStyles = selectedElement.styles[currentBreakpoint] || {};
+
+    updateElement(selectedElement.id, {
+      styles: {
+        ...selectedElement.styles,
+        [currentBreakpoint]: {
+          ...currentStyles,
+          ...updates,
+        },
+      },
+    });
+  };
+
+  const renderComponentProperties = () => {
+    if (!selectedComponent) return null;
+
     switch (selectedComponent.type) {
       case 'HERO':
         return <HeroProperties component={selectedComponent} onChange={updateComponent} />;
@@ -57,37 +100,64 @@ export function PropertyPanel() {
     }
   };
 
+  const renderElementProperties = () => {
+    if (!selectedElement) return null;
+
+    // TODO: Create specific property editors for primitives (TextProperties, ImageProperties, etc.)
+    return (
+      <div className="space-y-4">
+        <div className="p-4 bg-muted/50 rounded-md border text-xs text-muted-foreground">
+          Property editors for <strong>{selectedElement.type}</strong> primitives are coming soon. Use the Style tab for visual control.
+        </div>
+      </div>
+    );
+  };
+
+  const handleNameChange = (newName: string) => {
+    if (isElement && selectedElement) {
+      updateElement(selectedElement.id, { name: newName });
+    } else if (selectedComponent) {
+      updateComponent(selectedComponent.id, { name: newName });
+    }
+  };
+
+  const handleClose = () => {
+    if (isElement) {
+      selectElement(null);
+    } else {
+      selectComponent(null);
+    }
+  };
+
   return (
     <div className="w-80 border-l bg-white flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center justify-between border-b p-4">
         <div>
-          <h3 className="font-semibold">{selectedComponent.name}</h3>
+          <h3 className="font-semibold">{item.name}</h3>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {selectedComponent.type}
+            {item.type}
           </p>
         </div>
         <Button
           variant="ghost"
           size="sm"
           className="h-8 w-8 p-0"
-          onClick={() => selectComponent(null)}
+          onClick={handleClose}
         >
           <X className="h-4 w-4" />
         </Button>
       </div>
 
-      {/* Component Name */}
+      {/* Item Name */}
       <div className="border-b p-4">
-        <Label htmlFor="component-name" className="text-xs">
-          Component Name
+        <Label htmlFor="item-name" className="text-xs">
+          {isElement ? 'Element Name' : 'Component Name'}
         </Label>
         <Input
-          id="component-name"
-          value={selectedComponent.name}
-          onChange={(e) =>
-            updateComponent(selectedComponent.id, { name: e.target.value })
-          }
+          id="item-name"
+          value={item.name}
+          onChange={(e) => handleNameChange(e.target.value)}
           className="mt-2"
         />
       </div>
@@ -117,62 +187,75 @@ export function PropertyPanel() {
           </TabsList>
 
           <TabsContent value="content" className="p-4">
-            {renderProperties()}
+            {isElement ? renderElementProperties() : renderComponentProperties()}
           </TabsContent>
 
-          <TabsContent value="style" className="p-4">
-            <div className="space-y-4">
-              <div>
-                <Label className="text-xs">Background Color</Label>
-                <Input
-                  type="color"
-                  value={selectedComponent.styles?.backgroundColor || '#ffffff'}
-                  onChange={(e) =>
-                    updateComponent(selectedComponent.id, {
-                      styles: {
-                        ...selectedComponent.styles,
-                        backgroundColor: e.target.value,
-                      },
-                    })
-                  }
-                  className="mt-2 h-10"
+          <TabsContent value="style" className="p-0">
+            {isElement && selectedElement ? (
+              <div className="divide-y p-4 space-y-6 overflow-y-auto max-h-[calc(100vh-250px)]">
+                <LayoutPanel
+                  styles={selectedElement.styles[currentBreakpoint] || {}}
+                  onChange={handleStyleChange}
+                />
+                <SizingPanel
+                  styles={selectedElement.styles[currentBreakpoint] || {}}
+                  onChange={handleStyleChange}
+                />
+                <BoxModelEditor
+                  styles={selectedElement.styles[currentBreakpoint] || {}}
+                  onChange={handleStyleChange}
+                />
+                <TypographyPanel
+                  styles={selectedElement.styles[currentBreakpoint] || {}}
+                  onChange={handleStyleChange}
+                />
+                <BackgroundPanel
+                  styles={selectedElement.styles[currentBreakpoint] || {}}
+                  onChange={handleStyleChange}
+                />
+                <BorderPanel
+                  styles={selectedElement.styles[currentBreakpoint] || {}}
+                  onChange={handleStyleChange}
                 />
               </div>
+            ) : (
+              <div className="p-4 space-y-4">
+                {/* Legacy style controls for components */}
+                <div>
+                  <Label className="text-xs">Background Color</Label>
+                  <Input
+                    type="color"
+                    value={selectedComponent?.styles?.backgroundColor || '#ffffff'}
+                    onChange={(e) =>
+                      selectedComponent && updateComponent(selectedComponent.id, {
+                        styles: {
+                          ...selectedComponent.styles,
+                          backgroundColor: e.target.value,
+                        },
+                      })
+                    }
+                    className="mt-2 h-10"
+                  />
+                </div>
 
-              <div>
-                <Label className="text-xs">Padding (px)</Label>
-                <Input
-                  type="number"
-                  value={selectedComponent.styles?.padding || 0}
-                  onChange={(e) =>
-                    updateComponent(selectedComponent.id, {
-                      styles: {
-                        ...selectedComponent.styles,
-                        padding: parseInt(e.target.value),
-                      },
-                    })
-                  }
-                  className="mt-2"
-                />
+                <div>
+                  <Label className="text-xs">Padding (px)</Label>
+                  <Input
+                    type="number"
+                    value={selectedComponent?.styles?.padding || 0}
+                    onChange={(e) =>
+                      selectedComponent && updateComponent(selectedComponent.id, {
+                        styles: {
+                          ...selectedComponent.styles,
+                          padding: parseInt(e.target.value),
+                        },
+                      })
+                    }
+                    className="mt-2"
+                  />
+                </div>
               </div>
-
-              <div>
-                <Label className="text-xs">Margin (px)</Label>
-                <Input
-                  type="number"
-                  value={selectedComponent.styles?.margin || 0}
-                  onChange={(e) =>
-                    updateComponent(selectedComponent.id, {
-                      styles: {
-                        ...selectedComponent.styles,
-                        margin: parseInt(e.target.value),
-                      },
-                    })
-                  }
-                  className="mt-2"
-                />
-              </div>
-            </div>
+            )}
           </TabsContent>
 
           <TabsContent value="advanced" className="p-4">
@@ -180,36 +263,39 @@ export function PropertyPanel() {
               <div>
                 <Label className="text-xs">Custom CSS Classes</Label>
                 <Input
-                  value={selectedComponent.styles?.customClasses || ''}
-                  onChange={(e) =>
-                    updateComponent(selectedComponent.id, {
-                      styles: {
-                        ...selectedComponent.styles,
-                        customClasses: e.target.value,
-                      },
-                    })
-                  }
+                  value={isElement ? (selectedElement?.className || '') : (selectedComponent?.styles?.customClasses || '')}
+                  onChange={(e) => {
+                    if (isElement && selectedElement) {
+                      updateElement(selectedElement.id, { className: e.target.value });
+                    } else if (selectedComponent) {
+                      updateComponent(selectedComponent.id, {
+                        styles: { ...selectedComponent.styles, customClasses: e.target.value }
+                      });
+                    }
+                  }}
                   placeholder="custom-class another-class"
                   className="mt-2"
                 />
               </div>
 
-              <div>
-                <Label className="text-xs">Custom ID</Label>
-                <Input
-                  value={selectedComponent.config?.customId || ''}
-                  onChange={(e) =>
-                    updateComponent(selectedComponent.id, {
-                      config: {
-                        ...selectedComponent.config,
-                        customId: e.target.value,
-                      },
-                    })
-                  }
-                  placeholder="my-component"
-                  className="mt-2"
-                />
-              </div>
+              {!isElement && selectedComponent && (
+                <div>
+                  <Label className="text-xs">Custom ID</Label>
+                  <Input
+                    value={selectedComponent.config?.customId || ''}
+                    onChange={(e) =>
+                      updateComponent(selectedComponent.id, {
+                        config: {
+                          ...selectedComponent.config,
+                          customId: e.target.value,
+                        },
+                      })
+                    }
+                    placeholder="my-component"
+                    className="mt-2"
+                  />
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>

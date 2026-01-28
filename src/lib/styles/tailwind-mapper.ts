@@ -242,7 +242,7 @@ export function stylesToTailwindClasses(styles: Partial<ElementStyles>): {
       classes.push(tailwindClass);
     } else {
       // If we can't map to Tailwind, use inline styles
-      inlineStyles[key as keyof ElementStyles] = value;
+      (inlineStyles as any)[key] = value;
     }
   }
 

@@ -140,6 +140,9 @@ export interface ElementStyles {
   aspectRatio?: string;
   pointerEvents?: 'auto' | 'none';
   userSelect?: 'auto' | 'none' | 'text' | 'all';
+
+  // List styles
+  listStyleType?: string;
 }
 
 /**

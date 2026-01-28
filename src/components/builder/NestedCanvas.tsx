@@ -104,11 +104,11 @@ function ElementRenderer({
   return (
     <div
       className="relative group"
-      onMouseEnter={(e) => {
+      onMouseEnter={(e: React.MouseEvent) => {
         e.stopPropagation();
         onHover(element.id);
       }}
-      onMouseLeave={(e) => {
+      onMouseLeave={(e: React.MouseEvent) => {
         e.stopPropagation();
         onHover(null);
       }}
@@ -116,11 +116,10 @@ function ElementRenderer({
       {/* Selection/Hover Overlay */}
       {(isSelected || isHovered) && (
         <div
-          className={`absolute inset-0 pointer-events-none z-10 ${
-            isSelected
+          className={`absolute inset-0 pointer-events-none z-10 ${isSelected
               ? 'ring-2 ring-blue-500 ring-offset-2'
               : 'ring-1 ring-blue-300'
-          }`}
+            }`}
         />
       )}
 
@@ -136,7 +135,7 @@ function ElementRenderer({
         element={element}
         breakpoint={breakpoint}
         isBuilder={true}
-        onClick={(e) => {
+        onClick={(e: React.MouseEvent) => {
           e.stopPropagation();
           onSelect(element.id);
         }}

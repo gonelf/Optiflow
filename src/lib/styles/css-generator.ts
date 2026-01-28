@@ -113,7 +113,7 @@ export function stylesToCSSObject(styles: Partial<ElementStyles>): React.CSSProp
     } else if (key === 'backgroundGradient' && typeof value === 'object') {
       cssObject.backgroundImage = gradientToCSS(value as GradientValue);
     } else if ((key === 'padding' || key === 'margin') && typeof value === 'object') {
-      cssObject[key as keyof React.CSSProperties] = spacingToCSS(value as SpacingValue);
+      (cssObject as any)[key] = spacingToCSS(value as SpacingValue);
     } else if (typeof value === 'number') {
       // React CSSProperties handles numeric values automatically for most properties
       cssObject[key as keyof React.CSSProperties] = value as any;

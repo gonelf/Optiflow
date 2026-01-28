@@ -9,6 +9,36 @@ import { ResponsiveStyles, StateStyles } from './styles';
 /**
  * Combined element type (primitives + components)
  */
+
+/**
+ * Legacy component definition (flat system)
+ */
+export interface BuilderComponent {
+  id: string;
+  type: ComponentType;
+  name: string;
+  order: number;
+  config: Record<string, any>;
+  styles: Record<string, any>;
+  content: Record<string, any>;
+}
+
+/**
+ * Page metadata
+ */
+export interface PageMetadata {
+  title: string;
+  slug: string;
+  description?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  ogImage?: string;
+  favicon?: string;
+}
+
+/**
+ * Combined element type (primitives + components)
+ */
 export type ElementType = PrimitiveType | ComponentType | string;
 
 /**

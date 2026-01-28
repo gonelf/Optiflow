@@ -106,12 +106,12 @@ export async function createElement(
       order,
       depth,
       path, // Will be updated below
-      content: { ...defaultContent, ...content },
+      content: { ...defaultContent, ...content } as any,
       styles: {
         base: { ...defaultStyles, ...styles?.base },
         ...styles,
-      },
-      stateStyles: {},
+      } as any,
+      stateStyles: {} as any,
     },
   });
 
@@ -166,13 +166,13 @@ export async function updateElement(elementId: string, updates: UpdateElementReq
       name: updates.name ?? existing.name,
       parentId: updates.parentId !== undefined ? updates.parentId : existing.parentId,
       order: updates.order ?? existing.order,
-      content: newContent,
-      styles: newStyles,
-      stateStyles: newStateStyles,
+      content: newContent as any,
+      styles: newStyles as any,
+      stateStyles: newStateStyles as any,
       locked: updates.locked ?? existing.locked,
       hidden: updates.hidden ?? existing.hidden,
       className: updates.className ?? existing.className,
-      attributes: updates.attributes ?? existing.attributes,
+      attributes: updates.attributes as any,
     },
   });
 
@@ -323,13 +323,13 @@ export async function duplicateElement(elementId: string, includeChildren = true
       order: original.order + 1,
       depth: original.depth,
       path: '', // Will be updated
-      content: original.content,
-      styles: original.styles,
-      stateStyles: original.stateStyles,
+      content: original.content as any,
+      styles: original.styles as any,
+      stateStyles: original.stateStyles as any,
       locked: original.locked,
       hidden: original.hidden,
       className: original.className,
-      attributes: original.attributes,
+      attributes: original.attributes as any,
     },
   });
 
@@ -377,13 +377,13 @@ async function duplicateElementRecursive(element: any, newParentId: string) {
       order: element.order,
       depth: element.depth,
       path: '', // Will be updated
-      content: element.content,
-      styles: element.styles,
-      stateStyles: element.stateStyles,
+      content: element.content as any,
+      styles: element.styles as any,
+      stateStyles: element.stateStyles as any,
       locked: element.locked,
       hidden: element.hidden,
       className: element.className,
-      attributes: element.attributes,
+      attributes: element.attributes as any,
     },
   });
 
