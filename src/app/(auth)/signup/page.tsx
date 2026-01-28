@@ -52,7 +52,7 @@ export default function SignupPage() {
         })
         router.push('/login')
       } else {
-        router.push('/dashboard')
+        router.push('/onboarding')
         router.refresh()
       }
     } catch (error: any) {

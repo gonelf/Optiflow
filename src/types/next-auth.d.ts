@@ -7,6 +7,7 @@ declare module 'next-auth' {
       email: string
       name?: string | null
       image?: string | null
+      onboarded: boolean
     }
   }
 
@@ -14,11 +15,13 @@ declare module 'next-auth' {
     id: string
     email: string
     name?: string | null
+    onboarded?: boolean
   }
 }
 
 declare module 'next-auth/jwt' {
   interface JWT {
     id: string
+    onboarded: boolean
   }
 }

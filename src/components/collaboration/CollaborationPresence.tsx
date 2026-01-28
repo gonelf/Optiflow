@@ -6,6 +6,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import NextImage from 'next/image';
 import { getPusherClient, getPageChannel, CollaborationEvents } from '@/services/collaboration/pusher.service';
 import { User } from 'lucide-react';
 
@@ -33,28 +34,8 @@ export function CollaborationPresence({
   const [collaborators, setCollaborators] = useState<CollaboratorUser[]>([]);
   const [cursors, setCursors] = useState<Map<string, { x: number; y: number }>>(new Map());
 
-  useEffect(() => {
-    // Join collaboration session
-    joinSession();
 
-    // Subscribe to Pusher channel
-    const pusher = getPusherClient();
-    const channel = pusher.subscribe(getPageChannel(pageId));
-
-    // Listen for user events
-    channel.bind(CollaborationEvents.USER_JOINED, handleUserJoined);
-    channel.bind(CollaborationEvents.USER_LEFT, handleUserLeft);
-    channel.bind(CollaborationEvents.CURSOR_MOVE, handleCursorMove);
-
-    // Cleanup
-    return () => {
-      leaveSession();
-      channel.unbind_all();
-      pusher.unsubscribe(getPageChannel(pageId));
-    };
-  }, [pageId, currentUserId]);
-
-  const joinSession = async () => {
+  const joinSession = useCallback(async () => {
     try {
       const response = await fetch('/api/collaboration/join', {
         method: 'POST',
@@ -73,9 +54,9 @@ export function CollaborationPresence({
     } catch (error) {
       console.error('Error joining session:', error);
     }
-  };
+  }, [pageId, currentUserId]);
 
-  const leaveSession = async () => {
+  const leaveSession = useCallback(async () => {
     try {
       await fetch('/api/collaboration/leave', {
         method: 'POST',
@@ -87,7 +68,7 @@ export function CollaborationPresence({
     } catch (error) {
       console.error('Error leaving session:', error);
     }
-  };
+  }, [pageId]);
 
   const handleUserJoined = useCallback((user: CollaboratorUser) => {
     if (user.userId === currentUserId) return;
@@ -135,6 +116,27 @@ export function CollaborationPresence({
     }, 5000);
   }, [currentUserId]);
 
+  useEffect(() => {
+    // Join collaboration session
+    joinSession();
+
+    // Subscribe to Pusher channel
+    const pusher = getPusherClient();
+    const channel = pusher.subscribe(getPageChannel(pageId));
+
+    // Listen for user events
+    channel.bind(CollaborationEvents.USER_JOINED, handleUserJoined);
+    channel.bind(CollaborationEvents.USER_LEFT, handleUserLeft);
+    channel.bind(CollaborationEvents.CURSOR_MOVE, handleCursorMove);
+
+    // Cleanup
+    return () => {
+      leaveSession();
+      channel.unbind_all();
+      pusher.unsubscribe(getPageChannel(pageId));
+    };
+  }, [pageId, currentUserId, handleCursorMove, handleUserJoined, handleUserLeft, joinSession, leaveSession]);
+
   if (collaborators.length === 0) {
     return null;
   }
@@ -158,12 +160,15 @@ export function CollaborationPresence({
               title={collaborator.userName}
             >
               {collaborator.userAvatar ? (
-                <img
-                  src={collaborator.userAvatar}
-                  alt={collaborator.userName}
-                  className="w-8 h-8 rounded-full border-2 border-white"
-                  style={{ borderColor: collaborator.color }}
-                />
+                <div className="w-8 h-8 rounded-full border-2 overflow-hidden bg-gray-100" style={{ borderColor: collaborator.color }}>
+                  <NextImage
+                    src={collaborator.userAvatar}
+                    alt={collaborator.userName}
+                    width={32}
+                    height={32}
+                    className="object-cover"
+                  />
+                </div>
               ) : (
                 <div
                   className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-white text-xs font-medium"

@@ -73,7 +73,7 @@ export function CohortAnalysis({
     };
 
     fetchCohorts();
-  }, [workspaceSlug, cohortType, startDate, endDate]);
+  }, [workspaceSlug, cohortType, startDate, endDate, selectedCohort]);
 
   // Fetch retention and conversion data for selected cohort
   useEffect(() => {
@@ -244,11 +244,10 @@ export function CohortAnalysis({
                                 {formatNumber(period.visitors)}
                               </td>
                               <td className="py-3 pr-4 text-right">
-                                <span className={`text-sm font-medium ${
-                                  period.retentionRate >= 50 ? 'text-green-600' :
-                                  period.retentionRate >= 25 ? 'text-yellow-600' :
-                                  'text-red-600'
-                                }`}>
+                                <span className={`text-sm font-medium ${period.retentionRate >= 50 ? 'text-green-600' :
+                                    period.retentionRate >= 25 ? 'text-yellow-600' :
+                                      'text-red-600'
+                                  }`}>
                                   {formatPercentage(period.retentionRate)}
                                 </span>
                               </td>

@@ -35,8 +35,8 @@ export class GeminiService {
   private baseURL: string = 'https://generativelanguage.googleapis.com/v1beta';
 
   constructor(config: GeminiConfig) {
-    this.apiKey = config.apiKey || process.env.GEMINI_API_KEY || '';
-    this.model = config.model || 'gemini-1.5-flash'; // Free tier model
+    this.apiKey = config.apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY || '';
+    this.model = config.model || 'gemini-2.5-flash';
 
     if (!this.apiKey) {
       throw new Error('Gemini API key is required');
@@ -93,10 +93,16 @@ export class GeminiService {
     const data: GeminiResponse = await response.json();
 
     if (!data.candidates || data.candidates.length === 0) {
-      throw new Error('No response from Gemini');
+      throw new Error('No response from Gemini (empty candidates)');
     }
 
-    return data.candidates[0].content.parts[0].text;
+    const firstCandidate = data.candidates[0];
+    if (!firstCandidate.content || !firstCandidate.content.parts || firstCandidate.content.parts.length === 0) {
+      const finishReason = firstCandidate.finishReason || 'Unknown';
+      throw new Error(`Gemini response missing content. Finish reason: ${finishReason}. Request might have been blocked or failed.`);
+    }
+
+    return firstCandidate.content.parts[0].text;
   }
 
   /**
@@ -150,10 +156,16 @@ export class GeminiService {
     const data: GeminiResponse = await response.json();
 
     if (!data.candidates || data.candidates.length === 0) {
-      throw new Error('No response from Gemini');
+      throw new Error('No response from Gemini (empty candidates)');
     }
 
-    return data.candidates[0].content.parts[0].text;
+    const firstCandidate = data.candidates[0];
+    if (!firstCandidate.content || !firstCandidate.content.parts || firstCandidate.content.parts.length === 0) {
+      const finishReason = firstCandidate.finishReason || 'Unknown';
+      throw new Error(`Gemini response missing content. Finish reason: ${finishReason}. Request might have been blocked or failed.`);
+    }
+
+    return firstCandidate.content.parts[0].text;
   }
 
   /**
@@ -224,7 +236,8 @@ export class GeminiService {
 
         try {
           const data = JSON.parse(line.slice(6));
-          const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          const firstCandidate = data.candidates?.[0];
+          const text = firstCandidate?.content?.parts?.[0]?.text;
           if (text) {
             onChunk(text);
           }

@@ -17,6 +17,8 @@ import { ComponentPalette } from '@/components/builder/ComponentPalette';
 import { Canvas } from '@/components/builder/Canvas';
 import { PropertyPanel } from '@/components/builder/PropertyPanel';
 import { useBuilderStore, BuilderComponent, ComponentType } from '@/store/builder.store';
+import { BuilderElement } from '@/types/builder';
+import { PRIMITIVE_CONFIGS, PrimitiveType } from '@/types/primitives';
 import { useToast } from '@/hooks/use-toast';
 
 export default function BuilderPage() {
@@ -26,7 +28,7 @@ export default function BuilderPage() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const { addComponent, loadPage, setSaving, components } = useBuilderStore();
+  const { addComponent, addElement, loadPage, setSaving, components, elements } = useBuilderStore();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -100,25 +102,57 @@ export default function BuilderPage() {
 
     // Check if dragging from palette
     if (active.id.toString().startsWith('palette-')) {
-      const componentType = active.data.current?.type as ComponentType;
+      const type = active.data.current?.type;
+      const isPrimitive = active.data.current?.isPrimitive;
 
-      // Create new component
-      const newComponent: BuilderComponent = {
-        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        type: componentType,
-        name: getDefaultComponentName(componentType),
-        order: components.length,
-        config: getDefaultConfig(componentType),
-        styles: getDefaultStyles(componentType),
-        content: getDefaultContent(componentType),
-      };
+      if (isPrimitive) {
+        const primitiveType = type as PrimitiveType;
+        const config = PRIMITIVE_CONFIGS[primitiveType];
 
-      addComponent(newComponent);
+        const newElement: BuilderElement = {
+          id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          type: primitiveType,
+          name: config.name,
+          pageId: params.pageId as string,
+          parentId: null, // For now, drops on canvas are top-level
+          order: elements.length,
+          depth: 0,
+          path: '',
+          content: { ...config.defaultContent },
+          styles: {
+            base: { ...config.defaultStyles } as any
+          },
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
 
-      toast({
-        title: 'Component added',
-        description: `${newComponent.name} has been added to your page.`,
-      });
+        addElement(newElement);
+
+        toast({
+          title: 'Element added',
+          description: `${newElement.name} has been added to your page.`,
+        });
+      } else {
+        const componentType = type as ComponentType;
+
+        // Create new legacy component
+        const newComponent: BuilderComponent = {
+          id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          type: componentType,
+          name: getDefaultComponentName(componentType),
+          order: components.length,
+          config: getDefaultConfig(componentType),
+          styles: getDefaultStyles(componentType),
+          content: getDefaultContent(componentType),
+        };
+
+        addComponent(newComponent);
+
+        toast({
+          title: 'Component added',
+          description: `${newComponent.name} has been added to your page.`,
+        });
+      }
     }
   };
 
@@ -143,6 +177,7 @@ export default function BuilderPage() {
           ogImage: state.metadata.ogImage,
           favicon: state.metadata.favicon,
           components: state.components,
+          elements: state.elements,
         }),
       });
 

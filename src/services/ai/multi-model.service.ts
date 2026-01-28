@@ -56,9 +56,10 @@ export class MultiModelService {
     for (const config of configs) {
       try {
         if (config.provider === 'gemini') {
-          if (config.apiKey || process.env.GEMINI_API_KEY) {
+          const apiKey = config.apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
+          if (apiKey) {
             const service = new GeminiService({
-              apiKey: config.apiKey || process.env.GEMINI_API_KEY || '',
+              apiKey: apiKey,
               model: config.model,
             });
 
@@ -333,21 +334,21 @@ export function createDefaultMultiModelService(): MultiModelService {
   const configs: AIModelConfig[] = [
     {
       provider: 'gemini',
-      model: 'gemini-2.0-flash-exp',
-      name: 'Gemini 2.0 Flash (Experimental)',
-      priority: 1, // Try first - experimental, usually has higher free tier
+      model: 'gemini-3-flash-preview',
+      name: 'Gemini 3 Flash (Preview)',
+      priority: 1, // Newest, high performance
     },
     {
       provider: 'gemini',
       model: 'gemini-2.5-flash',
       name: 'Gemini 2.5 Flash',
-      priority: 2, // Fallback - stable and capable
+      priority: 2, // Current stable standard
     },
     {
       provider: 'gemini',
-      model: 'gemini-2.0-flash',
-      name: 'Gemini 2.0 Flash',
-      priority: 3, // Last resort - stable fallback
+      model: 'gemini-2.5-pro',
+      name: 'Gemini 2.5 Pro',
+      priority: 3, // Most capable stable
     },
   ];
 

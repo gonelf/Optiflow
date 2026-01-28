@@ -7,18 +7,25 @@ import { GeneratePageInput } from '@/services/ai/generator.service';
 
 export function generatePagePrompt(input: GeneratePageInput): string {
   const {
+    productName = 'the product',
     industry = 'general',
     targetAudience = 'general audience',
     brandVoice = 'professional and friendly',
+    keyBenefits = '',
+    pageGoal = 'get signups',
     pageType = 'landing',
   } = input;
 
-  return `You are an expert landing page designer and copywriter. Generate a complete ${pageType} page structure in JSON format.
+  return `You are an expert landing page designer and copywriter. Generate a complete ${pageType} page structure in JSON format for a product called "${productName}".
 
 CONTEXT:
-- Industry: ${industry}
+- Product/Service: ${productName}
+- Main Description: ${input.description}
 - Target Audience: ${targetAudience}
+- Key Benefits: ${keyBenefits}
+- Primary Goal: ${pageGoal}
 - Brand Voice: ${brandVoice}
+- Industry: ${industry}
 - Page Type: ${pageType}
 
 AVAILABLE COMPONENTS:
