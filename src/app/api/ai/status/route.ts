@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth';
 import { AIGeneratorService } from '@/services/ai/generator.service';
 import { getMultiModelService } from '@/services/ai/multi-model.service';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/ai/status
  * Check AI service health and availability

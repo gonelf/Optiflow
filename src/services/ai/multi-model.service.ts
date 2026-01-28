@@ -334,21 +334,21 @@ export function createDefaultMultiModelService(): MultiModelService {
   const configs: AIModelConfig[] = [
     {
       provider: 'gemini',
-      model: 'gemini-3-flash-preview',
-      name: 'Gemini 3 Flash (Preview)',
-      priority: 1, // Newest, high performance
+      model: 'gemini-2.0-flash-exp',
+      name: 'Gemini 2.0 Flash (Experimental)',
+      priority: 1, // High performance, lowest latency
     },
     {
       provider: 'gemini',
-      model: 'gemini-2.5-flash',
-      name: 'Gemini 2.5 Flash',
-      priority: 2, // Current stable standard
+      model: 'gemini-1.5-flash-latest',
+      name: 'Gemini 1.5 Flash (Latest)',
+      priority: 2, // Current stable production standard
     },
     {
       provider: 'gemini',
-      model: 'gemini-2.5-pro',
-      name: 'Gemini 2.5 Pro',
-      priority: 3, // Most capable stable
+      model: 'gemini-1.5-pro-latest',
+      name: 'Gemini 1.5 Pro (Latest)',
+      priority: 3, // Most capable for complex tasks
     },
   ];
 

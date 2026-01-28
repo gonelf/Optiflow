@@ -36,7 +36,7 @@ export class GeminiService {
 
   constructor(config: GeminiConfig) {
     this.apiKey = config.apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY || '';
-    this.model = config.model || 'gemini-2.5-flash';
+    this.model = config.model || 'gemini-1.5-flash';
 
     if (!this.apiKey) {
       throw new Error('Gemini API key is required');
