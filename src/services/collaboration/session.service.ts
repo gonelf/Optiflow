@@ -89,7 +89,7 @@ export async function joinCollaborationSession(
     select: { color: true },
   });
 
-  const usedColors = new Set(activeSessions.map(s => s.color));
+  const usedColors = new Set(activeSessions.map((s: { color: string }) => s.color));
   const availableColor = USER_COLORS.find(c => !usedColors.has(c)) || USER_COLORS[0];
 
   // Create new session
@@ -196,7 +196,18 @@ export async function getActiveCollaborators(
     },
   });
 
-  return sessions.map(session => ({
+  return sessions.map((session: {
+    id: string;
+    userId: string;
+    userName: string;
+    userAvatar: string | null;
+    color: string;
+    isActive: boolean;
+    lastSeenAt: Date;
+    cursorX: number | null;
+    cursorY: number | null;
+    selectedComponentId: string | null;
+  }) => ({
     id: session.id,
     userId: session.userId,
     userName: session.userName,

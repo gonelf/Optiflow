@@ -370,18 +370,18 @@ export class CohortAnalysisService {
           },
         });
 
-        const uniqueVisitors = new Set(sessions.map(s => s.visitorId));
-        const conversions = sessions.flatMap(s => s.events);
+        const uniqueVisitors = new Set(sessions.map((s: { visitorId: string }) => s.visitorId));
+        const conversions = sessions.flatMap((s: { events: { id: string }[] }) => s.events);
 
         // distinct visitors who have at least one conversion event
         const uniqueConverters = new Set(
           sessions
-            .filter(s => s.events.length > 0)
-            .map(s => s.visitorId)
+            .filter((s: { events: { id: string }[] }) => s.events.length > 0)
+            .map((s: { visitorId: string }) => s.visitorId)
         );
 
         const avgSessionDuration = sessions.length > 0
-          ? sessions.reduce((sum: number, s: any) => sum + (s.duration || 0), 0) / sessions.length
+          ? sessions.reduce((sum: number, s: { duration: number | null }) => sum + (s.duration || 0), 0) / sessions.length
           : 0;
 
         return {

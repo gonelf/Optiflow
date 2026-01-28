@@ -4,6 +4,7 @@
  */
 
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
 export interface PageVersionData {
   id: string;
@@ -119,13 +120,25 @@ export async function getPageVersionHistory(
     skip: offset,
   });
 
-  return versions.map(v => ({
+  return versions.map((v: {
+    id: string;
+    versionNumber: number;
+    title: string;
+    description: string | null;
+    content: unknown;
+    metadata: unknown;
+    changeType: string;
+    changeSummary: string | null;
+    changedBy: string;
+    isRestorePoint: boolean;
+    createdAt: Date;
+  }) => ({
     id: v.id,
     versionNumber: v.versionNumber,
     title: v.title,
     description: v.description,
-    content: v.content as any,
-    metadata: v.metadata as any,
+    content: v.content,
+    metadata: v.metadata,
     changeType: v.changeType,
     changeSummary: v.changeSummary,
     changedBy: v.changedBy,
@@ -185,7 +198,7 @@ export async function rollbackToVersion(
   }
 
   // Start a transaction
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     // Update page metadata
     await tx.page.update({
       where: { id: pageId },
@@ -367,15 +380,15 @@ export async function cleanupOldVersions(
   const versionsToKeep = new Set<string>();
 
   // Keep recent versions
-  allVersions.slice(0, keepRecentCount).forEach(v => versionsToKeep.add(v.id));
+  allVersions.slice(0, keepRecentCount).forEach((v: { id: string }) => versionsToKeep.add(v.id));
 
   // Keep restore points
-  allVersions.filter(v => v.isRestorePoint).forEach(v => versionsToKeep.add(v.id));
+  allVersions.filter((v: { isRestorePoint: boolean }) => v.isRestorePoint).forEach((v: { id: string }) => versionsToKeep.add(v.id));
 
   // Delete old versions
   const versionsToDelete = allVersions
-    .filter(v => !versionsToKeep.has(v.id))
-    .map(v => v.id);
+    .filter((v: { id: string }) => !versionsToKeep.has(v.id))
+    .map((v: { id: string }) => v.id);
 
   if (versionsToDelete.length === 0) {
     return 0;

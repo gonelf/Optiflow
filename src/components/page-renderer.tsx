@@ -1,7 +1,23 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Component } from '@prisma/client';
+
+// Component type matching Prisma schema
+interface Component {
+  id: string;
+  pageId: string;
+  variantId: string | null;
+  type: string;
+  name: string;
+  order: number;
+  config: Record<string, unknown>;
+  styles: Record<string, unknown>;
+  content: Record<string, unknown>;
+  aiPrompt: string | null;
+  aiGenerated: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 // Placeholder component renderer
 // TODO: Replace with actual component imports when builder components are created

@@ -151,17 +151,25 @@ export async function getApplicableRules(
   });
 
   // Filter rules that match the visitor's segment
-  const applicableRules = rules.filter(rule => {
-    const segment = rule.segment as any;
+  const applicableRules = rules.filter((rule: { segment: unknown }) => {
+    const segment = rule.segment as Record<string, unknown>;
     return matchesSegment(context, segment);
   });
 
-  return applicableRules.map(rule => ({
+  return applicableRules.map((rule: {
+    id: string;
+    name: string;
+    segment: unknown;
+    action: string;
+    config: unknown;
+    priority: number;
+    isActive: boolean;
+  }) => ({
     id: rule.id,
     name: rule.name,
-    segment: rule.segment as any,
+    segment: rule.segment as Record<string, unknown>,
     action: rule.action,
-    config: rule.config as any,
+    config: rule.config as Record<string, unknown>,
     priority: rule.priority,
     isActive: rule.isActive,
   }));
@@ -407,12 +415,20 @@ export async function getAllPersonalizationRules(): Promise<PersonalizationRule[
     },
   });
 
-  return rules.map(rule => ({
+  return rules.map((rule: {
+    id: string;
+    name: string;
+    segment: unknown;
+    action: string;
+    config: unknown;
+    priority: number;
+    isActive: boolean;
+  }) => ({
     id: rule.id,
     name: rule.name,
-    segment: rule.segment as any,
+    segment: rule.segment as Record<string, unknown>,
     action: rule.action,
-    config: rule.config as any,
+    config: rule.config as Record<string, unknown>,
     priority: rule.priority,
     isActive: rule.isActive,
   }));
