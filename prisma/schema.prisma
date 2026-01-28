@@ -52,6 +52,8 @@ model Workspace {
   integrations  Integration[]
   analytics     AnalyticsSession[]
   webhooks      Webhook[]
+  designSystem  DesignSystem?
+  customFonts   CustomFont[]
 
   @@index([slug])
 }
@@ -118,6 +120,7 @@ model Page {
   workspace     Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   author        User        @relation(fields: [authorId], references: [id])
   components    Component[]
+  elements      Element[]
   variants      PageVariant[]
   abTests       ABTest[]
   analytics     AnalyticsSession[]
@@ -269,6 +272,7 @@ model PageVariant {
 
   // Variant-specific components
   components    Component[]
+  elements      Element[]
 
   // Metrics (denormalized for performance)
   impressions   Int         @default(0)
@@ -737,4 +741,99 @@ model SupportedLocale {
   @@unique([workspaceId, code])
   @@index([workspaceId])
   @@index([workspaceId, isEnabled])
+}
+
+// ============================================================================
+// PHASE 8: VISUAL CSS & PRIMITIVES
+// ============================================================================
+
+// ELEMENT MODEL - Enhanced component system for visual builder
+model Element {
+  id            String      @id @default(cuid())
+  pageId        String
+  variantId     String?
+
+  // Element Definition
+  type          String      // PrimitiveType or ComponentType
+  name          String
+  order         Int
+
+  // Hierarchy
+  parentId      String?     // Parent element ID for nesting
+  depth         Int         @default(0)
+  path          String      // Materialized path for tree queries
+
+  // Content & Styles
+  content       Json        @db.JsonB
+  styles        Json        @db.JsonB  // ResponsiveStyles
+  stateStyles   Json?       @db.JsonB  // Hover/focus/active styles
+
+  // Metadata
+  locked        Boolean     @default(false)
+  hidden        Boolean     @default(false)
+  className     String?
+  attributes    Json?
+
+  // AI
+  aiPrompt      String?     @db.Text
+  aiGenerated   Boolean     @default(false)
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  page          Page        @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  variant       PageVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  parent        Element?    @relation("ElementHierarchy", fields: [parentId], references: [id])
+  children      Element[]   @relation("ElementHierarchy")
+
+  @@index([pageId])
+  @@index([parentId])
+  @@index([pageId, order])
+  @@index([path])
+}
+
+// DESIGN SYSTEM - Design tokens per workspace
+model DesignSystem {
+  id            String    @id @default(cuid())
+  workspaceId   String    @unique
+  name          String    @default("Default")
+
+  // Token Values
+  colors        Json      @db.JsonB
+  typography    Json      @db.JsonB
+  spacing       Json      @db.JsonB
+  borderRadius  Json      @db.JsonB
+  shadows       Json      @db.JsonB
+  breakpoints   Json      @db.JsonB
+
+  // Custom CSS Variables
+  customTokens  Json?     @db.JsonB
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+// CUSTOM FONTS
+model CustomFont {
+  id            String    @id @default(cuid())
+  workspaceId   String
+  name          String
+  family        String
+  weight        Int[]
+  style         String[]  // normal, italic
+
+  // Font Files
+  woff2Url      String?
+  woffUrl       String?
+  ttfUrl        String?
+
+  createdAt     DateTime  @default(now())
+
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, family])
+  @@index([workspaceId])
 }
