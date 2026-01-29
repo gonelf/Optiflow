@@ -16,6 +16,7 @@ import {
   Copy,
   Edit,
   ExternalLink,
+  Sparkles,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -32,6 +33,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 interface Page {
   id: string;
@@ -58,9 +60,13 @@ export default function PagesListPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isAICreateDialogOpen, setIsAICreateDialogOpen] = useState(false);
   const [newPageTitle, setNewPageTitle] = useState('');
   const [newPageSlug, setNewPageSlug] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [aiPagePurpose, setAiPagePurpose] = useState('');
+  const [aiDesignStyle, setAiDesignStyle] = useState('');
+  const [isAIGenerating, setIsAIGenerating] = useState(false);
 
   const workspaceSlug = params.workspaceSlug as string;
 
@@ -194,6 +200,71 @@ export default function PagesListPage() {
     }
   };
 
+  const handleAICreatePage = async () => {
+    if (!aiPagePurpose || aiPagePurpose.length < 10) {
+      toast({
+        title: 'Error',
+        description: 'Please provide a detailed description of what the page is for (at least 10 characters).',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setIsAIGenerating(true);
+
+      // Get workspace ID
+      const workspaceResponse = await fetch(`/api/workspaces?slug=${workspaceSlug}`);
+      if (!workspaceResponse.ok) throw new Error('Failed to fetch workspace');
+
+      const workspaceData = await workspaceResponse.json();
+      const workspaceId = workspaceData.workspace.id;
+
+      // Create page with AI
+      const response = await fetch('/api/ai/ai-create-page', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          workspaceId,
+          pagePurpose: aiPagePurpose,
+          designStyle: pages.length === 0 && aiDesignStyle ? aiDesignStyle : undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create page with AI');
+      }
+
+      const data = await response.json();
+
+      toast({
+        title: 'Page created with AI',
+        description: 'Your AI-generated page has been created successfully.',
+      });
+
+      // Reset form
+      setAiPagePurpose('');
+      setAiDesignStyle('');
+      setIsAICreateDialogOpen(false);
+
+      // Navigate to new AI editor
+      const redirectUrl = data.redirectUrl || `/${workspaceSlug}/ai-pages/${data.page.id}`;
+      router.push(redirectUrl);
+    } catch (error: any) {
+      console.error('Error creating page with AI:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to create page with AI. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsAIGenerating(false);
+    }
+  };
+
   const filteredPages = pages.filter(
     (page) =>
       page.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -218,10 +289,16 @@ export default function PagesListPage() {
               Create and manage your landing pages
             </p>
           </div>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Page
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setIsAICreateDialogOpen(true)}>
+              <Sparkles className="mr-2 h-4 w-4" />
+              Create with AI
+            </Button>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              New Page
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -308,8 +385,8 @@ export default function PagesListPage() {
                 </span>
                 <span
                   className={`rounded-full px-2 py-0.5 ${page.status === 'PUBLISHED'
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-gray-100 text-gray-700'
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-gray-100 text-gray-700'
                     }`}
                 >
                   {page.status}
@@ -378,6 +455,95 @@ export default function PagesListPage() {
             </Button>
             <Button onClick={handleCreatePage} disabled={isCreating}>
               {isCreating ? 'Creating...' : 'Create Page'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* AI Create Page Dialog */}
+      <Dialog open={isAICreateDialogOpen} onOpenChange={setIsAICreateDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-purple-500" />
+              Create Page with AI
+            </DialogTitle>
+            <DialogDescription>
+              Describe what the page is for and AI will generate a complete design for you.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="ai-purpose">What is this page for?</Label>
+              <Textarea
+                id="ai-purpose"
+                value={aiPagePurpose}
+                onChange={(e) => setAiPagePurpose(e.target.value)}
+                placeholder="e.g., A landing page for our new AI-powered analytics tool that helps businesses track customer behavior and optimize conversions"
+                className="mt-2 min-h-[100px]"
+                disabled={isAIGenerating}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Be specific about the purpose, target audience, and key features.
+              </p>
+            </div>
+
+            {pages.length === 0 && (
+              <div>
+                <Label htmlFor="ai-style">Design Style (Optional)</Label>
+                <Input
+                  id="ai-style"
+                  value={aiDesignStyle}
+                  onChange={(e) => setAiDesignStyle(e.target.value)}
+                  placeholder="e.g., modern and minimal, bold and colorful, professional corporate"
+                  className="mt-2"
+                  disabled={isAIGenerating}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  This is your first page. Describe your preferred design style.
+                </p>
+              </div>
+            )}
+
+            {pages.length > 0 && (
+              <div className="rounded-lg bg-blue-50 p-3 text-sm text-blue-900">
+                <p className="font-medium">Design Consistency</p>
+                <p className="text-xs mt-1">
+                  AI will analyze your existing {pages.length} page{pages.length > 1 ? 's' : ''} and create a design that matches your current style.
+                </p>
+              </div>
+            )}
+
+            {isAIGenerating && (
+              <div className="rounded-lg bg-purple-50 p-4 text-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-500 border-t-transparent mx-auto" />
+                <p className="mt-3 text-sm font-medium text-purple-900">Generating your page with AI...</p>
+                <p className="text-xs text-purple-700 mt-1">This may take 10-30 seconds</p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsAICreateDialogOpen(false)}
+              disabled={isAIGenerating}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleAICreatePage} disabled={isAIGenerating || !aiPagePurpose}>
+              {isAIGenerating ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Generate Page
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

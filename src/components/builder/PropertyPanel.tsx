@@ -28,6 +28,8 @@ import {
   BackgroundPanel
 } from './style-panel';
 
+
+
 export function PropertyPanel() {
   const {
     getSelectedComponent,
@@ -75,6 +77,15 @@ export function PropertyPanel() {
     });
   };
 
+  const handleAIUpdate = (updatedElement: any) => {
+    if (updatedElement && selectedElement) {
+      updateElement(selectedElement.id, {
+        content: updatedElement.content,
+        styles: updatedElement.styles,
+      });
+    }
+  };
+
   const renderComponentProperties = () => {
     if (!selectedComponent) return null;
 
@@ -103,12 +114,85 @@ export function PropertyPanel() {
   const renderElementProperties = () => {
     if (!selectedElement) return null;
 
-    // TODO: Create specific property editors for primitives (TextProperties, ImageProperties, etc.)
+    const handleContentChange = (key: string, value: any) => {
+      updateElement(selectedElement.id, {
+        content: {
+          ...(selectedElement.content as any),
+          [key]: value,
+        },
+      });
+    };
+
+    // Cast to any for flexible access across different element types
+    const content = selectedElement.content as any;
+
     return (
-      <div className="space-y-4">
-        <div className="p-4 bg-muted/50 rounded-md border text-xs text-muted-foreground">
-          Property editors for <strong>{selectedElement.type}</strong> primitives are coming soon. Use the Style tab for visual control.
+      <div className="space-y-6">
+        {/* Common Properties */}
+        <div className="space-y-2">
+          <Label className="text-xs font-semibold uppercase text-muted-foreground">Element Type</Label>
+          <div className="text-sm font-medium capitalize">{selectedElement.type}</div>
         </div>
+
+        {/* Text Content */}
+        {(selectedElement.type === 'text' || selectedElement.type === 'button') && (
+          <div className="space-y-2">
+            <Label className="text-xs">Text Content</Label>
+            <Input
+              value={content?.content || ''}
+              onChange={(e) => handleContentChange('content', e.target.value)}
+              placeholder="Enter text..."
+            />
+          </div>
+        )}
+
+        {/* Image Properties */}
+        {selectedElement.type === 'image' && (
+          <>
+            <div className="space-y-2">
+              <Label className="text-xs">Image Source</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={content?.src || ''}
+                  onChange={(e) => handleContentChange('src', e.target.value)}
+                  placeholder="https://..."
+                />
+                <Button variant="outline" size="icon" className="shrink-0">
+                  <span className="sr-only">Upload</span>
+                  {/* Icon placeholder */}
+                  <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.81825 1.18188C7.64251 1.00615 7.35759 1.00615 7.18185 1.18188L4.18185 4.18188C4.00611 4.35761 4.00611 4.64254 4.18185 4.81828C4.35759 4.99401 4.64251 4.99401 4.81825 4.81828L7.05005 2.58648V9.49996C7.05005 9.74849 7.25152 9.94996 7.50005 9.94996C7.74858 9.94996 7.95005 9.74849 7.95005 9.49996V2.58648L10.1819 4.81828C10.3576 4.99401 10.6425 4.99401 10.8182 4.81828C10.994 4.64254 10.994 4.35761 10.8182 4.18188L7.81825 1.18188ZM2.5 9.99997C2.77614 9.99997 3 10.2238 3 10.5V12C3 12.5523 3.44772 13 4 13H11C11.5523 13 12 12.5523 12 12V10.5C12 10.2238 12.2239 9.99997 12.5 9.99997C12.7761 9.99997 13 10.2238 13 10.5V12C13 13.1046 12.1046 14 11 14H4C2.89543 14 2 13.1046 2 12V10.5C2 10.2238 2.22386 9.99997 2.5 9.99997Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path></svg>
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Alt Text</Label>
+              <Input
+                value={content?.alt || ''}
+                onChange={(e) => handleContentChange('alt', e.target.value)}
+                placeholder="Description for accessibility"
+              />
+            </div>
+          </>
+        )}
+
+        {/* Link Properties */}
+        {(selectedElement.type === 'link' || content?.tagName === 'a') && (
+          <div className="space-y-2">
+            <Label className="text-xs">Link URL</Label>
+            <Input
+              value={content?.href || ''}
+              onChange={(e) => handleContentChange('href', e.target.value)}
+              placeholder="https://... or /path"
+            />
+          </div>
+        )}
+
+        {/* Container Properties */}
+        {selectedElement.type === 'container' && (
+          <div className="p-4 bg-muted/30 rounded border text-xs">
+            Style this container using the <strong>Style</strong> tab.
+          </div>
+        )}
       </div>
     );
   };
@@ -139,14 +223,16 @@ export function PropertyPanel() {
             {item.type}
           </p>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8 w-8 p-0"
-          onClick={handleClose}
-        >
-          <X className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0"
+            onClick={handleClose}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Item Name */}
@@ -260,6 +346,8 @@ export function PropertyPanel() {
 
           <TabsContent value="advanced" className="p-4">
             <div className="space-y-4">
+
+
               <div>
                 <Label className="text-xs">Custom CSS Classes</Label>
                 <Input

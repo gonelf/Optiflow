@@ -20,13 +20,18 @@ export async function GET(req: NextRequest, context: RouteContext) {
 
     const { pageId } = context.params;
 
-    // Fetch page with components
+    // Fetch page with components and elements
     const page = await prisma.page.findUnique({
       where: {
         id: pageId,
       },
       include: {
         components: {
+          orderBy: {
+            order: 'asc',
+          },
+        },
+        elements: {
           orderBy: {
             order: 'asc',
           },
@@ -116,6 +121,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       ogImage,
       favicon,
       components,
+      elements,
       status,
     } = body;
 
@@ -163,13 +169,49 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       }
     }
 
-    // Fetch updated page with components
+    // Update elements if provided (for AI editor)
+    if (elements && Array.isArray(elements)) {
+      // Delete existing elements
+      await prisma.element.deleteMany({
+        where: {
+          pageId,
+          variantId: null,
+        },
+      });
+
+      // Create new elements
+      if (elements.length > 0) {
+        await prisma.element.createMany({
+          data: elements.map((el: any) => ({
+            id: el.id,
+            pageId,
+            type: el.type,
+            name: el.name,
+            order: el.order,
+            parentId: el.parentId,
+            depth: el.depth,
+            path: el.path || '',
+            content: el.content,
+            styles: el.styles,
+            className: el.className,
+            variantId: null,
+          })),
+        });
+      }
+    }
+
+    // Fetch updated page with components and elements
     const result = await prisma.page.findUnique({
       where: {
         id: pageId,
       },
       include: {
         components: {
+          orderBy: {
+            order: 'asc',
+          },
+        },
+        elements: {
           orderBy: {
             order: 'asc',
           },

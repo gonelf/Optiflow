@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
                 seoTitle: generatedContent.seoTitle,
                 seoDescription: generatedContent.seoDescription,
                 components: {
-                    create: generatedContent.components.map((comp, index) => ({
+                    create: (generatedContent.components || []).map((comp, index) => ({
                         type: comp.type.toUpperCase() as any,
                         name: comp.type.charAt(0) + comp.type.slice(1).toLowerCase(),
                         order: index,
