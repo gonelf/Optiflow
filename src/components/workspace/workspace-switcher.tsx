@@ -18,9 +18,10 @@ import { cn } from '@/lib/utils'
 
 interface WorkspaceSwitcherProps {
   workspaceSlug?: string
+  isCollapsed?: boolean
 }
 
-export function WorkspaceSwitcher({ workspaceSlug }: WorkspaceSwitcherProps) {
+export function WorkspaceSwitcher({ workspaceSlug, isCollapsed }: WorkspaceSwitcherProps) {
   const router = useRouter()
   const { workspaces, currentWorkspace } = useWorkspace(workspaceSlug)
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -33,9 +34,23 @@ export function WorkspaceSwitcher({ workspaceSlug }: WorkspaceSwitcherProps) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="w-full justify-between">
-            <span className="truncate">{currentWorkspace?.name || 'Select workspace'}</span>
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <Button
+            variant="outline"
+            className={cn(
+              'flex w-full items-center gap-2',
+              isCollapsed ? 'justify-center px-2' : 'justify-between'
+            )}
+          >
+            {isCollapsed ? (
+              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground font-bold shrink-0">
+                {currentWorkspace?.name?.charAt(0).toUpperCase() || 'W'}
+              </div>
+            ) : (
+              <>
+                <span className="truncate">{currentWorkspace?.name || 'Select workspace'}</span>
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </>
+            )}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56">

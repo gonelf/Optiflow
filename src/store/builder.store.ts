@@ -24,6 +24,7 @@ interface HistoryState {
   components: BuilderComponent[];
   elements: BuilderElement[];
   metadata: PageMetadata;
+  elementPool?: BuilderElement[];
 }
 
 interface BuilderState {
@@ -32,6 +33,9 @@ interface BuilderState {
   metadata: PageMetadata;
   components: BuilderComponent[];
   elements: BuilderElement[];
+
+  // Element pool (temporary storage for reusable elements)
+  elementPool: BuilderElement[];
 
   // UI state
   selection: CanvasSelection;
@@ -63,6 +67,13 @@ interface BuilderState {
   deleteElement: (id: string) => void;
   reorderElement: (id: string, newOrder: number, newParentId?: string | null) => void;
   duplicateElement: (id: string) => void;
+
+  // Element Pool (Saved elements)
+  // Element Pool (Saved elements)
+  saveToPool: (id: string) => void;
+  saveElementToPool: (element: BuilderElement) => void;
+  removeFromPool: (id: string) => void;
+  clearPool: () => void;
 
   // Selection
   selectComponent: (id: string | null) => void;
@@ -100,6 +111,9 @@ interface BuilderState {
   getElementById: (id: string) => BuilderElement | null;
   getElementsByParentId: (parentId: string | null) => BuilderElement[];
   buildElementTree: () => ElementTreeNode[];
+
+  // Element pool actions
+  addElementFromPool: (element: BuilderElement, parentId?: string | null, order?: number) => void;
 }
 
 const initialMetadata: PageMetadata = {
@@ -112,6 +126,7 @@ const initialState = {
   metadata: initialMetadata,
   components: [],
   elements: [],
+  elementPool: [],
   selection: {
     selectedElementIds: [],
     hoveredElementId: null,
@@ -128,6 +143,7 @@ const initialState = {
   isDragging: false,
   isSaving: false,
   history: [],
+
   currentHistoryIndex: -1,
   maxHistorySize: 50,
 };
@@ -323,26 +339,45 @@ export const useBuilderStore = create<BuilderState>()(
 
       duplicateElement: (id: string) =>
         set((state) => {
-          const element = state.elements.find((el) => el.id === id);
-          if (!element) return state;
+          const elementToDuplicate = state.elements.find((el) => el.id === id);
+          if (!elementToDuplicate) return state;
 
-          const newId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-          const newElement: BuilderElement = {
-            ...element,
-            id: newId,
-            name: `${element.name} (Copy)`,
-            order: element.order + 1,
-            createdAt: new Date(),
-            updatedAt: new Date(),
+          const newElements: BuilderElement[] = [];
+
+          // Recursive function to clone element and its children
+          const cloneElementRecursive = (element: BuilderElement, newParentId: string | null): string => {
+            const newId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+            const clonedElement: BuilderElement = {
+              ...element,
+              id: newId,
+              parentId: newParentId,
+              name: newParentId === elementToDuplicate.parentId ? `${element.name} (Copy)` : element.name,
+              order: newParentId === elementToDuplicate.parentId ? element.order + 1 : element.order,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            };
+
+            newElements.push(clonedElement);
+
+            // Find and clone Ids
+            const children = state.elements.filter(child => child.parentId === element.id);
+            children.forEach(child => {
+              cloneElementRecursive(child, newId);
+            });
+
+            return newId;
           };
+
+          const newRootId = cloneElementRecursive(elementToDuplicate, elementToDuplicate.parentId);
 
           setTimeout(() => get().saveToHistory(), 0);
 
           return {
-            elements: [...state.elements, newElement],
+            elements: [...state.elements, ...newElements],
             selection: {
               ...state.selection,
-              selectedElementIds: [newId],
+              selectedElementIds: [newRootId],
             },
           };
         }),
@@ -533,6 +568,83 @@ export const useBuilderStore = create<BuilderState>()(
 
         return topLevel.map(buildNode);
       },
+
+      // --- Element Pool Actions ---
+      saveToPool: (elementId: string) =>
+        set((state) => {
+          const element = state.elements.find((el) => el.id === elementId);
+          if (!element) return state;
+
+          // Create a deep copy and remove page-specific info
+          const pooledElement: BuilderElement = {
+            ...JSON.parse(JSON.stringify(element)),
+            id: `pool-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            pageId: '',
+            parentId: null,
+            order: 0,
+            depth: 0,
+            path: '',
+          };
+
+          return {
+            elementPool: [...state.elementPool, pooledElement],
+          };
+        }),
+
+      saveElementToPool: (element: BuilderElement) =>
+        set((state) => {
+          // Create a deep copy and remove page-specific info
+          const pooledElement: BuilderElement = {
+            ...JSON.parse(JSON.stringify(element)),
+            id: `pool-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            pageId: '',
+            parentId: null,
+            order: 0,
+            depth: 0,
+            path: '',
+          };
+
+          return {
+            elementPool: [...state.elementPool, pooledElement],
+          };
+        }),
+
+      removeFromPool: (elementId: string) =>
+        set((state) => ({
+          elementPool: state.elementPool.filter((el) => el.id !== elementId),
+        })),
+
+      clearPool: () =>
+        set(() => ({
+          elementPool: [],
+        })),
+
+      addElementFromPool: (element: BuilderElement, parentId?: string | null, order?: number) =>
+        set((state) => {
+          // Create a new instance with proper IDs
+          const newElement: BuilderElement = {
+            ...JSON.parse(JSON.stringify(element)),
+            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            pageId: state.pageId || '',
+            parentId: parentId || null,
+            order: order ?? state.elements.filter((el) => el.parentId === parentId).length,
+            depth: parentId ? (state.getElementById(parentId)?.depth ?? 0) + 1 : 0,
+            path: parentId ? `${state.getElementById(parentId)?.path ?? ''}/${element.id}` : element.id,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+
+          setTimeout(() => get().saveToHistory(), 0);
+
+          return {
+            elements: [...state.elements, newElement],
+            selection: {
+              ...state.selection,
+              selectedElementIds: [newElement.id],
+            },
+            selectedComponentId: null,
+          };
+        }),
     }),
     { name: 'BuilderStore' }
   )

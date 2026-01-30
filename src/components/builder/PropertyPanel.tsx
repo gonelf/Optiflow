@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ElementActions } from './ElementActions';
 
 // Property editors for different component types
 import { HeroProperties } from './properties/HeroProperties';
@@ -224,6 +225,12 @@ export function PropertyPanel() {
           </p>
         </div>
         <div className="flex items-center gap-1">
+          {isElement && selectedElement && (
+            <ElementActions
+              elementId={selectedElement.id}
+              onActionComplete={handleClose}
+            />
+          )}
           <Button
             variant="ghost"
             size="sm"
