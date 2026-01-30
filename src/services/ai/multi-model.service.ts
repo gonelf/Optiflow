@@ -1,8 +1,8 @@
 /**
  * Multi-Model AI Service
- * Implements automatic fallback between different Gemini 2.x models
- * Priority: gemini-2.0-flash-exp -> gemini-2.5-flash -> gemini-2.0-flash
- * All models stay in the free tier! (Gemini 1.x models are deprecated)
+ * Implements automatic fallback between different Gemini models
+ * Models are configured via GEMINI_MODELS environment variable
+ * Default: gemini-2.5-flash,gemini-flash-latest
  */
 
 import { GeminiService } from './gemini.service';
@@ -327,32 +327,58 @@ export class MultiModelService {
 }
 
 /**
- * Create default multi-model service with Gemini 2.x fallback chain
- * Using only current, supported models (1.x models are deprecated)
+ * Create default multi-model service with Gemini fallback chain
+ * Models are configured via GEMINI_MODELS environment variable
+ * Format: comma-separated list of model names in priority order
+ * Example: GEMINI_MODELS="gemini-2.5-flash,gemini-flash-latest"
  */
 export function createDefaultMultiModelService(): MultiModelService {
-  const configs: AIModelConfig[] = [
-    {
-      provider: 'gemini',
-      model: 'gemini-2.0-flash-exp',
-      name: 'Gemini 2.0 Flash (Experimental)',
-      priority: 1, // High performance, lowest latency
-    },
-    {
-      provider: 'gemini',
-      model: 'gemini-1.5-flash-latest',
-      name: 'Gemini 1.5 Flash (Latest)',
-      priority: 2, // Current stable production standard
-    },
-    {
-      provider: 'gemini',
-      model: 'gemini-1.5-pro-latest',
-      name: 'Gemini 1.5 Pro (Latest)',
-      priority: 3, // Most capable for complex tasks
-    },
-  ];
+  // Read models from environment variable or use defaults
+  const modelsEnv = process.env.GEMINI_MODELS || 'gemini-2.5-flash,gemini-flash-latest';
+  const modelNames = modelsEnv.split(',').map(m => m.trim()).filter(m => m.length > 0);
+
+  // Create configs from model names
+  const configs: AIModelConfig[] = modelNames.map((model, index) => ({
+    provider: 'gemini',
+    model,
+    name: formatModelName(model),
+    priority: index + 1,
+  }));
+
+  // Fallback to defaults if no valid models configured
+  if (configs.length === 0) {
+    console.warn('⚠ No valid models in GEMINI_MODELS, using defaults');
+    configs.push(
+      {
+        provider: 'gemini',
+        model: 'gemini-2.5-flash',
+        name: 'Gemini 2.5 Flash',
+        priority: 1,
+      },
+      {
+        provider: 'gemini',
+        model: 'gemini-flash-latest',
+        name: 'Gemini Flash (Latest)',
+        priority: 2,
+      }
+    );
+  }
+
+  console.log(`🤖 Configured AI models: ${configs.map(c => c.model).join(', ')}`);
 
   return new MultiModelService(configs);
+}
+
+/**
+ * Format model name for display
+ */
+function formatModelName(model: string): string {
+  // Convert model name to friendly display name
+  // e.g., "gemini-2.5-flash" -> "Gemini 2.5 Flash"
+  return model
+    .split('-')
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
 }
 
 /**

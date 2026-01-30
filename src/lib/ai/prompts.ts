@@ -252,8 +252,131 @@ Guidelines:
 - Set required fields thoughtfully`;
 }
 
+export interface PageWithContextInput {
+  pagePurpose: string;
+  existingPages?: Array<{
+    title: string;
+    components: any[];
+  }>;
+  designStyle?: string;
+}
+
+export function generatePageWithContextPrompt(input: PageWithContextInput): string {
+  const { pagePurpose, existingPages, designStyle } = input;
+
+  let contextSection = '';
+
+  if (existingPages && existingPages.length > 0) {
+    // Analyze existing pages for design consistency
+    const componentTypes = new Set<string>();
+    const componentPatterns: any[] = [];
+
+    existingPages.forEach(page => {
+      page.components?.forEach(comp => {
+        componentTypes.add(comp.type);
+        componentPatterns.push({
+          type: comp.type,
+          config: comp.config,
+          styles: comp.styles,
+          content: comp.content
+        });
+      });
+    });
+
+    contextSection = `DESIGN CONTEXT (Maintain Consistency):
+You are creating a new page for a workspace that already has ${existingPages.length} page(s). 
+Analyze the existing pages and maintain design consistency.
+
+Existing Pages:
+${existingPages.map((page, idx) => `
+${idx + 1}. "${page.title}"
+   Components: ${page.components?.map(c => c.type).join(', ') || 'none'}
+`).join('\n')}
+
+Component Patterns Found:
+${Array.from(componentTypes).join(', ')}
+
+Sample Component Structures:
+${JSON.stringify(componentPatterns.slice(0, 3), null, 2)}
+
+INSTRUCTIONS:
+1. Match the component types and structures used in existing pages
+2. Maintain similar styling patterns (colors, spacing, layouts)
+3. Keep the same design language and visual hierarchy
+4. Use similar content structures and formatting
+5. Ensure the new page feels like part of the same website`;
+  } else if (designStyle) {
+    // Use user-specified design style
+    contextSection = `DESIGN STYLE:
+This is the first page in the workspace. Create a ${designStyle} design.
+
+Style Guidelines for "${designStyle}":
+- Choose appropriate color schemes and typography
+- Select suitable component layouts
+- Apply consistent spacing and visual hierarchy
+- Create a cohesive, professional design
+- Use modern, conversion-focused patterns`;
+  } else {
+    // Default to modern, professional style
+    contextSection = `DESIGN STYLE:
+This is the first page in the workspace. Create a modern, professional design with:
+- Clean, minimalist aesthetics
+- Clear visual hierarchy
+- Conversion-focused layouts
+- Professional color palette
+- Accessible, user-friendly components`;
+  }
+
+  return `You are a WORLD-CLASS web designer creating PREMIUM, PRODUCTION-READY landing pages. Your designs must be VISUALLY STUNNING and rival the best SaaS landing pages (like Stripe, Linear, Vercel).
+
+PAGE PURPOSE:
+${pagePurpose}
+
+${contextSection}
+
+🎨 DESIGN PHILOSOPHY:
+Create a page that makes users say "WOW!" at first glance. Use:
+- **Rich color palettes** (gradients, vibrant accents, depth)
+- **Modern aesthetics** (glassmorphism, subtle shadows, smooth transitions)
+- **Professional typography** (clear hierarchy, generous spacing)
+- **Visual interest** (backgrounds, patterns, illustrations)
+- **Multiple sections** (Hero, Features, Social Proof, Pricing, FAQ, CTA, Footer)
+
+HTML STRUCTURE:
+Generate a single semantic HTML5 \`<body>\` content structure (do not include <head> or <html> tags).
+- Use semantic tags: \`<header>\`, \`<section>\`, \`<nav>\`, \`<footer>\`, \`<article>\`
+- **CRITICAL**: Apply ALL styling using inline \`style="..."\` attributes. Do NOT use classes.
+- Use images with \`src\` placeholders (e.g., https://via.placeholder.com/800x400).
+- Include SEO metadata in a special hidden div at the start:
+  \`<div id="seo-metadata" data-title="Page Title" data-description="Meta description"></div>\`
+
+TARGET SECTIONS:
+Analyze the page purpose, industry, and audience to determine the most effective sections for this specific case.
+You must include at least 5-7 distinct sections to ensure a full, professional page.
+
+Guidance for section selection:
+1. **HERO SECTION** (Mandatory): High-impact header with headline, subhead, and CTAs.
+2. **Core Content**: Select sections that best explain the value proposition (e.g., Features, How it Works, Benefits, Portfolio, Services).
+3. **Social Proof**: Build trust (e.g., Testimonials, Logos, Stats) if relevant.
+4. **Conversion**: Pricing, Contact, or Newsletter depending on the page goal.
+5. **Final CTA**: Strong closing section.
+6. **Footer**: Standard footer.
+
+Ensure a logical flow that tells a story and guides the user towards the primary goal. Don't feel constrained to a specific formula if the content demands something unique.
+
+🎨 STYLING RULES (Use inline styles):
+- **Gradients**: \`background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)\`
+- **Typography**: \`font-family: sans-serif; font-size: 3.75rem; font-weight: 800; line-height: 1.1; color: #111827\`
+- **Flexbox**: \`display: flex; flex-direction: column; align-items: center; gap: 24px\`
+- **Grid**: \`display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px\`
+- **Shadows**: \`box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1)\`
+- **Rounded**: \`border-radius: 12px\`
+
+Generate the HTML string now. Return ONLY valid HTML code, no markdown fencing needed.`;
+}
+
 export const SYSTEM_PROMPTS = {
-  PAGE_GENERATOR: 'You are an expert landing page designer who creates high-converting pages using proven design patterns and compelling copy.',
+  PAGE_GENERATOR: 'You are an expert web developer who writes clean, semantic HTML structure and modern CSS styles generated as JSON.',
   COPY_OPTIMIZER: 'You are a conversion copywriting expert who optimizes headlines, CTAs, and body copy for maximum engagement.',
   SEO_SPECIALIST: 'You are an SEO expert who creates optimized meta tags and content structure for better search rankings.',
   UX_DESIGNER: 'You are a UX expert who designs intuitive, user-friendly interfaces that guide visitors toward conversion goals.',

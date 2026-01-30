@@ -104,6 +104,14 @@ export default async function PublishedPage({
           order: 'asc',
         },
       },
+      elements: {
+        where: {
+          variantId: null, // Get base elements
+        },
+        orderBy: {
+          order: 'asc',
+        },
+      },
       abTests: {
         where: {
           status: 'RUNNING',
@@ -112,6 +120,11 @@ export default async function PublishedPage({
           variants: {
             include: {
               components: {
+                orderBy: {
+                  order: 'asc',
+                },
+              },
+              elements: {
                 orderBy: {
                   order: 'asc',
                 },
@@ -129,6 +142,7 @@ export default async function PublishedPage({
 
   // Determine which variant to show
   let components = page.components;
+  let elements = page.elements;
   let variantId: string | null = null;
 
   if (page.abTests.length > 0 && searchParams.variant) {
@@ -136,6 +150,7 @@ export default async function PublishedPage({
     const variant = activeTest.variants.find((v) => v.id === searchParams.variant);
     if (variant) {
       components = variant.components as any;
+      elements = variant.elements as any;
       variantId = variant.id;
     }
   }
@@ -180,7 +195,7 @@ export default async function PublishedPage({
       )}
 
       {/* Render page components */}
-      <PageRenderer components={components} pageId={page.id} variantId={variantId} />
+      <PageRenderer components={components} elements={elements} pageId={page.id} variantId={variantId} />
     </>
   );
 }
