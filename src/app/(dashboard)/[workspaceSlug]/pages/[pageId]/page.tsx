@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Save, Eye, Settings, ArrowLeft } from 'lucide-react';
+import { Save, Eye, Settings, ArrowLeft, Layout } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Element } from '@prisma/client';
 import { AIEditPopover } from '@/components/builder/ai/AIEditPopover';
@@ -21,6 +21,8 @@ import {
 } from '@/components/builder/style-panel';
 import { ElementActions } from '@/components/builder/ElementActions';
 import { ElementPoolPalette } from '@/components/builder/ElementPoolPalette';
+import { TailwindElementsPalette } from '@/components/builder/TailwindElementsPalette';
+import { ThemeChanger } from '@/components/builder/ThemeChanger';
 import {
   DndContext,
   DragOverlay,
@@ -49,6 +51,8 @@ export default function BuilderPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showElementPool, setShowElementPool] = useState(false);
+  const [showTailwindPalette, setShowTailwindPalette] = useState(false);
+  const [currentTheme, setCurrentTheme] = useState('default');
   const [draggedElement, setDraggedElement] = useState<any>(null);
 
   const sensors = useSensors(
@@ -358,14 +362,37 @@ export default function BuilderPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <ThemeChanger
+              currentThemeId={currentTheme}
+              onThemeChange={(themeId, updatedElements) => {
+                setCurrentTheme(themeId);
+                setElements(updatedElements);
+              }}
+              elements={elements}
+            />
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShowElementPool(!showElementPool)}
+              onClick={() => {
+                setShowTailwindPalette(!showTailwindPalette);
+                if (!showTailwindPalette) setShowElementPool(false);
+              }}
+              className={showTailwindPalette ? 'bg-primary/10 border-primary' : ''}
+            >
+              <Layout className="h-4 w-4 mr-2" />
+              {showTailwindPalette ? 'Hide Elements' : 'Tailwind'}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setShowElementPool(!showElementPool);
+                if (!showElementPool) setShowTailwindPalette(false);
+              }}
               className={showElementPool ? 'bg-primary/10 border-primary' : ''}
             >
               <Save className="h-4 w-4 mr-2" />
-              {showElementPool ? 'Hide Pool' : 'Show Pool'}
+              {showElementPool ? 'Hide Pool' : 'My Pool'}
             </Button>
             <Button variant="outline" size="sm" onClick={handlePreview}>
               <Eye className="h-4 w-4 mr-2" />
@@ -425,6 +452,15 @@ export default function BuilderPage() {
                 onClose={() => setSelectedElementId(null)}
                 setShowElementPool={setShowElementPool}
                 setElements={setElements}
+              />
+            )}
+
+            {/* Tailwind Elements Palette */}
+            {showTailwindPalette && (
+              <TailwindElementsPalette
+                onAddElement={(element) => {
+                  addElementToState(element, selectedElementId);
+                }}
               />
             )}
 
