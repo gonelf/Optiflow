@@ -15,6 +15,7 @@ const updateWorkspaceSchema = z.object({
     .regex(/^[a-z0-9-]+$/)
     .optional(),
   domain: z.string().optional(),
+  startingPageId: z.string().nullable().optional(),
 })
 
 export async function GET(

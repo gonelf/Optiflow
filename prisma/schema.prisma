@@ -43,12 +43,14 @@ model Workspace {
   stripeCustomerId String?
   stripeSubscriptionId String?
   domain        String?   // Custom domain
+  startingPageId String?  // The default/home page for this workspace
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   // Relations
   members       WorkspaceMember[]
   pages         Page[]
+  startingPage  Page?     @relation("StartingPage", fields: [startingPageId], references: [id], onDelete: SetNull)
   templates     Template[]
   integrations  Integration[]
   analytics     AnalyticsSession[]
@@ -127,6 +129,7 @@ model Page {
   analytics     AnalyticsSession[]
   versions      PageVersion[]
   translations  PageTranslation[]
+  startingForWorkspaces Workspace[] @relation("StartingPage")
 
   @@unique([workspaceId, slug])
   @@index([workspaceId])

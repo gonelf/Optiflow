@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -9,19 +9,31 @@ import { Label } from '@/components/ui/label'
 import { useWorkspace } from '@/hooks/use-workspace'
 import { useToast } from '@/hooks/use-toast'
 import { Trash2 } from 'lucide-react'
+import { StartingPageSelector } from '@/components/workspace/starting-page-selector'
 
 export default function WorkspaceSettings() {
   const router = useRouter()
   const params = useParams()
   const { toast } = useToast()
   const workspaceSlug = params.workspaceSlug as string
-  const { currentWorkspace, updateWorkspace, deleteWorkspace, role } = useWorkspace(workspaceSlug)
+  const { currentWorkspace, workspace, updateWorkspace, deleteWorkspace, role } = useWorkspace(workspaceSlug)
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: currentWorkspace?.name || '',
     slug: currentWorkspace?.slug || '',
     domain: currentWorkspace?.domain || '',
   })
+
+  // Update form data when workspace loads
+  useEffect(() => {
+    if (currentWorkspace) {
+      setFormData({
+        name: currentWorkspace.name || '',
+        slug: currentWorkspace.slug || '',
+        domain: currentWorkspace.domain || '',
+      })
+    }
+  }, [currentWorkspace])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -73,6 +85,11 @@ export default function WorkspaceSettings() {
       })
       setIsLoading(false)
     }
+  }
+
+  const handleStartingPageUpdate = async (startingPageId: string | null) => {
+    if (!currentWorkspace) return
+    await updateWorkspace(currentWorkspace.id, { startingPageId })
   }
 
   const isAdmin = role === 'ADMIN' || role === 'OWNER'
@@ -137,6 +154,16 @@ export default function WorkspaceSettings() {
           </CardContent>
         </Card>
       </form>
+
+      {currentWorkspace && (
+        <StartingPageSelector
+          workspaceId={currentWorkspace.id}
+          currentStartingPage={workspace?.startingPage}
+          onUpdate={handleStartingPageUpdate}
+          isAdmin={isAdmin}
+          isLoading={isLoading}
+        />
+      )}
 
       {isOwner && (
         <Card className="border-destructive">
