@@ -44,7 +44,7 @@ export async function middleware(request: NextRequest) {
     // Protected routes (dashboard and workspace APIs)
     if (
       pathname.startsWith('/dashboard') ||
-      pathname.match(/^\/[^\/]+\/(settings|pages|templates)/) ||
+      pathname.match(/^\/[^\/]+\/(settings|pages|templates|preview|ab-tests|analytics)/) ||
       pathname.startsWith('/api/workspaces')
     ) {
       logger.debug(`Checking auth for protected route: ${pathname}`, { requestId })
