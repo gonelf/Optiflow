@@ -138,17 +138,27 @@ export default function BuilderPage() {
     try {
       // Flatten tree back to list
       const flatElements: any[] = [];
-      const flatten = (els: ExtendedElement[], parentId: string | null = null, depth = 0) => {
+      const flatten = (els: ExtendedElement[], parentId: string | null = null, depth = 0, parentPath = '') => {
         els.forEach((el, index) => {
           const { children, ...elementData } = el;
+
+          // Build path for element
+          const elementPath = parentPath ? `${parentPath}/${el.id}` : el.id;
+
           flatElements.push({
             ...elementData,
+            name: elementData.name || elementData.type || 'Unnamed',
             parentId,
             order: index,
             depth,
+            path: elementPath,
+            content: elementData.content || {},
+            styles: elementData.styles || {},
+            className: elementData.className || '',
           });
+
           if (children && children.length > 0) {
-            flatten(children, el.id, depth + 1);
+            flatten(children, el.id, depth + 1, elementPath);
           }
         });
       };
@@ -160,16 +170,21 @@ export default function BuilderPage() {
         body: JSON.stringify({ elements: flatElements }),
       });
 
-      if (!response.ok) throw new Error('Failed to save');
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Save error:', errorData);
+        throw new Error(errorData.error || 'Failed to save');
+      }
 
       toast({
         title: 'Saved',
         description: 'Page saved successfully',
       });
     } catch (error) {
+      console.error('Save error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to save page',
+        description: error instanceof Error ? error.message : 'Failed to save page',
         variant: 'destructive',
       });
     } finally {
@@ -186,12 +201,22 @@ export default function BuilderPage() {
   };
 
   const addElementToState = (elementTemplate: any, targetId?: string | null) => {
+    const elementId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const newElement: ExtendedElement = {
       ...elementTemplate,
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: elementId,
+      name: elementTemplate.name || elementTemplate.type || 'Unnamed Element',
+      pageId: params.pageId as string,
       order: 999, // default to end, will be fixed by siblings logic or flat sort
+      depth: 0,
+      path: elementId,
+      content: elementTemplate.content || {},
+      styles: elementTemplate.styles || {},
+      className: elementTemplate.className || '',
       children: [],
-      parentId: null // default
+      parentId: null, // default
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     if (!targetId) {

@@ -25,6 +25,7 @@ interface TailwindElement {
   icon: any;
   template: {
     type: string;
+    name: string;
     tagName?: string;
     content: any;
     styles: any;
@@ -43,6 +44,7 @@ const TAILWIND_ELEMENTS: TailwindElement[] = [
     icon: Type,
     template: {
       type: 'text',
+      name: 'Heading',
       tagName: 'h2',
       content: { tagName: 'h2', content: 'Heading Text' },
       styles: {},
@@ -58,6 +60,7 @@ const TAILWIND_ELEMENTS: TailwindElement[] = [
     icon: Type,
     template: {
       type: 'text',
+      name: 'Subheading',
       tagName: 'h3',
       content: { tagName: 'h3', content: 'Subheading Text' },
       styles: {},
@@ -73,6 +76,7 @@ const TAILWIND_ELEMENTS: TailwindElement[] = [
     icon: FileText,
     template: {
       type: 'text',
+      name: 'Paragraph',
       tagName: 'p',
       content: { tagName: 'p', content: 'This is a paragraph of text. You can edit this content.' },
       styles: {},
@@ -88,6 +92,7 @@ const TAILWIND_ELEMENTS: TailwindElement[] = [
     icon: FileText,
     template: {
       type: 'text',
+      name: 'Lead Text',
       tagName: 'p',
       content: { tagName: 'p', content: 'This is lead text that stands out from regular paragraphs.' },
       styles: {},
@@ -105,6 +110,7 @@ const TAILWIND_ELEMENTS: TailwindElement[] = [
     icon: Square,
     template: {
       type: 'button',
+      name: 'Primary Button',
       content: { content: 'Click me' },
       styles: {},
       className: 'px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors'
@@ -119,6 +125,7 @@ const TAILWIND_ELEMENTS: TailwindElement[] = [
     icon: Square,
     template: {
       type: 'button',
+      name: 'Secondary Button',
       content: { content: 'Learn More' },
       styles: {},
       className: 'px-6 py-3 bg-gray-200 text-gray-800 font-medium rounded-lg hover:bg-gray-300 transition-colors'
@@ -133,6 +140,7 @@ const TAILWIND_ELEMENTS: TailwindElement[] = [
     icon: Square,
     template: {
       type: 'button',
+      name: 'Outline Button',
       content: { content: 'Get Started' },
       styles: {},
       className: 'px-6 py-3 border-2 border-blue-600 text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-colors'
@@ -147,6 +155,7 @@ const TAILWIND_ELEMENTS: TailwindElement[] = [
     icon: Square,
     template: {
       type: 'button',
+      name: 'Ghost Button',
       content: { content: 'Ghost' },
       styles: {},
       className: 'px-6 py-3 text-gray-700 font-medium rounded-lg hover:bg-gray-100 transition-colors'
@@ -163,6 +172,7 @@ const TAILWIND_ELEMENTS: TailwindElement[] = [
     icon: CreditCard,
     template: {
       type: 'container',
+      name: 'Container',
       content: {},
       styles: {},
       className: 'p-6 bg-white border border-gray-200 rounded-lg shadow-sm'
@@ -177,6 +187,7 @@ const TAILWIND_ELEMENTS: TailwindElement[] = [
     icon: CreditCard,
     template: {
       type: 'container',
+      name: 'Container',
       content: {},
       styles: {},
       className: 'p-6 bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow'
@@ -191,6 +202,7 @@ const TAILWIND_ELEMENTS: TailwindElement[] = [
     icon: CreditCard,
     template: {
       type: 'container',
+      name: 'Container',
       content: {},
       styles: {},
       className: 'p-6 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-lg shadow-lg'
@@ -207,6 +219,7 @@ const TAILWIND_ELEMENTS: TailwindElement[] = [
     icon: Layout,
     template: {
       type: 'container',
+      name: 'Section',
       tagName: 'section',
       content: { tagName: 'section' },
       styles: {},
@@ -222,6 +235,7 @@ const TAILWIND_ELEMENTS: TailwindElement[] = [
     icon: Layout,
     template: {
       type: 'container',
+      name: 'Container',
       content: {},
       styles: {},
       className: 'max-w-7xl mx-auto px-4'
@@ -236,6 +250,7 @@ const TAILWIND_ELEMENTS: TailwindElement[] = [
     icon: Layers,
     template: {
       type: 'container',
+      name: 'Container',
       content: {},
       styles: {},
       className: 'flex flex-row gap-4 items-center'
@@ -250,6 +265,7 @@ const TAILWIND_ELEMENTS: TailwindElement[] = [
     icon: Layers,
     template: {
       type: 'container',
+      name: 'Container',
       content: {},
       styles: {},
       className: 'flex flex-col gap-4'
@@ -264,6 +280,7 @@ const TAILWIND_ELEMENTS: TailwindElement[] = [
     icon: Layers,
     template: {
       type: 'container',
+      name: 'Container',
       content: {},
       styles: {},
       className: 'grid grid-cols-1 md:grid-cols-2 gap-6'
@@ -278,6 +295,7 @@ const TAILWIND_ELEMENTS: TailwindElement[] = [
     icon: Layers,
     template: {
       type: 'container',
+      name: 'Container',
       content: {},
       styles: {},
       className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
@@ -294,6 +312,7 @@ const TAILWIND_ELEMENTS: TailwindElement[] = [
     icon: AlertCircle,
     template: {
       type: 'container',
+      name: 'Container',
       content: {},
       styles: {},
       className: 'p-4 bg-blue-50 border-l-4 border-blue-500 text-blue-700 rounded'
@@ -308,6 +327,7 @@ const TAILWIND_ELEMENTS: TailwindElement[] = [
     icon: AlertCircle,
     template: {
       type: 'container',
+      name: 'Container',
       content: {},
       styles: {},
       className: 'p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded'
@@ -322,6 +342,7 @@ const TAILWIND_ELEMENTS: TailwindElement[] = [
     icon: AlertCircle,
     template: {
       type: 'container',
+      name: 'Container',
       content: {},
       styles: {},
       className: 'p-4 bg-yellow-50 border-l-4 border-yellow-500 text-yellow-700 rounded'
@@ -336,6 +357,7 @@ const TAILWIND_ELEMENTS: TailwindElement[] = [
     icon: AlertCircle,
     template: {
       type: 'container',
+      name: 'Container',
       content: {},
       styles: {},
       className: 'p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded'
@@ -352,6 +374,7 @@ const TAILWIND_ELEMENTS: TailwindElement[] = [
     icon: Square,
     template: {
       type: 'text',
+      name: 'Badge',
       tagName: 'span',
       content: { tagName: 'span', content: 'New' },
       styles: {},
@@ -367,6 +390,7 @@ const TAILWIND_ELEMENTS: TailwindElement[] = [
     icon: Square,
     template: {
       type: 'text',
+      name: 'Primary Badge',
       tagName: 'span',
       content: { tagName: 'span', content: 'Featured' },
       styles: {},
