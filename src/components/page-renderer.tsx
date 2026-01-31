@@ -386,8 +386,8 @@ const ComponentRenderer = ({ type, content, config }: { type: string; content: a
 
 
 interface PageRendererProps {
-  components: Component[];
-  elements?: Element[]; // Add support for elements
+  components: any[];
+  elements?: any[]; // Add support for elements
   pageId: string;
   variantId?: string | null;
 }

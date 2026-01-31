@@ -181,7 +181,12 @@ export default async function PublishedPage({
       )}
 
       {/* Render page components */}
-      <PageRenderer components={components} elements={elements} pageId={page.id} variantId={variantId} />
+      <PageRenderer
+        components={JSON.parse(JSON.stringify(components))}
+        elements={JSON.parse(JSON.stringify(elements))}
+        pageId={page.id}
+        variantId={variantId}
+      />
     </>
   );
 }
