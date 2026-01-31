@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Save, Eye, Settings, ArrowLeft, Layout } from 'lucide-react';
+import { Save, Eye, Settings, ArrowLeft, Layout, Globe, GlobeLock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Element } from '@prisma/client';
 import { AIEditPopover } from '@/components/builder/ai/AIEditPopover';
@@ -48,8 +48,10 @@ export default function BuilderPage() {
   const [elements, setElements] = useState<ExtendedElement[]>([]);
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
   const [pageMetadata, setPageMetadata] = useState<any>(null);
+  const [pageStatus, setPageStatus] = useState<string>('DRAFT');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   const [showElementPool, setShowElementPool] = useState(false);
   const [showTailwindPalette, setShowTailwindPalette] = useState(false);
   const [currentTheme, setCurrentTheme] = useState('default');
@@ -77,6 +79,7 @@ export default function BuilderPage() {
           slug: data.slug,
           description: data.description,
         });
+        setPageStatus(data.status || 'DRAFT');
 
         // Build element tree
         const elementsList = data.elements || [];
@@ -193,7 +196,43 @@ export default function BuilderPage() {
   };
 
   const handlePreview = () => {
-    window.open(`/p/${pageMetadata?.slug}`, '_blank');
+    window.open(`/${params.workspaceSlug}/preview/${params.pageId}`, '_blank');
+  };
+
+  const handlePublish = async () => {
+    const newStatus = pageStatus === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED';
+    const action = newStatus === 'PUBLISHED' ? 'publish' : 'unpublish';
+
+    setIsPublishing(true);
+    try {
+      const response = await fetch(`/api/pages/${params.pageId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to ${action} page`);
+      }
+
+      setPageStatus(newStatus);
+      toast({
+        title: newStatus === 'PUBLISHED' ? 'Page published' : 'Page unpublished',
+        description: newStatus === 'PUBLISHED'
+          ? `Your page is now live at /p/${pageMetadata?.slug}`
+          : 'Your page has been unpublished.',
+      });
+    } catch (error) {
+      console.error(`${action} error:`, error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : `Failed to ${action} page`,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsPublishing(false);
+    }
   };
 
   const handleBack = () => {
@@ -422,6 +461,25 @@ export default function BuilderPage() {
             <Button variant="outline" size="sm" onClick={handlePreview}>
               <Eye className="h-4 w-4 mr-2" />
               Preview
+            </Button>
+            <Button
+              variant={pageStatus === 'PUBLISHED' ? 'outline' : 'default'}
+              size="sm"
+              onClick={handlePublish}
+              disabled={isPublishing}
+              className={pageStatus === 'PUBLISHED' ? '' : 'bg-green-600 hover:bg-green-700'}
+            >
+              {pageStatus === 'PUBLISHED' ? (
+                <>
+                  <GlobeLock className="h-4 w-4 mr-2" />
+                  {isPublishing ? 'Unpublishing...' : 'Unpublish'}
+                </>
+              ) : (
+                <>
+                  <Globe className="h-4 w-4 mr-2" />
+                  {isPublishing ? 'Publishing...' : 'Publish'}
+                </>
+              )}
             </Button>
             <Button size="sm" onClick={handleSave} disabled={isSaving}>
               <Save className="h-4 w-4 mr-2" />

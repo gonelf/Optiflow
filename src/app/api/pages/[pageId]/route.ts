@@ -139,6 +139,9 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
         ...(ogImage !== undefined && { ogImage }),
         ...(favicon !== undefined && { favicon }),
         ...(status !== undefined && { status }),
+        // Set publishedAt when publishing, clear it when unpublishing
+        ...(status === 'PUBLISHED' && { publishedAt: new Date() }),
+        ...(status === 'DRAFT' && { publishedAt: null }),
       },
     });
 
