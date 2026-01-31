@@ -13,6 +13,7 @@ export interface UpdateWorkspaceInput {
   name?: string
   slug?: string
   domain?: string
+  startingPageId?: string | null
 }
 
 export class WorkspaceService {
@@ -74,6 +75,14 @@ export class WorkspaceService {
             },
           },
         },
+        startingPage: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            status: true,
+          },
+        },
       },
     })
   }
@@ -92,6 +101,14 @@ export class WorkspaceService {
                 avatarUrl: true,
               },
             },
+          },
+        },
+        startingPage: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            status: true,
           },
         },
       },
@@ -136,10 +153,51 @@ export class WorkspaceService {
       }
     }
 
+    // If startingPageId is being updated, validate the page belongs to this workspace
+    if (data.startingPageId !== undefined && data.startingPageId !== null) {
+      const page = await prisma.page.findFirst({
+        where: {
+          id: data.startingPageId,
+          workspaceId: workspaceId,
+        },
+      })
+
+      if (!page) {
+        throw new Error('Page not found or does not belong to this workspace')
+      }
+    }
+
     return prisma.workspace.update({
       where: { id: workspaceId },
       data,
+      include: {
+        startingPage: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+          },
+        },
+      },
     })
+  }
+
+  static async getStartingPage(workspaceId: string) {
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: workspaceId },
+      include: {
+        startingPage: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            status: true,
+          },
+        },
+      },
+    })
+
+    return workspace?.startingPage || null
   }
 
   static async delete(workspaceId: string) {

@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react'
 import useSWR from 'swr'
 
+interface StartingPage {
+  id: string
+  title: string
+  slug: string
+  status?: string
+}
+
 interface Workspace {
   id: string
   name: string
@@ -8,6 +15,8 @@ interface Workspace {
   plan: string
   role: string
   domain?: string | null
+  startingPageId?: string | null
+  startingPage?: StartingPage | null
   _count?: {
     members: number
     pages: number
