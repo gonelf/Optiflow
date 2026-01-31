@@ -90,6 +90,16 @@ const nextConfig = {
         ],
       },
       {
+        // Workspace subdomain pages (served via /w/[workspaceSlug] route)
+        source: '/w/:workspaceSlug/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, s-maxage=3600, stale-while-revalidate=86400',
+          },
+        ],
+      },
+      {
         source: '/api/:path*',
         headers: [
           {

@@ -3,6 +3,59 @@ import type { NextRequest } from 'next/server'
 import { getToken } from 'next-auth/jwt'
 import { logger } from './lib/logger'
 
+// Helper function to extract workspace subdomain from hostname
+function getWorkspaceSubdomain(hostname: string): string | null {
+  // Get the root domain from environment variable or default
+  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000'
+
+  // Handle localhost for development
+  if (hostname.includes('localhost')) {
+    // For local development, subdomains would be like: workspace.localhost:3000
+    const parts = hostname.split('.')
+    if (parts.length >= 2 && parts[0] !== 'www' && parts[0] !== 'localhost') {
+      return parts[0]
+    }
+    return null
+  }
+
+  // Handle Vercel preview deployments (*.vercel.app)
+  if (hostname.endsWith('.vercel.app')) {
+    const parts = hostname.split('.')
+    // Pattern: workspace-slug.project-name.vercel.app (3+ parts means there's a subdomain)
+    // Or workspace-slug--project-name.vercel.app for subdomain previews
+    if (parts.length >= 3 && parts[0] !== 'www') {
+      // Check if it's a subdomain pattern (contains double dash which separates workspace from project)
+      if (parts[0].includes('--')) {
+        return parts[0].split('--')[0]
+      }
+      // Otherwise it's project.vercel.app which is the main domain
+      return null
+    }
+    return null
+  }
+
+  // Handle production domain
+  // e.g., workspace.example.com -> workspace
+  const rootDomainWithoutPort = rootDomain.split(':')[0]
+  if (hostname.endsWith(`.${rootDomainWithoutPort}`)) {
+    const subdomain = hostname.replace(`.${rootDomainWithoutPort}`, '')
+    if (subdomain !== 'www' && subdomain.length > 0) {
+      return subdomain
+    }
+  }
+
+  // Check for direct subdomain match pattern
+  const parts = hostname.split('.')
+  if (parts.length >= 3) {
+    const potentialSubdomain = parts[0]
+    if (potentialSubdomain !== 'www') {
+      return potentialSubdomain
+    }
+  }
+
+  return null
+}
+
 export async function middleware(request: NextRequest) {
   const startTime = Date.now()
   const { pathname, search } = request.nextUrl
@@ -12,15 +65,63 @@ export async function middleware(request: NextRequest) {
   // Generate request ID for tracking
   const requestId = crypto.randomUUID()
 
+  // Get the hostname from the request
+  const hostname = request.headers.get('host') || request.nextUrl.hostname
+
   // Log incoming request
   logger.request(method, fullPath, {
     requestId,
     userAgent: request.headers.get('user-agent'),
     referer: request.headers.get('referer'),
+    hostname,
   })
 
   try {
-    // Allow public routes
+    // Check for workspace subdomain
+    const workspaceSlug = getWorkspaceSubdomain(hostname)
+
+    if (workspaceSlug) {
+      // This is a workspace subdomain request
+      logger.debug(`Workspace subdomain detected: ${workspaceSlug}`, { requestId, hostname })
+
+      // Allow static files and API routes
+      if (
+        pathname.startsWith('/_next') ||
+        pathname.startsWith('/favicon') ||
+        pathname.startsWith('/api/')
+      ) {
+        const response = NextResponse.next()
+        response.headers.set('x-request-id', requestId)
+        return response
+      }
+
+      // Rewrite to the workspace page route
+      // The `/w/[workspaceSlug]/[[...pageSlug]]` route will handle the page rendering
+      const pageSlug = pathname === '/' ? '' : pathname.slice(1) // Remove leading slash
+      const rewriteUrl = new URL(`/w/${workspaceSlug}${pageSlug ? `/${pageSlug}` : ''}`, request.url)
+
+      // Preserve query parameters
+      rewriteUrl.search = search
+
+      logger.debug(`Rewriting workspace subdomain request`, {
+        requestId,
+        from: pathname,
+        to: rewriteUrl.pathname,
+        workspaceSlug,
+        pageSlug: pageSlug || '(root)',
+      })
+
+      const response = NextResponse.rewrite(rewriteUrl)
+      response.headers.set('x-request-id', requestId)
+      response.headers.set('x-workspace-slug', workspaceSlug)
+
+      const duration = Date.now() - startTime
+      logger.response(method, fullPath, 200, duration, { requestId, rewrittenTo: rewriteUrl.pathname })
+
+      return response
+    }
+
+    // Allow public routes (for main domain)
     if (
       pathname === '/' ||
       pathname.startsWith('/api/health') ||
