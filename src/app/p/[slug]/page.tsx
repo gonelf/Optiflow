@@ -3,32 +3,11 @@ import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { PageRenderer } from '@/components/page-renderer';
 
+// Make this route fully dynamic to avoid build-time database calls
+export const dynamic = 'force-dynamic';
+
 // ISR: Revalidate every hour
 export const revalidate = 3600;
-
-// Dynamic params for static generation
-export async function generateStaticParams() {
-  // Generate static pages for the most popular published pages
-  const pages = await prisma.page.findMany({
-    where: {
-      status: 'PUBLISHED',
-      publishedAt: {
-        not: null,
-      },
-    },
-    select: {
-      slug: true,
-    },
-    take: 100, // Pre-generate top 100 pages
-    orderBy: {
-      publishedAt: 'desc',
-    },
-  });
-
-  return pages.map((page) => ({
-    slug: page.slug,
-  }));
-}
 
 // Generate metadata for SEO
 export async function generateMetadata({
@@ -36,41 +15,48 @@ export async function generateMetadata({
 }: {
   params: { slug: string };
 }): Promise<Metadata> {
-  const page = await prisma.page.findFirst({
-    where: {
-      slug: params.slug,
-      status: 'PUBLISHED',
-    },
-    select: {
-      seoTitle: true,
-      seoDescription: true,
-      ogImage: true,
-      title: true,
-      description: true,
-    },
-  });
+  try {
+    const page = await prisma.page.findFirst({
+      where: {
+        slug: params.slug,
+        status: 'PUBLISHED',
+      },
+      select: {
+        seoTitle: true,
+        seoDescription: true,
+        ogImage: true,
+        title: true,
+        description: true,
+      },
+    });
 
-  if (!page) {
+    if (!page) {
+      return {
+        title: 'Page Not Found',
+      };
+    }
+
     return {
-      title: 'Page Not Found',
+      title: page.seoTitle || page.title,
+      description: page.seoDescription || page.description || undefined,
+      openGraph: {
+        title: page.seoTitle || page.title,
+        description: page.seoDescription || page.description || undefined,
+        images: page.ogImage ? [page.ogImage] : undefined,
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: page.seoTitle || page.title,
+        description: page.seoDescription || page.description || undefined,
+        images: page.ogImage ? [page.ogImage] : undefined,
+      },
+    };
+  } catch (error) {
+    console.error('Error generating metadata:', error);
+    return {
+      title: 'Page',
     };
   }
-
-  return {
-    title: page.seoTitle || page.title,
-    description: page.seoDescription || page.description || undefined,
-    openGraph: {
-      title: page.seoTitle || page.title,
-      description: page.seoDescription || page.description || undefined,
-      images: page.ogImage ? [page.ogImage] : undefined,
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: page.seoTitle || page.title,
-      description: page.seoDescription || page.description || undefined,
-      images: page.ogImage ? [page.ogImage] : undefined,
-    },
-  };
 }
 
 interface PublishedPageProps {
