@@ -10,6 +10,14 @@ const signupSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    // Check if database is available
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json(
+        { message: 'Database not configured' },
+        { status: 500 }
+      )
+    }
+
     const body = await req.json()
 
     // Validate input
@@ -27,13 +35,13 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Create user (Note: In production, hash the password with bcrypt)
+    // Create user without password (OAuth-based auth)
+    // Note: This app uses OAuth (Google/GitHub) for authentication
+    // Passwords are not stored in the database
     const user = await prisma.user.create({
       data: {
         name: validatedData.name,
         email: validatedData.email,
-        // TODO: Hash password with bcrypt before storing
-        // passwordHash: await bcrypt.hash(validatedData.password, 10),
       },
       select: {
         id: true,
@@ -56,8 +64,20 @@ export async function POST(req: NextRequest) {
     }
 
     console.error('Signup error:', error)
+
+    // Return more detailed error in development
+    if (process.env.NODE_ENV === 'development') {
+      return NextResponse.json(
+        {
+          message: 'Failed to create account',
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+        { status: 500 }
+      )
+    }
+
     return NextResponse.json(
-      { message: 'Failed to create account' },
+      { message: 'Failed to create account. Please try again later.' },
       { status: 500 }
     )
   }
