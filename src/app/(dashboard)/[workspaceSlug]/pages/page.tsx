@@ -17,6 +17,8 @@ import {
   Edit,
   ExternalLink,
   Sparkles,
+  Globe,
+  GlobeLock,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -202,6 +204,52 @@ export default function PagesListPage() {
     }
   };
 
+  const handlePublishPage = async (pageId: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED';
+    const action = newStatus === 'PUBLISHED' ? 'publish' : 'unpublish';
+
+    try {
+      const response = await fetch(`/api/pages/${pageId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || `Failed to ${action} page`);
+      }
+
+      const page = pages.find(p => p.id === pageId);
+      toast({
+        title: newStatus === 'PUBLISHED' ? 'Page published' : 'Page unpublished',
+        description: newStatus === 'PUBLISHED'
+          ? `Your page is now live at /p/${page?.slug}`
+          : 'Your page has been unpublished.',
+      });
+
+      // Refresh pages list
+      fetchPages();
+    } catch (error: any) {
+      console.error(`Error ${action}ing page:`, error);
+      toast({
+        title: 'Error',
+        description: error.message || `Failed to ${action} page. Please try again.`,
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handlePreviewPage = (page: Page) => {
+    window.open(`/${workspaceSlug}/preview/${page.id}`, '_blank');
+  };
+
+  const handleViewPublished = (page: Page) => {
+    window.open(`/p/${page.slug}`, '_blank');
+  };
+
   const handleAICreatePage = async () => {
     if (!aiPagePurpose || aiPagePurpose.length < 10) {
       toast({
@@ -363,9 +411,30 @@ export default function PagesListPage() {
                       <Edit className="mr-2 h-4 w-4" />
                       Edit
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handlePreviewPage(page)}>
                       <Eye className="mr-2 h-4 w-4" />
                       Preview
+                    </DropdownMenuItem>
+                    {page.status === 'PUBLISHED' && (
+                      <DropdownMenuItem onClick={() => handleViewPublished(page)}>
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        View Published
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem
+                      onClick={() => handlePublishPage(page.id, page.status)}
+                    >
+                      {page.status === 'PUBLISHED' ? (
+                        <>
+                          <GlobeLock className="mr-2 h-4 w-4" />
+                          Unpublish
+                        </>
+                      ) : (
+                        <>
+                          <Globe className="mr-2 h-4 w-4" />
+                          Publish
+                        </>
+                      )}
                     </DropdownMenuItem>
                     <DropdownMenuItem>
                       <Copy className="mr-2 h-4 w-4" />
