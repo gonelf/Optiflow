@@ -33,8 +33,8 @@ const nextConfig = {
   async headers() {
     const ContentSecurityPolicy = `
       default-src 'self';
-      script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com;
-      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://cdn.tailwindcss.com;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com;
       img-src 'self' data: https: blob:;
       font-src 'self' https://fonts.gstatic.com;
       connect-src 'self' https://api.openai.com https://api.stripe.com https://api.supabase.co;

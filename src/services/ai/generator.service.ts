@@ -15,6 +15,8 @@ export interface GeneratePageInput {
   keyBenefits?: string;
   pageGoal?: string;
   pageType?: 'landing' | 'pricing' | 'about' | 'contact' | 'blog' | 'product';
+  customPrompt?: string;
+  designImageUrl?: string;
 }
 
 export interface GeneratedComponent {
@@ -57,26 +59,68 @@ export class AIGeneratorService {
   static async generatePage(input: GeneratePageInput): Promise<GeneratedPage> {
     const multiModel = getMultiModelService();
 
-    const systemPrompt = generatePagePrompt(input);
-    const userPrompt = `Generate a ${input.pageType || 'landing'} page with the following description: ${input.description}`;
+    const systemPrompt = input.customPrompt || generatePagePrompt(input);
+    const userPrompt = `Generate a ${input.pageType || 'landing'} page with the following description: ${input.description}. ${input.designImageUrl ? 'Use the attached image as visual inspiration for the layout and style.' : ''}`;
+
+    let images: string[] = [];
+    if (input.designImageUrl) {
+      try {
+        const imgRes = await fetch(input.designImageUrl);
+        if (imgRes.ok) {
+          const buffer = await imgRes.arrayBuffer();
+          const base64 = Buffer.from(buffer).toString('base64');
+          images.push(base64);
+        } else {
+          console.warn('Failed to fetch design image:', input.designImageUrl);
+        }
+      } catch (err) {
+        console.error('Error fetching design image:', err);
+      }
+    }
 
     const result = await multiModel.generateContent(userPrompt, {
       systemInstruction: systemPrompt,
       temperature: 0.8,
       maxTokens: 3000,
+      images: images.length > 0 ? images : undefined,
     });
 
     try {
-      const generatedPage = JSON.parse(result.content);
-      const validatedPage = this.validateAndFormatPage(generatedPage);
+      // Clean markdown if present
+      const content = result.content.replace(/```html\n|```/g, '').trim();
 
-      // Add metadata about which provider was used
+      const cheerio = await import('cheerio');
+      const $ = cheerio.load(content);
+
+      // Extract Metadata
+      const $seo = $('#seo-metadata');
+      let title = $seo.attr('data-title') || 'AI Generated Page';
+      let description = $seo.attr('data-description') || '';
+
+      // Fallback metadata extraction
+      if (!title || title === 'AI Generated Page') {
+        title = $('h1').first().text() || $('title').text() || 'Untitled Page';
+      }
+
+      // Return structured page with HTML content element
       return {
-        ...validatedPage,
+        title,
+        description,
+        seoTitle: title,
+        seoDescription: description,
+        components: [], // Empty for HTML mode
+        elements: [
+          {
+            type: 'html-content',
+            content: content
+          }
+        ],
         generatedBy: result.provider,
       };
+
     } catch (error) {
-      throw new Error('Failed to parse generated page JSON');
+      console.error('Error parsing generated page:', error);
+      throw new Error('Failed to parse (HTML) generated page');
     }
   }
 
@@ -450,7 +494,7 @@ export class AIGeneratorService {
     const attributes: Record<string, string> = {};
     if (node.attribs) {
       Object.keys(node.attribs).forEach(key => {
-        if (key !== 'style' && key !== 'class') {
+        if (key !== 'style') {
           attributes[key] = node.attribs[key];
         }
       });
@@ -473,6 +517,11 @@ export class AIGeneratorService {
 
     // Get styles
     const styles = parseStyle(node.attribs?.style);
+
+    // Add class to styles as className if present
+    if (node.attribs?.class) {
+      styles.className = node.attribs.class;
+    }
 
     // Get content (if text node)
     let content = '';

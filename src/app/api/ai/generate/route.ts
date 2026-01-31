@@ -5,12 +5,14 @@ import { AIGeneratorService } from '@/services/ai/generator.service';
 import { z } from 'zod';
 
 const generatePageSchema = z.object({
-  description: z.string().min(10),
+  description: z.string().min(1),
   industry: z.string().optional(),
   targetAudience: z.string().optional(),
   brandVoice: z.string().optional(),
   pageType: z.enum(['landing', 'pricing', 'about', 'contact', 'blog', 'product']).optional(),
   workspaceId: z.string(),
+  customPrompt: z.string().optional(),
+  designImageUrl: z.string().optional(),
 });
 
 /**
@@ -53,6 +55,7 @@ export async function POST(req: NextRequest) {
       targetAudience: validatedData.targetAudience,
       brandVoice: validatedData.brandVoice,
       pageType: validatedData.pageType,
+      customPrompt: validatedData.customPrompt,
     });
 
     return NextResponse.json({
@@ -76,7 +79,7 @@ export async function POST(req: NextRequest) {
     if (error instanceof Error) {
       // Check if it's a rate limit error
       const isRateLimit = error.message.toLowerCase().includes('rate limit') ||
-                          error.message.toLowerCase().includes('quota');
+        error.message.toLowerCase().includes('quota');
 
       return NextResponse.json(
         {
