@@ -2,8 +2,59 @@
 
 import { useEffect } from 'react';
 import { Component, Element } from '@prisma/client';
-import { ElementRenderer } from '@/components/builder/ElementRenderer';
 import { Check, Star, Mail, MessageCircle } from 'lucide-react';
+import { BuilderElement } from '@/types/builder';
+import * as Primitives from '@/components/builder/primitives';
+
+// --- Recursive Element Renderer (Phase 8) ---
+const RecursiveElementRenderer = ({
+  element,
+  allElements,
+  onElementClick
+}: {
+  element: BuilderElement;
+  allElements: BuilderElement[];
+  onElementClick?: (id: string, type: string) => void;
+}) => {
+  const children = allElements
+    .filter(el => el.parentId === element.id)
+    .sort((a, b) => a.order - b.order);
+
+  // @ts-ignore - dynamic primitive lookup
+  const PrimitiveComponent = Primitives[element.type.toUpperCase() as keyof typeof Primitives]
+    // @ts-ignore
+    || Primitives[element.type as keyof typeof Primitives];
+
+  if (!PrimitiveComponent) {
+    return null; // Or render a placeholder if preferred
+  }
+
+  return (
+    <PrimitiveComponent
+      element={element}
+      isBuilder={false}
+      onClick={(e: React.MouseEvent) => {
+        if (onElementClick) {
+          // Prevent navigation if it's just tracking, 
+          // but for specific elements (like buttons) we might want to allow it.
+          // For now, let's just track.
+          onElementClick(element.id, element.type as string);
+        }
+      }}
+    >
+      {children.map(child => (
+        <RecursiveElementRenderer
+          key={child.id}
+          element={child}
+          allElements={allElements}
+          onElementClick={onElementClick}
+        />
+      ))}
+    </PrimitiveComponent>
+  );
+};
+
+// --- Legacy Components ---
 
 // Hero Component
 const HeroComponent = ({ content }: { content: any }) => (
@@ -352,7 +403,7 @@ const FooterComponent = ({ content }: { content: any }) => (
   </footer>
 );
 
-// Component mapper
+// Component mapper for Legacy components
 const ComponentRenderer = ({ type, content, config }: { type: string; content: any; config: any }) => {
   const components: Record<string, React.ComponentType<{ content: any }>> = {
     HERO: HeroComponent,
@@ -387,14 +438,13 @@ const ComponentRenderer = ({ type, content, config }: { type: string; content: a
 
 interface PageRendererProps {
   components: Component[];
-  elements?: Element[]; // Add support for elements
+  elements?: Element[];
   pageId: string;
   variantId?: string | null;
 }
 
 export function PageRenderer({ components, elements, pageId, variantId }: PageRendererProps) {
   useEffect(() => {
-    // ... existing analytics code ...
     // Track scroll depth for heatmap
     let maxScrollDepth = 0;
     const handleScroll = () => {
@@ -457,34 +507,21 @@ export function PageRenderer({ components, elements, pageId, variantId }: PageRe
     });
   };
 
-  // If we have recursive elements, use the new ElementRenderer
+  // Check if we have elements to render (Phase 8 AI Editor)
   if (elements && elements.length > 0) {
-    // Sort root elements
-    const rootElements = elements
+    const builderElements = elements as unknown as BuilderElement[];
+
+    const rootElements = builderElements
       .filter(el => !el.parentId)
       .sort((a, b) => a.order - b.order);
 
-    // Build the tree structure in memory for rendering
-    const buildTree = (parentId: string | null): any[] => {
-      return elements
-        .filter(el => el.parentId === parentId)
-        .sort((a, b) => a.order - b.order)
-        .map(el => ({
-          ...el,
-          // Since Element from Prisma doesn't strictly adhere to what ElementRenderer expects in terms of types (any vs Json)
-          // We cast or rely on runtime behavior. The ElementRenderer expects 'children' array
-          children: buildTree(el.id)
-        }));
-    };
-
-    const tree = buildTree(null);
-
     return (
       <div className="min-h-screen bg-white">
-        {tree.map(el => (
-          <ElementRenderer
-            key={el.id}
-            element={el}
+        {rootElements.map(element => (
+          <RecursiveElementRenderer
+            key={element.id}
+            element={element}
+            allElements={builderElements}
             onElementClick={(id, type) => handleComponentClick(id, type)}
           />
         ))}

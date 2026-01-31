@@ -785,7 +785,7 @@ model Element {
   // Relations
   page          Page        @relation(fields: [pageId], references: [id], onDelete: Cascade)
   variant       PageVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
-  parent        Element?    @relation("ElementHierarchy", fields: [parentId], references: [id])
+  parent        Element?    @relation("ElementHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
   children      Element[]   @relation("ElementHierarchy")
 
   @@index([pageId])

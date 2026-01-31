@@ -52,14 +52,30 @@ export class GeminiService {
       systemInstruction?: string;
       temperature?: number;
       maxTokens?: number;
+      images?: string[]; // Array of base64 strings
     }
   ): Promise<string> {
     const url = `${this.baseURL}/models/${this.model}:generateContent?key=${this.apiKey}`;
 
+    const parts: any[] = [{ text: prompt }];
+
+    if (options?.images) {
+      options.images.forEach(image => {
+        // Assume image is base64 string without data prefix, or handle if it has it
+        const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
+        parts.push({
+          inline_data: {
+            mime_type: 'image/jpeg', // Defaulting to jpeg, ideally detecting from base64 header if present
+            data: base64Data
+          }
+        });
+      });
+    }
+
     const requestBody: any = {
       contents: [
         {
-          parts: [{ text: prompt }],
+          parts: parts,
         },
       ],
       generationConfig: {

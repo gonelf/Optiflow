@@ -7,6 +7,55 @@ const config: Config = {
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
+  safelist: [
+    {
+      pattern: /^(bg|text|border|ring)-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-[0-9]+/,
+      variants: ['hover', 'focus', 'active'],
+    },
+    {
+      pattern: /^(bg|text|border|ring)-(black|white|transparent|current)/,
+      variants: ['hover', 'focus'],
+    },
+    {
+      pattern: /^(p|m)[xy]?-[0-9]+/,
+      variants: ['md', 'lg'],
+    },
+    {
+      pattern: /^flex/,
+      variants: ['md', 'lg'],
+    },
+    {
+      pattern: /^grid/,
+      variants: ['md', 'lg'],
+    },
+    {
+      pattern: /^w-[0-9\/]+/,
+      variants: ['md', 'lg'],
+    },
+    {
+      pattern: /^h-[0-9\/]+/,
+    },
+    {
+      pattern: /^gap-[0-9]+/,
+      variants: ['md', 'lg'],
+    },
+    {
+      pattern: /^rounded/,
+    },
+    {
+      pattern: /^shadow/,
+    },
+    {
+      pattern: /^from-|to-/,
+    },
+    {
+      pattern: /^items-|justify-/,
+    },
+    {
+      pattern: /^font-|text-/,
+      variants: ['md', 'lg'],
+    },
+  ],
   theme: {
     extend: {
       colors: {

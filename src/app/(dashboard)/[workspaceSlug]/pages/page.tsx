@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface Page {
   id: string;
@@ -67,6 +68,7 @@ export default function PagesListPage() {
   const [aiPagePurpose, setAiPagePurpose] = useState('');
   const [aiDesignStyle, setAiDesignStyle] = useState('');
   const [isAIGenerating, setIsAIGenerating] = useState(false);
+  const [consistencyMode, setConsistencyMode] = useState<'CONSISTENT' | 'NEW'>('CONSISTENT');
 
   const workspaceSlug = params.workspaceSlug as string;
 
@@ -230,6 +232,7 @@ export default function PagesListPage() {
           workspaceId,
           pagePurpose: aiPagePurpose,
           designStyle: pages.length === 0 && aiDesignStyle ? aiDesignStyle : undefined,
+          consistencyMode: pages.length > 0 ? consistencyMode : undefined,
         }),
       });
 
@@ -507,11 +510,39 @@ export default function PagesListPage() {
             )}
 
             {pages.length > 0 && (
-              <div className="rounded-lg bg-blue-50 p-3 text-sm text-blue-900">
-                <p className="font-medium">Design Consistency</p>
-                <p className="text-xs mt-1">
-                  AI will analyze your existing {pages.length} page{pages.length > 1 ? 's' : ''} and create a design that matches your current style.
-                </p>
+              <div className="pt-2">
+                <Label>Design Approach</Label>
+                <Tabs
+                  value={consistencyMode}
+                  onValueChange={(val) => setConsistencyMode(val as 'CONSISTENT' | 'NEW')}
+                  className="mt-2"
+                >
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="CONSISTENT">Match Existing Style</TabsTrigger>
+                    <TabsTrigger value="NEW">New Design</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="CONSISTENT" className="mt-2 text-sm text-muted-foreground">
+                    <div className="rounded-lg bg-blue-50 p-3 text-blue-900">
+                      <p className="font-medium flex items-center gap-2">
+                        <Sparkles className="h-4 w-4" />
+                        Smart Analysis
+                      </p>
+                      <p className="text-xs mt-1">
+                        AI will analyze your existing {pages.length} page{pages.length > 1 ? 's' : ''} to match your brand&apos;s colors, typography, and component style.
+                      </p>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="NEW" className="mt-2 text-sm text-muted-foreground">
+                    <div className="rounded-lg bg-gray-50 p-3 text-gray-900">
+                      <p className="font-medium">Fresh Start</p>
+                      <p className="text-xs mt-1">
+                        Create a completely new design with its own unique style, ignoring existing pages.
+                      </p>
+                    </div>
+                  </TabsContent>
+                </Tabs>
               </div>
             )}
 

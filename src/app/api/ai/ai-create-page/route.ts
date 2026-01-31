@@ -9,6 +9,7 @@ const aiCreatePageSchema = z.object({
     workspaceId: z.string(),
     pagePurpose: z.string().min(10, 'Page purpose must be at least 10 characters'),
     designStyle: z.string().optional(),
+    consistencyMode: z.enum(['CONSISTENT', 'NEW']).optional().default('CONSISTENT'),
 });
 
 /**
@@ -48,26 +49,30 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Access denied' }, { status: 403 });
         }
 
-        // Fetch existing pages for design context
-        const existingPages = await prisma.page.findMany({
-            where: {
-                workspaceId: validatedData.workspaceId,
-            },
-            include: {
-                components: {
-                    select: {
-                        type: true,
-                        config: true,
-                        styles: true,
-                        content: true,
+        // Fetch existing pages for design context only if mode is CONSISTENT
+        let existingPages: any[] = [];
+
+        if (validatedData.consistencyMode === 'CONSISTENT') {
+            existingPages = await prisma.page.findMany({
+                where: {
+                    workspaceId: validatedData.workspaceId,
+                },
+                include: {
+                    components: {
+                        select: {
+                            type: true,
+                            config: true,
+                            styles: true,
+                            content: true,
+                        },
                     },
                 },
-            },
-            take: 5, // Limit to 5 most recent pages for context
-            orderBy: {
-                createdAt: 'desc',
-            },
-        });
+                take: 5, // Limit to 5 most recent pages for context
+                orderBy: {
+                    createdAt: 'desc',
+                },
+            });
+        }
 
         // Prepare existing pages data for AI
         const existingPagesContext = existingPages.map(page => ({
@@ -222,7 +227,7 @@ export async function POST(req: NextRequest) {
                 slug: page.slug,
                 description: page.description,
             },
-            redirectUrl: workspace ? `/${workspace.slug}/ai-pages/${page.id}` : `/ai-pages/${page.id}`,
+            redirectUrl: workspace ? `/${workspace.slug}/pages/${page.id}` : `/pages/${page.id}`,
         });
     } catch (error) {
         console.error('AI page creation error:', error);

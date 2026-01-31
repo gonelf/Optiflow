@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import * as Primitives from '@/components/builder/primitives';
 
 import { HeroRenderer } from '@/components/builder/components/Hero';
 import { CTARenderer } from '@/components/builder/components/CTA';
@@ -12,6 +13,41 @@ import { FAQRenderer } from '@/components/builder/components/FAQ';
 import { FormRenderer } from '@/components/builder/components/Form';
 import { NewsletterRenderer } from '@/components/builder/components/Newsletter';
 import { BuilderComponent } from '@/store/builder.store';
+import { BuilderElement } from '@/types/builder';
+
+// Recursive renderer for Elements (Phase 8)
+const RecursiveElementRenderer = ({
+    element,
+    allElements
+}: {
+    element: BuilderElement;
+    allElements: BuilderElement[];
+}) => {
+    const children = allElements
+        .filter(el => el.parentId === element.id)
+        .sort((a, b) => a.order - b.order);
+
+    // @ts-ignore - dynamic primitive lookup
+    const PrimitiveComponent = Primitives[element.type.toUpperCase() as keyof typeof Primitives]
+        // @ts-ignore
+        || Primitives[element.type as keyof typeof Primitives];
+
+    if (!PrimitiveComponent) {
+        return null;
+    }
+
+    return (
+        <PrimitiveComponent element={element} isBuilder={false}>
+            {children.map(child => (
+                <RecursiveElementRenderer
+                    key={child.id}
+                    element={child}
+                    allElements={allElements}
+                />
+            ))}
+        </PrimitiveComponent>
+    );
+};
 
 export default function PreviewPage() {
     const params = useParams();
@@ -20,6 +56,7 @@ export default function PreviewPage() {
     const [pageData, setPageData] = useState<{
         title: string;
         components: BuilderComponent[];
+        elements: BuilderElement[];
     } | null>(null);
 
     useEffect(() => {
@@ -37,6 +74,7 @@ export default function PreviewPage() {
                 setPageData({
                     title: data.title,
                     components: data.components || [],
+                    elements: data.elements || [],
                 });
             } catch (err) {
                 console.error('Error loading page:', err);
@@ -107,6 +145,8 @@ export default function PreviewPage() {
         );
     }
 
+    const hasNewElements = pageData.elements.length > 0;
+
     return (
         <div className="min-h-screen bg-white">
             {/* Preview Banner */}
@@ -116,16 +156,34 @@ export default function PreviewPage() {
 
             {/* Page Content */}
             <main>
-                {pageData.components.length === 0 ? (
-                    <div className="flex h-96 items-center justify-center">
-                        <div className="text-center">
-                            <p className="text-gray-500">This page has no components yet.</p>
-                        </div>
+                {hasNewElements ? (
+                    // Render Phase 8 Elements
+                    <div className="w-full">
+                        {pageData.elements
+                            .filter(el => !el.parentId)
+                            .sort((a, b) => a.order - b.order)
+                            .map(element => (
+                                <RecursiveElementRenderer
+                                    key={element.id}
+                                    element={element}
+                                    allElements={pageData.elements}
+                                />
+                            ))
+                        }
                     </div>
                 ) : (
-                    pageData.components
-                        .sort((a, b) => a.order - b.order)
-                        .map((component) => renderComponent(component))
+                    // Render Legacy Components
+                    pageData.components.length === 0 ? (
+                        <div className="flex h-96 items-center justify-center">
+                            <div className="text-center">
+                                <p className="text-gray-500">This page has no components yet.</p>
+                            </div>
+                        </div>
+                    ) : (
+                        pageData.components
+                            .sort((a, b) => a.order - b.order)
+                            .map((component) => renderComponent(component))
+                    )
                 )}
             </main>
         </div>

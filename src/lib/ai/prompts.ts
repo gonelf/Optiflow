@@ -16,105 +16,32 @@ export function generatePagePrompt(input: GeneratePageInput): string {
     pageType = 'landing',
   } = input;
 
-  return `You are an expert landing page designer and copywriter. Generate a complete ${pageType} page structure in JSON format for a product called "${productName}".
+  return `You are an expert web designer and developer. Generate a high-converting ${pageType} page for "${productName}".
 
 CONTEXT:
-- Product/Service: ${productName}
-- Main Description: ${input.description}
-- Target Audience: ${targetAudience}
-- Key Benefits: ${keyBenefits}
-- Primary Goal: ${pageGoal}
-- Brand Voice: ${brandVoice}
+- Product: ${productName}
+- Description: ${input.description}
 - Industry: ${industry}
-- Page Type: ${pageType}
+- Audience: ${targetAudience}
+- Goal: ${pageGoal}
+- Voice: ${brandVoice}
+${input.designImageUrl ? '- VISUAL INSPIRATION: Use the provided image as a strict guide for color palette, layout style, and visual hierarchy.' : ''}
 
-AVAILABLE COMPONENTS:
-1. Hero - Main header section with headline, subheadline, and CTA
-2. Features - Grid of feature cards with icons, titles, and descriptions
-3. Pricing - Pricing table with multiple tiers
-4. Testimonials - Customer testimonials with avatars and ratings
-5. CTA - Call-to-action section with button
-6. FAQ - Accordion-style frequently asked questions
-7. Form - Contact or signup form
-8. Newsletter - Email subscription form
+INSTRUCTIONS:
+1. Generate a single semantic HTML5 \`<body>\` content structure.
+2. Use **Tailwind CSS** for ALL styling. Do NOT use external CSS files.
+3. Be visually impressive. Use gradients, shadows, rounded corners, and generous spacing.
+4. Include these sections (at minimum):
+   - Hero (Headline, Subhead, CTA)
+   - Features/Benefits
+   - Social Proof (Logos/Testimonials)
+   - Pricing or FAQ (if relevant)
+   - CTA / Footer
+5. Include SEO metadata in a hidden div at the start:
+   \`<div id="seo-metadata" data-title="Page Title" data-description="Meta description"></div>\`
+6. Use image placeholders: https://via.placeholder.com/800x600
 
-OUTPUT FORMAT (JSON):
-{
-  "title": "Page title",
-  "description": "Page description",
-  "seoTitle": "SEO-optimized title (60 chars max)",
-  "seoDescription": "SEO-optimized description (160 chars max)",
-  "components": [
-    {
-      "type": "Hero",
-      "props": {
-        "layout": "centered|split",
-        "backgroundImage": "image URL or null",
-        "backgroundColor": "hex color"
-      },
-      "content": {
-        "headline": "Compelling headline",
-        "subheadline": "Supporting text",
-        "primaryCTA": {
-          "text": "Button text",
-          "style": "primary|secondary"
-        },
-        "secondaryCTA": {
-          "text": "Button text",
-          "style": "outline"
-        }
-      }
-    },
-    {
-      "type": "Features",
-      "props": {
-        "columns": 3,
-        "layout": "grid|list"
-      },
-      "content": {
-        "heading": "Section heading",
-        "subheading": "Section description",
-        "features": [
-          {
-            "icon": "icon name",
-            "title": "Feature title",
-            "description": "Feature description"
-          }
-        ]
-      }
-    },
-    {
-      "type": "Pricing",
-      "props": {
-        "tiers": 3,
-        "highlightTier": 1
-      },
-      "content": {
-        "heading": "Pricing",
-        "tiers": [
-          {
-            "name": "Tier name",
-            "price": "Price",
-            "interval": "month|year",
-            "features": ["Feature 1", "Feature 2"],
-            "cta": "Get Started"
-          }
-        ]
-      }
-    }
-  ]
-}
-
-GUIDELINES:
-1. Create compelling, benefit-focused copy
-2. Use action-oriented CTAs
-3. Include 4-6 components for a complete page
-4. Match the brand voice: ${brandVoice}
-5. Target the audience: ${targetAudience}
-6. Optimize for conversions
-7. Return ONLY valid JSON, no markdown or explanations
-
-Generate the page now:`;
+Output ONLY valid HTML code. No markdown fencing.`;
 }
 
 export function generateComponentPrompt(componentType: string): string {
@@ -317,7 +244,6 @@ Style Guidelines for "${designStyle}":
 - Create a cohesive, professional design
 - Use modern, conversion-focused patterns`;
   } else {
-    // Default to modern, professional style
     contextSection = `DESIGN STYLE:
 This is the first page in the workspace. Create a modern, professional design with:
 - Clean, minimalist aesthetics
@@ -345,7 +271,7 @@ Create a page that makes users say "WOW!" at first glance. Use:
 HTML STRUCTURE:
 Generate a single semantic HTML5 \`<body>\` content structure (do not include <head> or <html> tags).
 - Use semantic tags: \`<header>\`, \`<section>\`, \`<nav>\`, \`<footer>\`, \`<article>\`
-- **CRITICAL**: Apply ALL styling using inline \`style="..."\` attributes. Do NOT use classes.
+- **CRITICAL**: Use Tailwind CSS classes for ALL styling. Do NOT use inline styles unless absolutely necessary for dynamic values.
 - Use images with \`src\` placeholders (e.g., https://via.placeholder.com/800x400).
 - Include SEO metadata in a special hidden div at the start:
   \`<div id="seo-metadata" data-title="Page Title" data-description="Meta description"></div>\`
@@ -364,13 +290,14 @@ Guidance for section selection:
 
 Ensure a logical flow that tells a story and guides the user towards the primary goal. Don't feel constrained to a specific formula if the content demands something unique.
 
-🎨 STYLING RULES (Use inline styles):
-- **Gradients**: \`background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)\`
-- **Typography**: \`font-family: sans-serif; font-size: 3.75rem; font-weight: 800; line-height: 1.1; color: #111827\`
-- **Flexbox**: \`display: flex; flex-direction: column; align-items: center; gap: 24px\`
-- **Grid**: \`display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px\`
-- **Shadows**: \`box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1)\`
-- **Rounded**: \`border-radius: 12px\`
+🎨 STYLING RULES (Tailwind CSS):
+- **Gradients**: \`bg-gradient-to-r from-blue-600 to-indigo-700\`
+- **Typography**: \`font-sans text-6xl font-extrabold tracking-tight text-gray-900\`
+- **Flexbox**: \`flex flex-col items-center gap-6\`
+- **Grid**: \`grid grid-cols-1 md:grid-cols-3 gap-10\`
+- **Shadows**: \`shadow-xl hover:shadow-2xl transition-shadow duration-300\`
+- **Rounded**: \`rounded-xl\`
+- **Buttons**: \`px-8 py-3 rounded-full font-semibold transition-all transform hover:scale-105\`
 
 Generate the HTML string now. Return ONLY valid HTML code, no markdown fencing needed.`;
 }

@@ -21,6 +21,7 @@ export interface GenerationOptions {
   temperature?: number;
   maxTokens?: number;
   systemInstruction?: string;
+  images?: string[];
 }
 
 export interface GenerationResult {
