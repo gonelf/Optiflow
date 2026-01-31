@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 interface Page {
   id: string;
@@ -66,6 +67,7 @@ export default function PagesListPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [aiPagePurpose, setAiPagePurpose] = useState('');
   const [aiDesignStyle, setAiDesignStyle] = useState('');
+  const [aiDesignMode, setAiDesignMode] = useState<'consistent' | 'new'>('consistent');
   const [isAIGenerating, setIsAIGenerating] = useState(false);
 
   const workspaceSlug = params.workspaceSlug as string;
@@ -229,7 +231,8 @@ export default function PagesListPage() {
         body: JSON.stringify({
           workspaceId,
           pagePurpose: aiPagePurpose,
-          designStyle: pages.length === 0 && aiDesignStyle ? aiDesignStyle : undefined,
+          designMode: aiDesignMode,
+          designStyle: (pages.length === 0 || aiDesignMode === 'new') && aiDesignStyle ? aiDesignStyle : undefined,
         }),
       });
 
@@ -248,6 +251,7 @@ export default function PagesListPage() {
       // Reset form
       setAiPagePurpose('');
       setAiDesignStyle('');
+      setAiDesignMode('consistent');
       setIsAICreateDialogOpen(false);
 
       // Navigate to new AI editor
@@ -489,9 +493,38 @@ export default function PagesListPage() {
               </p>
             </div>
 
-            {pages.length === 0 && (
+            {pages.length > 0 && (
               <div>
-                <Label htmlFor="ai-style">Design Style (Optional)</Label>
+                <Label>Design Approach</Label>
+                <RadioGroup
+                  value={aiDesignMode}
+                  onValueChange={(value) => setAiDesignMode(value as 'consistent' | 'new')}
+                  disabled={isAIGenerating}
+                  className="mt-2"
+                >
+                  <RadioGroupItem value="consistent">
+                    <div>
+                      <p className="font-medium text-sm">Design Consistency</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        AI will analyze your existing {pages.length} page{pages.length > 1 ? 's' : ''} and create a design that matches your current style.
+                      </p>
+                    </div>
+                  </RadioGroupItem>
+                  <RadioGroupItem value="new">
+                    <div>
+                      <p className="font-medium text-sm">New Design</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Create a fresh, unique design without matching existing pages.
+                      </p>
+                    </div>
+                  </RadioGroupItem>
+                </RadioGroup>
+              </div>
+            )}
+
+            {(pages.length === 0 || aiDesignMode === 'new') && (
+              <div>
+                <Label htmlFor="ai-style">Design Style {pages.length > 0 && '(Optional)'}</Label>
                 <Input
                   id="ai-style"
                   value={aiDesignStyle}
@@ -501,16 +534,9 @@ export default function PagesListPage() {
                   disabled={isAIGenerating}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  This is your first page. Describe your preferred design style.
-                </p>
-              </div>
-            )}
-
-            {pages.length > 0 && (
-              <div className="rounded-lg bg-blue-50 p-3 text-sm text-blue-900">
-                <p className="font-medium">Design Consistency</p>
-                <p className="text-xs mt-1">
-                  AI will analyze your existing {pages.length} page{pages.length > 1 ? 's' : ''} and create a design that matches your current style.
+                  {pages.length === 0
+                    ? 'This is your first page. Describe your preferred design style.'
+                    : 'Describe the design style for this new page.'}
                 </p>
               </div>
             )}

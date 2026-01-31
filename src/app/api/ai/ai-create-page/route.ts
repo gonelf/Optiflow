@@ -8,6 +8,7 @@ import { z } from 'zod';
 const aiCreatePageSchema = z.object({
     workspaceId: z.string(),
     pagePurpose: z.string().min(10, 'Page purpose must be at least 10 characters'),
+    designMode: z.enum(['consistent', 'new']).optional().default('consistent'),
     designStyle: z.string().optional(),
 });
 
@@ -69,11 +70,14 @@ export async function POST(req: NextRequest) {
             },
         });
 
-        // Prepare existing pages data for AI
-        const existingPagesContext = existingPages.map(page => ({
-            title: page.title,
-            components: page.components,
-        }));
+        // Prepare existing pages data for AI (only if design mode is 'consistent')
+        const shouldUseExistingPages = validatedData.designMode === 'consistent' && existingPages.length > 0;
+        const existingPagesContext = shouldUseExistingPages
+            ? existingPages.map(page => ({
+                title: page.title,
+                components: page.components,
+            }))
+            : [];
 
         // Generate the page using AI with context
         const generatedPage = await AIGeneratorService.generatePageWithContext({
@@ -198,6 +202,7 @@ export async function POST(req: NextRequest) {
                 prompt: validatedData.pagePurpose,
                 context: {
                     workspaceId: validatedData.workspaceId,
+                    designMode: validatedData.designMode,
                     hasExistingPages: existingPagesContext.length > 0,
                     designStyle: validatedData.designStyle,
                     existingPageCount: existingPagesContext.length,
