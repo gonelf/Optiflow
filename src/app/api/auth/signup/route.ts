@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
     // Create user and update invite code in transaction
     console.log('[Signup] Creating new user:', validatedData.email)
 
-    const transaction = [
+    const transaction: any[] = [
       prisma.user.create({
         data: {
           id: crypto.randomUUID(),
