@@ -89,7 +89,7 @@ export async function POST(
         workspaceId: params.workspaceId,
         domain: normalizedDomain,
         status: vercelDomain.verified ? 'ACTIVE' : 'PENDING',
-        dnsRecords: vercelDomain.verification || null,
+        dnsRecords: vercelDomain.verification || undefined,
         verifiedAt: vercelDomain.verified ? new Date() : null,
       },
     })
