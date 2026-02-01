@@ -30,8 +30,8 @@ import { Card } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export const metadata: Metadata = {
-  title: 'Features - OptiFlow | Native A/B Testing & Analytics Builder',
-  description: 'Explore OptiFlow\'s comprehensive features: visual page builder, native A/B testing, integrated analytics, AI optimizations, and more. Everything you need to optimize SaaS conversions.',
+  title: 'Features - OptiVibe | Native A/B Testing & Analytics Builder',
+  description: 'Explore OptiVibe\'s comprehensive features: visual page builder, native A/B testing, integrated analytics, AI optimizations, and more. Everything you need to optimize SaaS conversions.',
 }
 
 export default function FeaturesPage() {
@@ -44,7 +44,7 @@ export default function FeaturesPage() {
             <div className="flex items-center">
               <Link href="/" className="flex items-center space-x-2">
                 <Zap className="h-6 w-6 text-primary" />
-                <span className="text-xl font-bold">OptiFlow</span>
+                <span className="text-xl font-bold">OptiVibe</span>
               </Link>
             </div>
             <div className="hidden md:flex items-center space-x-8">
@@ -52,7 +52,7 @@ export default function FeaturesPage() {
                 Features
               </Link>
               <Link href="/#benefits" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                Why OptiFlow
+                Why OptiVibe
               </Link>
               <Link href="/pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                 Pricing
@@ -81,7 +81,7 @@ export default function FeaturesPage() {
             <span className="block text-primary mt-2">Win More Conversions</span>
           </h1>
           <p className="text-xl text-muted-foreground mb-10 max-w-3xl mx-auto">
-            OptiFlow combines powerful page building, native A/B testing, and deep analytics
+            OptiVibe combines powerful page building, native A/B testing, and deep analytics
             in one seamless platform. No integrations, no friction—just results.
           </p>
           <Link href="/signup">
@@ -520,7 +520,7 @@ export default function FeaturesPage() {
             Built for Every SaaS Marketing Need
           </h2>
           <p className="text-lg text-muted-foreground">
-            From landing pages to product-led funnels—OptiFlow has you covered
+            From landing pages to product-led funnels—OptiVibe has you covered
           </p>
         </div>
 
@@ -580,7 +580,7 @@ export default function FeaturesPage() {
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <Zap className="h-5 w-5 text-primary" />
-                <span className="font-bold">OptiFlow</span>
+                <span className="font-bold">OptiVibe</span>
               </div>
               <p className="text-sm text-muted-foreground">
                 The no-code builder for SaaS growth teams. Build, test, and optimize—all in one place.
@@ -619,7 +619,7 @@ export default function FeaturesPage() {
           </div>
 
           <div className="border-t pt-8 flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground">
-            <p>© 2026 OptiFlow. All rights reserved.</p>
+            <p>© 2026 OptiVibe. All rights reserved.</p>
             <div className="flex gap-6 mt-4 md:mt-0">
               <Link href="#" className="hover:text-foreground transition-colors">Twitter</Link>
               <Link href="#" className="hover:text-foreground transition-colors">LinkedIn</Link>

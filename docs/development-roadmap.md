@@ -1,6 +1,6 @@
-# OptiFlow Development Roadmap
+# OptiVibe Development Roadmap
 
-Complete implementation plan for building OptiFlow MVP from scratch to production launch.
+Complete implementation plan for building OptiVibe MVP from scratch to production launch.
 
 ## Overview
 

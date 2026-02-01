@@ -5,7 +5,7 @@
 
 ## Overview
 
-Phase 3 implements a complete A/B testing system for OptiFlow, enabling users to create test variants, split traffic, track conversions, and analyze results with statistical significance.
+Phase 3 implements a complete A/B testing system for OptiVibe, enabling users to create test variants, split traffic, track conversions, and analyze results with statistical significance.
 
 ## Implemented Features
 

@@ -1,4 +1,4 @@
-// OptiFlow Database Schema
+// OptiVibe Database Schema
 // PostgreSQL via Supabase
 
 generator client {

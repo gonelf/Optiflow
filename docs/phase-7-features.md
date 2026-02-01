@@ -1,6 +1,6 @@
 # Phase 7: Advanced Features Documentation
 
-This document covers the implementation of Phase 7 advanced features for OptiFlow, including real-time collaboration, version history, personalization, multi-language support, and mobile preview.
+This document covers the implementation of Phase 7 advanced features for OptiVibe, including real-time collaboration, version history, personalization, multi-language support, and mobile preview.
 
 ## Table of Contents
 
@@ -17,7 +17,7 @@ This document covers the implementation of Phase 7 advanced features for OptiFlo
 
 ## Overview
 
-Phase 7 introduces advanced features that transform OptiFlow from a single-user page builder into a collaborative, multi-language platform with intelligent personalization.
+Phase 7 introduces advanced features that transform OptiVibe from a single-user page builder into a collaborative, multi-language platform with intelligent personalization.
 
 ### Key Features
 
