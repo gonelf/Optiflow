@@ -21,7 +21,7 @@ async function main() {
         update: {},
         create: {
             workspaceId: workspace.id,
-            name: 'OptiFlow Standard',
+            name: 'OptiVibe Standard',
             colors: {
                 primary: '#3b82f6',
                 secondary: '#64748b',
@@ -64,10 +64,10 @@ async function main() {
 
     // 3. Create a Default User (Author)
     const user = await prisma.user.upsert({
-        where: { email: 'admin@optiflow.com' },
+        where: { email: 'admin@optivibe.com' },
         update: {},
         create: {
-            email: 'admin@optiflow.com',
+            email: 'admin@optivibe.com',
             name: 'Admin User',
         },
     });

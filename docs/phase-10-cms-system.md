@@ -1042,7 +1042,7 @@ const items = await prisma.collectionItem.findMany({
 
 ### Webflow CMS Migration
 1. Export Webflow collections as JSON
-2. Map Webflow field types to Optiflow types
+2. Map Webflow field types to OptiVibe types
 3. Import items with transformed data
 4. Recreate collection list bindings
 

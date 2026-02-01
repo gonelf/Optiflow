@@ -5,7 +5,7 @@
 
 ## Overview
 
-Phase 5 implements AI-powered features and key integrations for OptiFlow, including OpenAI GPT-4 page generation, Stripe payment processing, and a custom webhook system.
+Phase 5 implements AI-powered features and key integrations for OptiVibe, including OpenAI GPT-4 page generation, Stripe payment processing, and a custom webhook system.
 
 ## Implemented Features
 
@@ -331,7 +331,7 @@ const response = await fetch('/api/webhooks', {
   method: 'POST',
   body: JSON.stringify({
     workspaceId: 'workspace_123',
-    url: 'https://example.com/webhooks/optiflow',
+    url: 'https://example.com/webhooks/optivibe',
     events: ['conversion.created', 'ab_test.winner_declared'],
     secret: 'your_secret_key',
   }),

@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Objective**: Transform Optiflow's AI from a generation tool into an intelligent co-pilot that provides real-time assistance, and enable seamless design import from Figma to dramatically accelerate workflows.
+**Objective**: Transform OptiVibe's AI from a generation tool into an intelligent co-pilot that provides real-time assistance, and enable seamless design import from Figma to dramatically accelerate workflows.
 
 **Duration**: 4-5 weeks
 **Priority**: High (P1) - Key competitive differentiator
@@ -20,10 +20,10 @@
 5. **Content Assistant** - Write, rewrite, and optimize text
 
 ### Figma Integration
-6. **Figma Plugin** - Export designs from Figma to Optiflow
-7. **Design Import** - Convert Figma frames to Optiflow elements
+6. **Figma Plugin** - Export designs from Figma to OptiVibe
+7. **Design Import** - Convert Figma frames to OptiVibe elements
 8. **Token Sync** - Synchronize design tokens between systems
-9. **Component Mapping** - Map Figma components to Optiflow components
+9. **Component Mapping** - Map Figma components to OptiVibe components
 
 ---
 
@@ -517,7 +517,7 @@ type FigmaNodeType =
   | 'BOOLEAN_OPERATION'
   | 'SLICE';
 
-// Figma to Optiflow Mapping
+// Figma to OptiVibe Mapping
 interface FigmaImportConfig {
   // What to import
   frameIds: string[];
@@ -539,13 +539,13 @@ interface FigmaImportConfig {
 
 interface ComponentMappingRule {
   figmaComponentName: string | RegExp;
-  optiflowComponent: string;
+  optivibeComponent: string;
   propertyMapping: Record<string, string>;
 }
 
 interface StyleMappingRule {
   figmaStyle: string;                  // Figma style ID or name
-  optiflowToken: string;               // Design token reference
+  optivibeToken: string;               // Design token reference
 }
 
 // Import Result
@@ -554,7 +554,7 @@ interface FigmaImportResult {
   designTokens?: Partial<DesignTokens>;
   assets: ImportedAsset[];
   warnings: ImportWarning[];
-  componentMap: Map<string, string>;   // Figma ID -> Optiflow ID
+  componentMap: Map<string, string>;   // Figma ID -> OptiVibe ID
 }
 
 interface ImportedAsset {
@@ -610,7 +610,7 @@ interface ExportComplete {
 - [ ] Frame selector (tree view)
 - [ ] Export options panel
 - [ ] Progress indicator
-- [ ] Authentication with Optiflow
+- [ ] Authentication with OptiVibe
 - [ ] Workspace/page selector
 
 **Files to Create:**
@@ -648,8 +648,8 @@ figma-plugin/src/export/
 ```
 
 ##### 11.5.3 Plugin API Communication
-- [ ] OAuth flow with Optiflow
-- [ ] Send export data to Optiflow API
+- [ ] OAuth flow with OptiVibe
+- [ ] Send export data to OptiVibe API
 - [ ] Handle large exports (chunking)
 - [ ] Error handling and retry
 
@@ -663,7 +663,7 @@ figma-plugin/src/api/
 
 #### 11.6 Import Pipeline (4 days)
 
-##### 11.6.1 Optiflow Import API
+##### 11.6.1 OptiVibe Import API
 - [ ] Receive Figma export data
 - [ ] Queue import job
 - [ ] Process in background
@@ -734,7 +734,7 @@ src/services/figma/layout-converters/
 
 ##### 11.7.1 Image Import
 - [ ] Download images from Figma
-- [ ] Upload to Optiflow asset storage
+- [ ] Upload to OptiVibe asset storage
 - [ ] Generate responsive sizes
 - [ ] Update element references
 
@@ -767,7 +767,7 @@ src/services/figma/asset-handlers/
 - [ ] Extract typography scales
 - [ ] Extract spacing values
 - [ ] Extract shadow presets
-- [ ] Map to Optiflow token structure
+- [ ] Map to OptiVibe token structure
 
 **Files to Create:**
 ```
@@ -780,7 +780,7 @@ src/services/figma/token-extractors/
 ```
 
 ##### 11.8.2 Two-Way Sync
-- [ ] Push Optiflow tokens to Figma
+- [ ] Push OptiVibe tokens to Figma
 - [ ] Pull Figma style changes
 - [ ] Conflict resolution UI
 - [ ] Sync history/audit log
@@ -810,7 +810,7 @@ src/services/figma/component-detection/
 
 ##### 11.9.2 Manual Mapping UI
 - [ ] Show Figma components list
-- [ ] Map to Optiflow components
+- [ ] Map to OptiVibe components
 - [ ] Property binding interface
 - [ ] Save mapping templates
 
@@ -973,7 +973,7 @@ model FigmaComponentMapping {
   // Mapping
   figmaComponentName String
   figmaComponentId   String?
-  optiflowComponent  String
+  optivibeComponent  String
   propertyMapping    Json    @db.JsonB
 
   // Metadata

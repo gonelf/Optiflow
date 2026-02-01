@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Objective**: Transform Optiflow from a component-only builder into a true visual design tool with element-level control, matching Webflow's core capability.
+**Objective**: Transform OptiVibe from a component-only builder into a true visual design tool with element-level control, matching Webflow's core capability.
 
 **Duration**: 3-4 weeks
 **Priority**: Critical (P0) - Foundation for all future builder enhancements

@@ -76,7 +76,7 @@ test.describe('Authentication', () => {
       // Note: This test requires a seeded test account
       await page.goto('/login');
 
-      await page.getByLabel(/email/i).fill('test@optiflow.com');
+      await page.getByLabel(/email/i).fill('test@optivibe.com');
       await page.getByLabel(/password/i).fill('TestPassword123!');
       await page.getByRole('button', { name: /sign in|log in/i }).click();
 
@@ -89,7 +89,7 @@ test.describe('Authentication', () => {
     test('should maintain session across page reloads', async ({ page }) => {
       // Login first
       await page.goto('/login');
-      await page.getByLabel(/email/i).fill('test@optiflow.com');
+      await page.getByLabel(/email/i).fill('test@optivibe.com');
       await page.getByLabel(/password/i).fill('TestPassword123!');
       await page.getByRole('button', { name: /sign in|log in/i }).click();
 
@@ -112,7 +112,7 @@ test.describe('Authentication', () => {
     test('should logout successfully', async ({ page }) => {
       // Login first
       await page.goto('/login');
-      await page.getByLabel(/email/i).fill('test@optiflow.com');
+      await page.getByLabel(/email/i).fill('test@optivibe.com');
       await page.getByLabel(/password/i).fill('TestPassword123!');
       await page.getByRole('button', { name: /sign in|log in/i }).click();
 

@@ -1,7 +1,7 @@
-# OptiFlow System Architecture
+# OptiVibe System Architecture
 
 ## Overview
-OptiFlow is a no-code SaaS marketing site builder with native A/B testing and integrated analytics. Built with Next.js 14, Tailwind CSS, Prisma + PostgreSQL (Supabase), and deployed on Vercel.
+OptiVibe is a no-code SaaS marketing site builder with native A/B testing and integrated analytics. Built with Next.js 14, Tailwind CSS, Prisma + PostgreSQL (Supabase), and deployed on Vercel.
 
 ## System Architecture Diagram
 
@@ -254,9 +254,9 @@ See `prisma/schema.prisma` for complete schema definition.
 ## Deployment Architecture
 
 ### Vercel Deployment
-- Production: `main` branch → optiflow.com
+- Production: `main` branch → optivibe.com
 - Preview: Pull requests → auto-deploy
-- Development: `develop` branch → dev.optiflow.com
+- Development: `develop` branch → dev.optivibe.com
 
 ### Environment Strategy
 - `.env.local` - Local development

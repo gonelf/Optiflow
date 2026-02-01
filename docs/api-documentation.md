@@ -1,7 +1,7 @@
-# OptiFlow API Documentation
+# OptiVibe API Documentation
 
 **Version**: 1.0.0
-**Base URL**: `https://api.optiflow.app` (or `https://yourinstance.com/api`)
+**Base URL**: `https://api.optivibe.app` (or `https://yourinstance.com/api`)
 
 ## Table of Contents
 
@@ -25,7 +25,7 @@ All API requests require authentication using an API key.
 
 ### Getting Your API Key
 
-1. Log in to OptiFlow
+1. Log in to OptiVibe
 2. Go to **Settings** → **API Keys**
 3. Click **Create API Key**
 4. Copy and store securely
@@ -36,7 +36,7 @@ Include your API key in the `Authorization` header:
 
 ```bash
 curl -H "Authorization: Bearer YOUR_API_KEY" \
-  https://api.optiflow.app/pages
+  https://api.optivibe.app/pages
 ```
 
 ### API Key Permissions
@@ -133,7 +133,7 @@ Get all pages in a workspace.
 **Example Request**:
 ```bash
 curl -H "Authorization: Bearer YOUR_API_KEY" \
-  "https://api.optiflow.app/pages?workspaceId=ws_123&status=PUBLISHED&limit=10"
+  "https://api.optivibe.app/pages?workspaceId=ws_123&status=PUBLISHED&limit=10"
 ```
 
 **Example Response**:
@@ -145,7 +145,7 @@ curl -H "Authorization: Bearer YOUR_API_KEY" \
       "title": "Product Launch",
       "slug": "product-launch",
       "status": "PUBLISHED",
-      "publishedUrl": "https://optiflow.app/p/product-launch",
+      "publishedUrl": "https://optivibe.app/p/product-launch",
       "createdAt": "2024-01-15T10:30:00Z",
       "updatedAt": "2024-01-20T14:22:00Z"
     }
@@ -168,7 +168,7 @@ Get a single page by ID.
 **Example Request**:
 ```bash
 curl -H "Authorization: Bearer YOUR_API_KEY" \
-  https://api.optiflow.app/pages/page_abc123
+  https://api.optivibe.app/pages/page_abc123
 ```
 
 **Example Response**:
@@ -192,7 +192,7 @@ curl -H "Authorization: Bearer YOUR_API_KEY" \
       }
     }
   ],
-  "publishedUrl": "https://optiflow.app/p/product-launch",
+  "publishedUrl": "https://optivibe.app/p/product-launch",
   "createdAt": "2024-01-15T10:30:00Z"
 }
 ```
@@ -251,7 +251,7 @@ Publish a draft page.
 {
   "id": "page_abc123",
   "status": "PUBLISHED",
-  "publishedUrl": "https://optiflow.app/p/product-launch",
+  "publishedUrl": "https://optivibe.app/p/product-launch",
   "publishedAt": "2024-01-22T12:00:00Z"
 }
 ```
@@ -552,7 +552,7 @@ Register a webhook endpoint.
 ```json
 {
   "workspaceId": "ws_123",
-  "url": "https://yourapp.com/webhooks/optiflow",
+  "url": "https://yourapp.com/webhooks/optivibe",
   "events": [
     "page.published",
     "conversion.created",
@@ -564,7 +564,7 @@ Register a webhook endpoint.
 
 #### Webhook Event Format
 
-When an event occurs, OptiFlow sends a POST request:
+When an event occurs, OptiVibe sends a POST request:
 
 ```json
 {
@@ -603,13 +603,13 @@ function verifyWebhook(payload, signature, secret) {
 ### JavaScript/TypeScript
 
 ```bash
-npm install @optiflow/sdk
+npm install @optivibe/sdk
 ```
 
 ```typescript
-import OptiFlow from '@optiflow/sdk';
+import OptiVibe from '@optivibe/sdk';
 
-const client = new OptiFlow({
+const client = new OptiVibe({
   apiKey: 'YOUR_API_KEY'
 });
 
@@ -638,13 +638,13 @@ await client.analytics.track({
 ### Python
 
 ```bash
-pip install optiflow
+pip install optivibe
 ```
 
 ```python
-from optiflow import OptiFlow
+from optivibe import OptiVibe
 
-client = OptiFlow(api_key='YOUR_API_KEY')
+client = OptiVibe(api_key='YOUR_API_KEY')
 
 # List pages
 pages = client.pages.list(
@@ -664,10 +664,10 @@ page = client.pages.create(
 
 ## Support
 
-- **Documentation**: [docs.optiflow.app](https://docs.optiflow.app)
-- **API Status**: [status.optiflow.app](https://status.optiflow.app)
-- **Support**: support@optiflow.app
-- **Discord**: [discord.gg/optiflow](https://discord.gg/optiflow)
+- **Documentation**: [docs.optivibe.app](https://docs.optivibe.app)
+- **API Status**: [status.optivibe.app](https://status.optivibe.app)
+- **Support**: support@optivibe.app
+- **Discord**: [discord.gg/optivibe](https://discord.gg/optivibe)
 
 ---
 
