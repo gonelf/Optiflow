@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { HeatmapViewer } from '@/components/analytics/HeatmapViewer';
+import { useWorkspace } from '@/hooks/use-workspace';
 
 interface HeatmapsPageProps {
   params: {
@@ -20,6 +21,7 @@ interface Page {
 }
 
 export default function HeatmapsPage({ params }: HeatmapsPageProps) {
+  const { currentWorkspace, isLoading: isWorkspaceLoading } = useWorkspace(params.workspaceSlug);
   const [pages, setPages] = useState<Page[]>([]);
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -27,13 +29,15 @@ export default function HeatmapsPage({ params }: HeatmapsPageProps) {
   useEffect(() => {
     // Fetch pages for this workspace
     const fetchPages = async () => {
+      if (!currentWorkspace?.id) return;
+
       try {
-        const response = await fetch(`/api/pages?workspaceSlug=${params.workspaceSlug}`);
+        const response = await fetch(`/api/pages?workspaceId=${currentWorkspace.id}`);
         if (response.ok) {
           const data = await response.json();
-          setPages(data);
-          if (data.length > 0) {
-            setSelectedPageId(data[0].id);
+          setPages(data.pages || []);
+          if (data.pages?.length > 0) {
+            setSelectedPageId(data.pages[0].id);
           }
         }
       } catch (error) {
@@ -43,8 +47,10 @@ export default function HeatmapsPage({ params }: HeatmapsPageProps) {
       }
     };
 
-    fetchPages();
-  }, [params.workspaceSlug]);
+    if (!isWorkspaceLoading) {
+      fetchPages();
+    }
+  }, [currentWorkspace?.id, isWorkspaceLoading]);
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -55,7 +61,7 @@ export default function HeatmapsPage({ params }: HeatmapsPageProps) {
         </p>
       </div>
 
-      {loading ? (
+      {(loading || isWorkspaceLoading) ? (
         <div className="text-center py-12">
           <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
           <p className="mt-4 text-gray-600">Loading pages...</p>
