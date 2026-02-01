@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { useWorkspace } from '@/hooks/use-workspace';
 import {
   Plus,
   Search,
@@ -59,6 +60,9 @@ export default function PagesListPage() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
+  const workspaceSlug = params.workspaceSlug as string;
+  const { currentWorkspace, isLoading: isWorkspaceLoading, isError: isWorkspaceError } = useWorkspace(workspaceSlug);
+
   const [pages, setPages] = useState<Page[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -72,27 +76,14 @@ export default function PagesListPage() {
   const [aiDesignMode, setAiDesignMode] = useState<'consistent' | 'new'>('consistent');
   const [isAIGenerating, setIsAIGenerating] = useState(false);
 
-  const workspaceSlug = params.workspaceSlug as string;
-
   const fetchPages = useCallback(async () => {
+    if (!currentWorkspace?.id) return;
+
     try {
       setIsLoading(true);
 
-      // Get workspace ID first
-      const workspaceResponse = await fetch(`/api/workspaces?slug=${workspaceSlug}`);
-      if (workspaceResponse.status === 404) {
-        // If workspace slug is invalid (e.g. "dashboard"), redirect to root dashboard
-        router.push('/dashboard');
-        return;
-      }
-
-      if (!workspaceResponse.ok) throw new Error('Failed to fetch workspace');
-
-      const workspaceData = await workspaceResponse.json();
-      const workspaceId = workspaceData.workspace.id;
-
-      // Fetch pages
-      const response = await fetch(`/api/pages?workspaceId=${workspaceId}`);
+      // Fetch pages using workspace ID from hook
+      const response = await fetch(`/api/pages?workspaceId=${currentWorkspace.id}`);
       if (!response.ok) throw new Error('Failed to fetch pages');
 
       const data = await response.json();
@@ -107,11 +98,16 @@ export default function PagesListPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [workspaceSlug, toast]);
+  }, [currentWorkspace?.id, toast]);
 
   useEffect(() => {
+    // Redirect to dashboard if workspace doesn't exist
+    if (!isWorkspaceLoading && !currentWorkspace) {
+      router.push('/dashboard');
+      return;
+    }
     fetchPages();
-  }, [fetchPages]);
+  }, [fetchPages, currentWorkspace, isWorkspaceLoading, router]);
 
   const handleCreatePage = async () => {
     if (!newPageTitle || !newPageSlug) {
@@ -123,24 +119,26 @@ export default function PagesListPage() {
       return;
     }
 
+    if (!currentWorkspace?.id) {
+      toast({
+        title: 'Error',
+        description: 'Workspace not found. Please try again.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       setIsCreating(true);
 
-      // Get workspace ID
-      const workspaceResponse = await fetch(`/api/workspaces?slug=${workspaceSlug}`);
-      if (!workspaceResponse.ok) throw new Error('Failed to fetch workspace');
-
-      const workspaceData = await workspaceResponse.json();
-      const workspaceId = workspaceData.workspace.id;
-
-      // Create page
+      // Create page using workspace ID from hook
       const response = await fetch('/api/pages', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          workspaceId,
+          workspaceId: currentWorkspace.id,
           title: newPageTitle,
           slug: newPageSlug,
         }),
@@ -260,24 +258,26 @@ export default function PagesListPage() {
       return;
     }
 
+    if (!currentWorkspace?.id) {
+      toast({
+        title: 'Error',
+        description: 'Workspace not found. Please try again.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       setIsAIGenerating(true);
 
-      // Get workspace ID
-      const workspaceResponse = await fetch(`/api/workspaces?slug=${workspaceSlug}`);
-      if (!workspaceResponse.ok) throw new Error('Failed to fetch workspace');
-
-      const workspaceData = await workspaceResponse.json();
-      const workspaceId = workspaceData.workspace.id;
-
-      // Create page with AI
+      // Create page with AI using workspace ID from hook
       const response = await fetch('/api/ai/ai-create-page', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          workspaceId,
+          workspaceId: currentWorkspace.id,
           pagePurpose: aiPagePurpose,
           designMode: aiDesignMode,
           designStyle: (pages.length === 0 || aiDesignMode === 'new') && aiDesignStyle ? aiDesignStyle : undefined,
