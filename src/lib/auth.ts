@@ -65,12 +65,13 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id
-        // Get onboarded status for existing users or new ones
+        // Get onboarded status and system role for existing users or new ones
         const dbUser = await prisma.user.findUnique({
           where: { id: user.id },
-          select: { onboarded: true },
+          select: { onboarded: true, systemRole: true },
         })
         token.onboarded = dbUser?.onboarded ?? false
+        token.systemRole = dbUser?.systemRole ?? 'USER'
       }
       return token
     },
@@ -78,6 +79,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string
         session.user.onboarded = token.onboarded as boolean
+        session.user.systemRole = token.systemRole as string
       }
       return session
     },

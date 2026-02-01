@@ -451,3 +451,50 @@ ALTER TABLE "Integration" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "CustomDomain" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "ApiKey" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Session" ENABLE ROW LEVEL SECURITY;
+
+-- ============================================================================
+-- INVITE SYSTEM & WAITLIST
+-- ============================================================================
+
+CREATE TYPE "WaitlistStatus" AS ENUM ('PENDING', 'INVITED', 'REGISTERED', 'REMOVED');
+CREATE TYPE "SystemRole" AS ENUM ('USER', 'ADMIN');
+
+CREATE TABLE "InviteCode" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "code" TEXT NOT NULL UNIQUE,
+    "maxUses" INTEGER NOT NULL DEFAULT 1,
+    "usedCount" INTEGER NOT NULL DEFAULT 0,
+    "expiryDate" TIMESTAMP(3),
+    "createdBy" TEXT,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL
+);
+
+CREATE TABLE "WaitlistUser" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "email" TEXT NOT NULL UNIQUE,
+    "name" TEXT,
+    "referralCode" TEXT NOT NULL UNIQUE,
+    "referredBy" TEXT,
+    "referralCount" INTEGER NOT NULL DEFAULT 0,
+    "position" INTEGER NOT NULL DEFAULT 0,
+    "status" "WaitlistStatus" NOT NULL DEFAULT 'PENDING',
+    "invitedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL
+);
+
+-- Add systemRole to User
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "systemRole" "SystemRole" NOT NULL DEFAULT 'USER';
+
+-- Indexes
+CREATE INDEX "InviteCode_code_idx" ON "InviteCode"("code");
+CREATE INDEX "InviteCode_isActive_idx" ON "InviteCode"("isActive");
+CREATE INDEX "WaitlistUser_email_idx" ON "WaitlistUser"("email");
+CREATE INDEX "WaitlistUser_referralCode_idx" ON "WaitlistUser"("referralCode");
+CREATE INDEX "WaitlistUser_status_idx" ON "WaitlistUser"("status");
+
+-- RLS
+ALTER TABLE "InviteCode" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "WaitlistUser" ENABLE ROW LEVEL SECURITY;

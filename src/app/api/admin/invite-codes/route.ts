@@ -1,0 +1,55 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+
+function generateCode(length = 10) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+    let result = ''
+    for (let i = 0; i < length; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+    return result
+}
+
+export async function POST(req: NextRequest) {
+    const session = await getServerSession(authOptions)
+
+    if (session?.user?.systemRole !== 'ADMIN') {
+        return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { count = 1, maxUses = 1, expiryDate } = await req.json()
+
+    const codes = []
+    for (let i = 0; i < count; i++) {
+        codes.push({
+            code: generateCode(10),
+            maxUses,
+            expiryDate: expiryDate ? new Date(expiryDate) : null,
+            createdBy: session.user.id,
+            isActive: true
+        })
+    }
+
+    // Bulk create
+    await prisma.inviteCode.createMany({
+        data: codes
+    })
+
+    return NextResponse.json({ message: 'Codes generated', count })
+}
+
+export async function GET(req: NextRequest) {
+    const session = await getServerSession(authOptions)
+
+    if (session?.user?.systemRole !== 'ADMIN') {
+        return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    }
+
+    const codes = await prisma.inviteCode.findMany({
+        orderBy: { createdAt: 'desc' }
+    })
+
+    return NextResponse.json(codes)
+}

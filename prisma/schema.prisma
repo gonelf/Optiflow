@@ -22,6 +22,7 @@ model User {
   name          String?
   avatarUrl     String?
   onboarded     Boolean   @default(false)
+  systemRole    SystemRole @default(USER)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -798,9 +799,9 @@ model Element {
   path          String      // Materialized path for tree queries
 
   // Content & Styles
-  content       Json        @db.JsonB
-  styles        Json        @db.JsonB  // ResponsiveStyles
-  stateStyles   Json?       @db.JsonB  // Hover/focus/active styles
+  content       Json?       @db.JsonB // Primitive content (text, image url)
+  styles        Json        @db.JsonB // Tailwind classes + custom styles
+  stateStyles   Json?       @db.JsonB // Hover/focus/active styles
 
   // Metadata
   locked        Boolean     @default(false)
@@ -811,20 +812,77 @@ model Element {
   // AI
   aiPrompt      String?     @db.Text
   aiGenerated   Boolean     @default(false)
-
+  
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
   // Relations
   page          Page        @relation(fields: [pageId], references: [id], onDelete: Cascade)
   variant       PageVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
-  parent        Element?    @relation("ElementHierarchy", fields: [parentId], references: [id])
+  parent        Element?    @relation("ElementHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
   children      Element[]   @relation("ElementHierarchy")
 
   @@index([pageId])
   @@index([parentId])
+  @@index([order])
   @@index([pageId, order])
   @@index([path])
+}
+
+// ============================================================================
+// INVITE SYSTEM & WAITLIST
+// ============================================================================
+
+model InviteCode {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  maxUses     Int       @default(1)
+  usedCount   Int       @default(0)
+  expiryDate  DateTime?
+  createdBy   String?   // Admin User ID
+  isActive    Boolean   @default(true)
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([code])
+  @@index([isActive])
+}
+
+model WaitlistUser {
+  id          String    @id @default(cuid())
+  email       String    @unique
+  name        String?
+  
+  // Viral Mechanics
+  referralCode String   @unique // Generated unique code for this user
+  referredBy   String?  // The referralCode of the person who referred them
+  referralCount Int     @default(0)
+  
+  // Position
+  position    Int       @default(0) // Logic handled in app/db triggers usually
+  
+  status      WaitlistStatus @default(PENDING)
+  invitedAt   DateTime?
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([email])
+  @@index([referralCode])
+  @@index([status])
+}
+
+enum WaitlistStatus {
+  PENDING
+  INVITED
+  REGISTERED
+  REMOVED
+}
+
+enum SystemRole {
+  USER
+  ADMIN
 }
 
 // DESIGN SYSTEM - Design tokens per workspace

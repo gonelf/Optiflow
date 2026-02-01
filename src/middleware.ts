@@ -210,6 +210,7 @@ export async function middleware(request: NextRequest) {
       pathname.startsWith('/api/auth') ||
       pathname.startsWith('/login') ||
       pathname.startsWith('/signup') ||
+      pathname.startsWith('/waitlist') ||
       pathname.startsWith('/_next') ||
       pathname.startsWith('/favicon')
     ) {
@@ -226,6 +227,7 @@ export async function middleware(request: NextRequest) {
     // Protected routes (dashboard and workspace APIs)
     if (
       pathname.startsWith('/dashboard') ||
+      pathname.startsWith('/admin') ||
       pathname.match(/^\/[^\/]+\/(settings|pages|templates|preview|ab-tests|analytics)/) ||
       pathname.startsWith('/api/workspaces')
     ) {
