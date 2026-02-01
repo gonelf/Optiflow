@@ -24,11 +24,14 @@ export async function POST(req: NextRequest) {
     const codes = []
     for (let i = 0; i < count; i++) {
         codes.push({
+            id: crypto.randomUUID(),
             code: generateCode(10),
             maxUses,
             expiryDate: expiryDate ? new Date(expiryDate) : null,
             createdBy: session.user.id,
-            isActive: true
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
         })
     }
 

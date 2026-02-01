@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
 import { motion } from 'framer-motion'
-import { Copy, Check, Users, Sparkles } from 'lucide-react'
+import { Copy, Check, Users, Zap, Twitter, Linkedin, Mail } from 'lucide-react'
 
 export default function WaitlistPage() {
     const searchParams = useSearchParams()
@@ -84,8 +84,9 @@ export default function WaitlistPage() {
         <div className="flex min-h-screen items-center justify-center bg-gray-50/50 p-4 dark:bg-gray-950/50">
             <Card className="w-full max-w-md border-border/50 shadow-lg backdrop-blur-sm">
                 <CardHeader className="text-center space-y-2">
-                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                        <Sparkles className="h-6 w-6 text-primary" />
+                    <div className="mx-auto mb-4 flex items-center justify-center space-x-2">
+                        <Zap className="h-8 w-8 text-primary fill-current" />
+                        <span className="text-2xl font-bold tracking-tight">OptiVibe</span>
                     </div>
                     <CardTitle className="text-3xl font-bold tracking-tight">
                         {user ? 'You are on the list!' : 'Join the Waitlist'}
@@ -93,7 +94,7 @@ export default function WaitlistPage() {
                     <CardDescription className="text-base">
                         {user
                             ? `You are #${user.position} in line.`
-                            : 'OptiFlow is currently in private beta. Reserve your spot today.'}
+                            : 'OptiVibe is currently in private beta. Reserve your spot today.'}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -143,6 +144,36 @@ export default function WaitlistPage() {
                                 <p className="text-xs text-muted-foreground text-center">
                                     For every friend who joins using your link, you'll drop one spot in line.
                                 </p>
+
+                                <div className="text-center text-sm font-medium pt-2">
+                                    Share on social media
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-3 pt-2">
+                                    <Button variant="outline" className="gap-2" onClick={() => {
+                                        const shareUrl = `${window.location.origin}/waitlist?ref=${user.referralCode}`
+                                        const text = "I just joined the waiting list for OptiVibe! Secure your spot now."
+                                        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`, '_blank')
+                                    }} title="Share on Twitter">
+                                        <TwitterIcon className="h-4 w-4" />
+                                        Twitter
+                                    </Button>
+                                    <Button variant="outline" className="gap-2" onClick={() => {
+                                        const shareUrl = `${window.location.origin}/waitlist?ref=${user.referralCode}`
+                                        window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`, '_blank')
+                                    }} title="Share on LinkedIn">
+                                        <LinkedinIcon className="h-4 w-4" />
+                                        LinkedIn
+                                    </Button>
+                                    <Button variant="outline" className="gap-2" onClick={() => {
+                                        const shareUrl = `${window.location.origin}/waitlist?ref=${user.referralCode}`
+                                        const text = "I just joined the waiting list for OptiVibe! Secure your spot now."
+                                        window.open(`mailto:?subject=${encodeURIComponent("Join me on OptiVibe")}&body=${encodeURIComponent(text + "\n\n" + shareUrl)}`, '_blank')
+                                    }} title="Share via Email">
+                                        <MailIcon className="h-4 w-4" />
+                                        Email
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -152,5 +183,32 @@ export default function WaitlistPage() {
             {/* Background decoration */}
             <div className="fixed inset-0 -z-10 h-full w-full bg-white dark:bg-black bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
         </div>
+    )
+}
+
+function TwitterIcon({ className }: { className?: string }) {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+            <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" />
+        </svg>
+    )
+}
+
+function LinkedinIcon({ className }: { className?: string }) {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+            <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+            <rect width="4" height="12" x="2" y="9" />
+            <circle cx="4" cy="4" r="2" />
+        </svg>
+    )
+}
+
+function MailIcon({ className }: { className?: string }) {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+            <rect width="20" height="16" x="2" y="4" rx="2" />
+            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+        </svg>
     )
 }

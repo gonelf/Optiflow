@@ -39,44 +39,52 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Verify Invite Code
-    const invite = await prisma.inviteCode.findUnique({
-      where: { code: validatedData.inviteCode },
-    })
+    // Verify Invite Code (Bypass for Admin)
+    const isAdminEmail = validatedData.email === 'gonelf@gmail.com'
+    let invite = null
 
-    if (!invite || !invite.isActive) {
-      return NextResponse.json(
-        { message: 'Invalid or inactive invite code' },
-        { status: 400 }
-      )
-    }
+    if (!isAdminEmail) {
+      invite = await prisma.inviteCode.findUnique({
+        where: { code: validatedData.inviteCode },
+      })
 
-    if (invite.expiryDate && invite.expiryDate < new Date()) {
-      return NextResponse.json(
-        { message: 'Invite code has expired' },
-        { status: 400 }
-      )
-    }
+      if (!invite || !invite.isActive) {
+        return NextResponse.json(
+          { message: 'Invalid or inactive invite code' },
+          { status: 400 }
+        )
+      }
 
-    if (invite.usedCount >= invite.maxUses) {
-      return NextResponse.json(
-        { message: 'Invite code usage limit reached' },
-        { status: 400 }
-      )
+      if (invite.expiryDate && invite.expiryDate < new Date()) {
+        return NextResponse.json(
+          { message: 'Invite code has expired' },
+          { status: 400 }
+        )
+      }
+
+      if (invite.usedCount >= invite.maxUses) {
+        return NextResponse.json(
+          { message: 'Invite code usage limit reached' },
+          { status: 400 }
+        )
+      }
     }
 
     // Assign Admin Role if email matches specific user
-    const sysRole = validatedData.email === 'gonelf@gmail.com' ? 'ADMIN' : 'USER'
+    const sysRole = isAdminEmail ? 'ADMIN' : 'USER'
 
     // Create user and update invite code in transaction
     console.log('[Signup] Creating new user:', validatedData.email)
 
-    const [user] = await prisma.$transaction([
+    const transaction = [
       prisma.user.create({
         data: {
+          id: crypto.randomUUID(),
           name: validatedData.name,
           email: validatedData.email,
           systemRole: sysRole,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
         select: {
           id: true,
@@ -84,17 +92,26 @@ export async function POST(req: NextRequest) {
           email: true,
           createdAt: true,
         },
-      }),
-      prisma.inviteCode.update({
-        where: { id: invite.id },
-        data: { usedCount: { increment: 1 } },
-      }),
-      // Also update waitlist status if they were on it
-      prisma.waitlistUser.updateMany({
-        where: { email: validatedData.email },
-        data: { status: 'REGISTERED' }
       })
-    ])
+    ]
+
+    if (invite) {
+      transaction.push(
+        prisma.inviteCode.update({
+          where: { id: invite.id },
+          data: { usedCount: { increment: 1 } },
+        })
+      )
+      // Also update waitlist status if they were on it
+      transaction.push(
+        prisma.waitlistUser.updateMany({
+          where: { email: validatedData.email },
+          data: { status: 'REGISTERED' }
+        })
+      )
+    }
+
+    const [user] = await prisma.$transaction(transaction as any)
 
     // Update waitlist position for others? (Not strictly required for registrants unless we want to remove them from the line)
 

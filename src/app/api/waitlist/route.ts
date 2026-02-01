@@ -14,7 +14,7 @@ function generateCode(length = 8) {
 
 const waitlistSchema = z.object({
     email: z.string().email(),
-    referredBy: z.string().optional(),
+    referredBy: z.string().nullable().optional(),
 })
 
 export async function POST(req: NextRequest) {
@@ -66,10 +66,13 @@ export async function POST(req: NextRequest) {
         // Create User
         waitlistUser = await prisma.waitlistUser.create({
             data: {
+                id: crypto.randomUUID(),
                 email,
                 referralCode: generateCode(8), // Unique 8-char code
                 referredBy: referrer ? referrer.referralCode : null,
                 position: newPosition,
+                createdAt: new Date(),
+                updatedAt: new Date(),
             },
         })
 
@@ -141,9 +144,8 @@ export async function GET(req: NextRequest) {
     }
 
     // Calculate people ahead
-    const aheadCount = await prisma.waitlistUser.count({
-        where: { position: { lt: user.position }, status: 'PENDING' }
-    })
+    // Viral: Show position as people ahead to create FOMO
+    const aheadCount = user.position
 
     return NextResponse.json({ user, aheadCount })
 }
