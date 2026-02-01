@@ -881,6 +881,7 @@ function ElementNode({
               {element.type}
             </div>
           )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={content?.src || 'https://via.placeholder.com/150'}
             alt={content?.alt || ''}

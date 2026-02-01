@@ -20,6 +20,7 @@ export default function SignupPage() {
     name: '',
     email: '',
     password: '',
+    inviteCode: '',
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -84,7 +85,7 @@ export default function SignupPage() {
     <Card>
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
-        <CardDescription>Get started with OptiVibe for free</CardDescription>
+        <CardDescription>Enter your invite code to join OptiFlow</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -125,10 +126,29 @@ export default function SignupPage() {
               minLength={8}
             />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="inviteCode">Invite Code</Label>
+            <Input
+              id="inviteCode"
+              type="text"
+              placeholder="ENTER-CODE"
+              value={formData.inviteCode}
+              onChange={(e) => setFormData({ ...formData, inviteCode: e.target.value })}
+              disabled={isLoading}
+              required
+            />
+          </div>
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? 'Creating account...' : 'Create account'}
           </Button>
         </form>
+
+        <div className="mt-4 text-center text-sm">
+          <span className="text-muted-foreground">Don&apos;t have an invite code? </span>
+          <Link href="/waitlist" className="text-primary hover:underline font-medium">
+            Join the waitlist
+          </Link>
+        </div>
 
         <div className="relative my-4">
           <div className="absolute inset-0 flex items-center">

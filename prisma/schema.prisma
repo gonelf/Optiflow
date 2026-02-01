@@ -497,38 +497,109 @@ model SupportedLocale {
 }
 
 model Element {
-  id          String       @id @default(cuid())
-  pageId      String
-  variantId   String?
-  type        String
-  name        String
-  order       Int
-  parentId    String?
-  depth       Int          @default(0)
-  path        String
-  content     Json?
-  styles      Json
-  stateStyles Json?
-  locked      Boolean      @default(false)
-  hidden      Boolean      @default(false)
-  className   String?
-  attributes  Json?
-  aiPrompt    String?
-  aiGenerated Boolean      @default(false)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  page        Page         @relation(fields: [pageId], references: [id], onDelete: Cascade)
-  parent      Element?     @relation("ElementHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
-  children    Element[]    @relation("ElementHierarchy")
-  variant     PageVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  id            String      @id @default(cuid())
+  pageId        String
+  variantId     String?
+
+  // Element Definition
+  type          String      // PrimitiveType or ComponentType
+  name          String
+  order         Int
+
+  // Hierarchy
+  parentId      String?     // Parent element ID for nesting
+  depth         Int         @default(0)
+  path          String      // Materialized path for tree queries
+
+  // Content & Styles
+  content       Json?       @db.JsonB // Primitive content (text, image url)
+  styles        Json        @db.JsonB // Tailwind classes + custom styles
+  stateStyles   Json?       @db.JsonB // Hover/focus/active styles
+
+  // Metadata
+  locked        Boolean     @default(false)
+  hidden        Boolean     @default(false)
+  className     String?
+  attributes    Json?
+
+  // AI
+  aiPrompt      String?     @db.Text
+  aiGenerated   Boolean     @default(false)
+  
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  page          Page        @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  variant       PageVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  parent        Element?    @relation("ElementHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children      Element[]   @relation("ElementHierarchy")
 
   @@index([pageId])
   @@index([parentId])
+  @@index([order])
   @@index([pageId, order])
   @@index([path])
-  @@index([order])
+
 }
 
+// ============================================================================
+// INVITE SYSTEM & WAITLIST
+// ============================================================================
+
+model InviteCode {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  maxUses     Int       @default(1)
+  usedCount   Int       @default(0)
+  expiryDate  DateTime?
+  createdBy   String?   // Admin User ID
+  isActive    Boolean   @default(true)
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([code])
+  @@index([isActive])
+}
+
+model WaitlistUser {
+  id          String    @id @default(cuid())
+  email       String    @unique
+  name        String?
+  
+  // Viral Mechanics
+  referralCode String   @unique // Generated unique code for this user
+  referredBy   String?  // The referralCode of the person who referred them
+  referralCount Int     @default(0)
+  
+  // Position
+  position    Int       @default(0) // Logic handled in app/db triggers usually
+  
+  status      WaitlistStatus @default(PENDING)
+  invitedAt   DateTime?
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([email])
+  @@index([referralCode])
+  @@index([status])
+}
+
+enum WaitlistStatus {
+  PENDING
+  INVITED
+  REGISTERED
+  REMOVED
+}
+
+enum SystemRole {
+  USER
+  ADMIN
+}
+
+// DESIGN SYSTEM - Design tokens per workspace
 model DesignSystem {
   id           String    @id @default(cuid())
   workspaceId  String    @unique
@@ -577,38 +648,7 @@ model CustomFont {
   @@index([workspaceId])
 }
 
-model InviteCode {
-  id         String    @id
-  code       String    @unique
-  maxUses    Int       @default(1)
-  usedCount  Int       @default(0)
-  expiryDate DateTime?
-  createdBy  String?
-  isActive   Boolean   @default(true)
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime
 
-  @@index([code])
-  @@index([isActive])
-}
-
-model WaitlistUser {
-  id            String         @id
-  email         String         @unique
-  name          String?
-  referralCode  String         @unique
-  referredBy    String?
-  referralCount Int            @default(0)
-  position      Int            @default(0)
-  status        WaitlistStatus @default(PENDING)
-  invitedAt     DateTime?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime
-
-  @@index([email])
-  @@index([referralCode])
-  @@index([status])
-}
 
 enum Role {
   OWNER
@@ -729,14 +769,4 @@ enum CustomDomainStatus {
   FAILED
 }
 
-enum SystemRole {
-  USER
-  ADMIN
-}
 
-enum WaitlistStatus {
-  PENDING
-  INVITED
-  REGISTERED
-  REMOVED
-}
