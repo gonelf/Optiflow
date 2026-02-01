@@ -56,6 +56,20 @@ function getWorkspaceSubdomain(hostname: string): string | null {
   return null
 }
 
+// Returns true when the hostname belongs to the Optiflow app itself
+// (localhost, *.vercel.app preview, or the configured root domain).
+// Any other hostname is a candidate for a user-configured custom domain.
+function isAppDomain(hostname: string): boolean {
+  const hostnameClean = hostname.split(':')[0]
+  const rootDomain = (process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000').split(':')[0]
+
+  return (
+    hostnameClean === 'localhost' ||
+    hostnameClean.endsWith('.vercel.app') ||
+    hostnameClean === rootDomain
+  )
+}
+
 export async function middleware(request: NextRequest) {
   const startTime = Date.now()
   const { pathname, search } = request.nextUrl
@@ -119,6 +133,73 @@ export async function middleware(request: NextRequest) {
       logger.response(method, fullPath, 200, duration, { requestId, rewrittenTo: rewriteUrl.pathname })
 
       return response
+    }
+
+    // Custom domain check: only fires for hostnames that are not the app's own
+    // domain (i.e. not localhost / *.vercel.app / root domain).
+    if (!isAppDomain(hostname)) {
+      try {
+        const hostnameClean = hostname.split(':')[0]
+
+        // Resolve domain → workspace via an internal Node.js API route.
+        // Prisma cannot run on Edge, so we delegate the DB query.
+        const resolveUrl = new URL('/api/domains/resolve', request.url)
+        resolveUrl.searchParams.set('domain', hostnameClean)
+        const resolveRes = await fetch(resolveUrl.toString())
+        const resolveData = await resolveRes.json()
+
+        if (resolveData.workspaceSlug) {
+          const customWorkspaceSlug = resolveData.workspaceSlug as string
+
+          logger.debug(`Custom domain matched`, {
+            requestId,
+            domain: hostnameClean,
+            workspaceSlug: customWorkspaceSlug,
+          })
+
+          // Pass through static assets and API routes unchanged
+          if (
+            pathname.startsWith('/_next') ||
+            pathname.startsWith('/favicon') ||
+            pathname.startsWith('/api/')
+          ) {
+            const response = NextResponse.next()
+            response.headers.set('x-request-id', requestId)
+            return response
+          }
+
+          // Rewrite to the workspace page route (same mechanism as subdomains)
+          const pageSlug = pathname === '/' ? '' : pathname.slice(1)
+          const rewriteUrl = new URL(
+            `/w/${customWorkspaceSlug}${pageSlug ? `/${pageSlug}` : ''}`,
+            request.url
+          )
+          rewriteUrl.search = search
+
+          logger.debug(`Custom domain rewrite`, {
+            requestId,
+            from: pathname,
+            to: rewriteUrl.pathname,
+            domain: hostnameClean,
+            workspaceSlug: customWorkspaceSlug,
+          })
+
+          const response = NextResponse.rewrite(rewriteUrl)
+          response.headers.set('x-request-id', requestId)
+          response.headers.set('x-workspace-slug', customWorkspaceSlug)
+
+          const duration = Date.now() - startTime
+          logger.response(method, fullPath, 200, duration, {
+            requestId,
+            rewrittenTo: rewriteUrl.pathname,
+          })
+
+          return response
+        }
+      } catch (error) {
+        // DB unavailable or query failed — fall through to normal routing
+        logger.error('Custom domain lookup failed', error, { requestId, hostname })
+      }
     }
 
     // Allow public routes (for main domain)
