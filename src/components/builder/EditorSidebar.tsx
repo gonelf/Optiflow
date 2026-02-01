@@ -33,6 +33,7 @@ import { Element } from '@prisma/client';
 import { AIEditPopover } from '@/components/builder/ai/AIEditPopover';
 import { ElementActions } from '@/components/builder/ElementActions';
 import { styleObjectToString, stringToStyleObject } from '@/lib/css';
+import { isUrlSafe, isIframeDomainTrusted, validateScript } from '@/lib/embed-security';
 import {
   BoxModelEditor,
   LayoutPanel,
@@ -950,6 +951,86 @@ export function EditorSidebar({
                             : 'Enter HTML code to embed (forms, widgets, etc.)'}
                         </p>
                       </div>
+
+                      {/* Security warnings for iFrame */}
+                      {content?.type === 'iframe' && content?.code && (
+                        <div className="space-y-2">
+                          {!isUrlSafe(content.code) ? (
+                            <div className="flex items-start gap-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+                              <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                              <div>
+                                <p className="font-medium">Invalid URL</p>
+                                <p>The URL appears to be invalid or uses an unsafe protocol.</p>
+                              </div>
+                            </div>
+                          ) : (
+                            (() => {
+                              const { trusted, domain } = isIframeDomainTrusted(content.code);
+                              return trusted ? (
+                                <div className="flex items-start gap-2 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700">
+                                  <div className="h-4 w-4 flex-shrink-0 mt-0.5 rounded-full bg-green-500 flex items-center justify-center">
+                                    <span className="text-white text-[8px]">✓</span>
+                                  </div>
+                                  <div>
+                                    <p className="font-medium">Trusted domain</p>
+                                    <p>{domain} is a known embed provider.</p>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="flex items-start gap-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700">
+                                  <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                                  <div>
+                                    <p className="font-medium">Unknown domain</p>
+                                    <p>{domain} is not in the trusted list. Content will be sandboxed.</p>
+                                  </div>
+                                </div>
+                              );
+                            })()
+                          )}
+                        </div>
+                      )}
+
+                      {/* Security warnings for script */}
+                      {content?.type === 'script' && content?.code && (
+                        <div className="space-y-2">
+                          {(() => {
+                            const { warnings } = validateScript(content.code);
+                            return warnings.length > 0 ? (
+                              <div className="flex items-start gap-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700">
+                                <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                                <div>
+                                  <p className="font-medium">Script warnings</p>
+                                  <ul className="mt-1 space-y-0.5">
+                                    {warnings.map((warning, i) => (
+                                      <li key={i}>• {warning}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-start gap-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
+                                <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                                <div>
+                                  <p className="font-medium">Script note</p>
+                                  <p>Scripts only execute on the published page, not in the editor.</p>
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      )}
+
+                      {/* Security note for HTML */}
+                      {content?.type === 'html' && content?.code && (
+                        <div className="flex items-start gap-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
+                          <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <p className="font-medium">HTML sanitization</p>
+                            <p>Script tags and event handlers will be removed for security.</p>
+                          </div>
+                        </div>
+                      )}
+
                       {content?.type === 'iframe' && (
                         <>
                           <div className="space-y-2">

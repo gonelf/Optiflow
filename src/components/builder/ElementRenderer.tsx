@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Element } from '@prisma/client';
+import { sanitizeHtml, isUrlSafe, getIframeSandbox } from '@/lib/embed-security';
 
 interface ExtendedElement extends Element {
     children?: ExtendedElement[];
@@ -98,7 +99,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({ element, onEle
 
         case 'embed': {
             // Embed elements (HTML, iFrame, or Script)
-            const embedContent = content as { type?: string; code?: string; aspectRatio?: string; allowFullscreen?: boolean };
+            const embedContent = content as { type?: string; code?: string; aspectRatio?: string; allowFullscreen?: boolean; sandbox?: string[] };
 
             // Empty embed
             if (!embedContent?.code) {
@@ -112,8 +113,20 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({ element, onEle
                 );
             }
 
-            // iFrame embed
+            // iFrame embed - with URL validation and sandbox
             if (embedContent.type === 'iframe') {
+                // Validate URL before rendering
+                if (!isUrlSafe(embedContent.code)) {
+                    return (
+                        <div
+                            {...props}
+                            style={{ ...inlineStyles, backgroundColor: '#fef2f2', minHeight: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#dc2626', padding: '1rem' }}
+                        >
+                            Invalid or unsafe URL
+                        </div>
+                    );
+                }
+
                 const containerStyle = embedContent.aspectRatio
                     ? {
                         ...inlineStyles,
@@ -123,6 +136,9 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({ element, onEle
                     }
                     : inlineStyles;
 
+                // Get appropriate sandbox attributes
+                const sandboxAttr = embedContent.sandbox?.join(' ') || getIframeSandbox(embedContent.code);
+
                 return (
                     <div
                         {...props}
@@ -131,6 +147,9 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({ element, onEle
                         <iframe
                             src={embedContent.code}
                             allowFullScreen={embedContent.allowFullscreen}
+                            sandbox={sandboxAttr}
+                            referrerPolicy="strict-origin-when-cross-origin"
+                            loading="lazy"
                             style={embedContent.aspectRatio ? {
                                 position: 'absolute',
                                 top: 0,
@@ -147,24 +166,29 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({ element, onEle
                 );
             }
 
-            // Script embed - renders and executes script in production
+            // Script embed - Note: Scripts are inherently dangerous
+            // Only trusted/reviewed scripts should be allowed
             if (embedContent.type === 'script') {
+                // Scripts are rendered as-is but wrapped in a container
+                // The security review happens at the UI level (PageSettingsDialog shows warnings)
                 return (
                     <div
                         {...props}
                         style={inlineStyles}
+                        data-embed-type="script"
                     >
                         <script dangerouslySetInnerHTML={{ __html: embedContent.code }} />
                     </div>
                 );
             }
 
-            // HTML embed (default)
+            // HTML embed (default) - Sanitize HTML before rendering
+            const sanitizedHtml = sanitizeHtml(embedContent.code || '');
             return (
                 <div
                     {...props}
                     style={inlineStyles}
-                    dangerouslySetInnerHTML={{ __html: embedContent.code || '' }}
+                    dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
                 />
             );
         }

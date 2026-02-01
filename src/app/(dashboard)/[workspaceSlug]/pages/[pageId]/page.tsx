@@ -10,6 +10,7 @@ import { Element } from '@prisma/client';
 import { ThemeChanger } from '@/components/builder/ThemeChanger';
 import { EditorSidebar } from '@/components/builder/EditorSidebar';
 import { PageSettingsDialog } from '@/components/builder/PageSettingsDialog';
+import { sanitizeHtml, isUrlSafe, getIframeSandbox } from '@/lib/embed-security';
 import {
   DndContext,
   DragOverlay,
@@ -741,8 +742,31 @@ function ElementNode({
         );
       }
 
-      // iFrame embed
+      // iFrame embed - with URL validation
       if (embedContent.type === 'iframe') {
+        // Validate URL
+        if (!isUrlSafe(embedContent.code)) {
+          return (
+            <div
+              data-label={element.type}
+              className={cn(selectionClasses, element.className || '')}
+              style={{
+                ...styles,
+                backgroundColor: '#fef2f2',
+                padding: '1rem',
+                borderRadius: '0.375rem',
+                color: '#dc2626',
+              }}
+              onClick={handleClick}
+            >
+              <strong>Invalid URL</strong>
+              <p style={{ marginTop: '0.5rem', fontSize: '0.75rem' }}>
+                The URL appears to be invalid or unsafe. Please check the URL.
+              </p>
+            </div>
+          );
+        }
+
         const containerStyle = embedContent.aspectRatio
           ? {
               ...styles,
@@ -751,6 +775,9 @@ function ElementNode({
               paddingBottom: embedContent.aspectRatio,
             }
           : styles;
+
+        // Get sandbox attributes for security
+        const sandboxAttr = getIframeSandbox(embedContent.code);
 
         return (
           <div
@@ -762,6 +789,8 @@ function ElementNode({
             <iframe
               src={embedContent.code}
               allowFullScreen={embedContent.allowFullscreen}
+              sandbox={sandboxAttr}
+              referrerPolicy="strict-origin-when-cross-origin"
               style={embedContent.aspectRatio ? {
                 position: 'absolute',
                 top: 0,
@@ -778,7 +807,7 @@ function ElementNode({
         );
       }
 
-      // Script embed (show preview in builder)
+      // Script embed (show preview in builder - never execute)
       if (embedContent.type === 'script') {
         return (
           <div
@@ -794,7 +823,10 @@ function ElementNode({
             }}
             onClick={handleClick}
           >
-            <strong>Script Embed (Preview)</strong>
+            <strong>Script Embed (Preview Only)</strong>
+            <p style={{ fontSize: '0.75rem', color: '#92400e', marginTop: '0.25rem' }}>
+              Scripts only execute on published pages
+            </p>
             <pre style={{ marginTop: '0.5rem', overflow: 'auto', maxHeight: '150px' }}>
               {embedContent.code}
             </pre>
@@ -802,14 +834,15 @@ function ElementNode({
         );
       }
 
-      // HTML embed (show preview in builder)
+      // HTML embed (show sanitized preview in builder)
+      const sanitizedHtml = sanitizeHtml(embedContent.code || '');
       return (
         <div
           data-label={element.type}
           className={cn(selectionClasses, element.className || '')}
           style={styles}
           onClick={handleClick}
-          dangerouslySetInnerHTML={{ __html: embedContent.code || '' }}
+          dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
         />
       );
     }
