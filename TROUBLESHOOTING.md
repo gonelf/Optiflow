@@ -1,4 +1,4 @@
-# OptiFlow Troubleshooting Guide
+# OptiVibe Troubleshooting Guide
 
 ## Common Issues and Solutions
 
@@ -125,10 +125,10 @@ vercel logs your-project-name --follow
 
 Look for these logs when the app starts:
 ```
-🚀 OptiFlow Application Starting
+🚀 OptiVibe Application Starting
 Environment variables check
 ✅ Database connection successful
-✅ OptiFlow Application Started Successfully
+✅ OptiVibe Application Started Successfully
 ```
 
 If you don't see these, the instrumentation hook may not be working:
@@ -313,7 +313,7 @@ Use this to trace requests across logs.
 **Good (Working):**
 ```
 ✅ Database connection successful
-✅ OptiFlow Application Started Successfully
+✅ OptiVibe Application Started Successfully
 Auth successful for user: user@example.com
 GET / - 200
 ```
@@ -385,7 +385,7 @@ Run this to verify everything:
 ```bash
 #!/bin/bash
 
-echo "Testing OptiFlow Deployment..."
+echo "Testing OptiVibe Deployment..."
 
 URL="https://your-app.vercel.app"
 

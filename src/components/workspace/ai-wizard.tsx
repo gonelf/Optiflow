@@ -403,7 +403,7 @@ export function AIWizard({ onComplete, onSkip }: AIWizardProps) {
                             <div className="space-y-2">
                                 <Label htmlFor="slug">Workspace URL</Label>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-muted-foreground">optiflow.com/</span>
+                                    <span className="text-muted-foreground">optivibe.com/</span>
                                     <Input
                                         id="slug"
                                         placeholder="my-awesome-business"

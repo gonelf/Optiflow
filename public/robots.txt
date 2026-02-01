@@ -2,4 +2,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://optiflow-seven.vercel.app/sitemap.xml
+Sitemap: https://optivibe-seven.vercel.app/sitemap.xml

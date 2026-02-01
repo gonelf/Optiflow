@@ -60,7 +60,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ workspaces })
   } catch (error) {
     logger.error('Get workspaces error', error)
-    return NextResponse.json({ message: 'Failed to fetch workspaces' }, { status: 500 })
+    return NextResponse.json(
+      {
+        message: 'Failed to fetch workspaces',
+        error: error instanceof Error ? error.message : String(error)
+      },
+      { status: 500 }
+    )
   }
 }
 

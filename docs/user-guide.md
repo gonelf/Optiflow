@@ -1,6 +1,6 @@
-# OptiFlow User Guide
+# OptiVibe User Guide
 
-**Welcome to OptiFlow!** This guide will help you get started with building, testing, and optimizing your marketing pages.
+**Welcome to OptiVibe!** This guide will help you get started with building, testing, and optimizing your marketing pages.
 
 ## Table of Contents
 
@@ -21,7 +21,7 @@
 
 ### Creating Your Account
 
-1. Visit [optiflow.app/signup](https://optiflow.app/signup)
+1. Visit [optivibe.app/signup](https://optivibe.app/signup)
 2. Enter your email address and choose a secure password
 3. Verify your email address
 4. Complete your profile setup
@@ -176,7 +176,7 @@ The page builder consists of four main areas:
 
 ### Interpreting Results
 
-OptiFlow shows you:
+OptiVibe shows you:
 
 - **Conversion Rate**: Percentage of visitors who completed the goal
 - **Confidence Level**: Statistical significance (aim for 95%+)
@@ -317,7 +317,7 @@ Optimize for search engines:
 ### Accessing Your Published Page
 
 Your page will be available at:
-- `https://optiflow.app/p/your-slug` (default)
+- `https://optivibe.app/p/your-slug` (default)
 - `https://your-domain.com` (with custom domain)
 
 ### Unpublishing
@@ -361,7 +361,7 @@ Accept payments on your pages:
 
 1. Go to **Integrations** → **Stripe**
 2. Click **Connect Stripe**
-3. Authorize OptiFlow
+3. Authorize OptiVibe
 4. Add payment buttons to your pages
 5. Track revenue in analytics
 
@@ -481,9 +481,9 @@ Programmatic access:
 If you need assistance:
 
 1. **Documentation**: Search our help center
-2. **Support**: Email support@optiflow.app
+2. **Support**: Email support@optivibe.app
 3. **Community**: Join our Discord community
-4. **Status**: Check status.optiflow.app for outages
+4. **Status**: Check status.optivibe.app for outages
 
 ---
 
@@ -512,6 +512,6 @@ Now that you know the basics:
 5. ✅ Invite your team members
 6. ✅ Review analytics weekly
 
-**Need more help?** Check out our [video tutorials](https://optiflow.app/tutorials) or join our [community](https://discord.gg/optiflow).
+**Need more help?** Check out our [video tutorials](https://optivibe.app/tutorials) or join our [community](https://discord.gg/optivibe).
 
 **Happy building! 🚀**

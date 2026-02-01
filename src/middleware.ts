@@ -56,7 +56,7 @@ function getWorkspaceSubdomain(hostname: string): string | null {
   return null
 }
 
-// Returns true when the hostname belongs to the Optiflow app itself
+// Returns true when the hostname belongs to the OptiVibe app itself
 // (localhost, *.vercel.app preview, or the configured root domain).
 // Any other hostname is a candidate for a user-configured custom domain.
 function isAppDomain(hostname: string): boolean {

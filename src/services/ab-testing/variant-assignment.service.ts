@@ -10,7 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { assignVariant, TrafficSplit } from './traffic-splitter.service';
 
-const VARIANT_COOKIE_NAME = 'optiflow_variant';
+const VARIANT_COOKIE_NAME = 'optivibe_variant';
 const COOKIE_MAX_AGE = 30 * 24 * 60 * 60; // 30 days
 
 export interface Variant {
