@@ -51,6 +51,7 @@ export default function BuilderPage() {
   const [currentTheme, setCurrentTheme] = useState('default');
   const [draggedElement, setDraggedElement] = useState<any>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [hoveredElementId, setHoveredElementId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 10 } }),
@@ -593,7 +594,9 @@ export default function BuilderPage() {
                 <AICanvas
                   elements={elements}
                   selectedId={selectedElementId}
+                  hoveredId={hoveredElementId}
                   onSelect={setSelectedElementId}
+                  onHover={setHoveredElementId}
                   onReorder={setElements}
                 />
               )}
@@ -661,12 +664,16 @@ export default function BuilderPage() {
 function AICanvas({
   elements,
   selectedId,
+  hoveredId,
   onSelect,
+  onHover,
   onReorder,
 }: {
   elements: ExtendedElement[];
   selectedId: string | null;
+  hoveredId: string | null;
   onSelect: (id: string) => void;
+  onHover: (id: string | null) => void;
   onReorder: (elements: ExtendedElement[]) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({
@@ -690,7 +697,9 @@ function AICanvas({
             key={el.id}
             element={el}
             selectedId={selectedId}
+            hoveredId={hoveredId}
             onSelect={onSelect}
+            onHover={onHover}
             onReorder={onReorder}
           />
         ))}
@@ -703,12 +712,16 @@ function AICanvas({
 function SortableElementNode({
   element,
   selectedId,
+  hoveredId,
   onSelect,
+  onHover,
   onReorder,
 }: {
   element: ExtendedElement;
   selectedId: string | null;
+  hoveredId: string | null;
   onSelect: (id: string) => void;
+  onHover: (id: string | null) => void;
   onReorder: (elements: ExtendedElement[]) => void;
 }) {
   const {
@@ -728,6 +741,7 @@ function SortableElementNode({
   };
 
   const isSelected = selectedId === element.id;
+  const isHovered = hoveredId === element.id;
 
   return (
     <div
@@ -737,6 +751,11 @@ function SortableElementNode({
         'relative group/sortable',
         isDragging && 'opacity-50 z-50'
       )}
+      onMouseOver={(e) => {
+        e.stopPropagation();
+        onHover(element.id);
+      }}
+      onMouseLeave={() => onHover(null)}
     >
       {/* Drag Handle */}
       <div
@@ -744,8 +763,8 @@ function SortableElementNode({
         {...listeners}
         className={cn(
           'absolute top-2 left-2 z-50 p-1.5 rounded bg-white/90 border border-gray-200 shadow-sm cursor-grab active:cursor-grabbing transition-opacity',
-          'opacity-0 group-hover/sortable:opacity-100',
-          isSelected && 'opacity-100',
+          'opacity-0',
+          (isSelected || isHovered) && 'opacity-100',
           isDragging && 'cursor-grabbing'
         )}
         title="Drag to reorder"
@@ -757,7 +776,9 @@ function SortableElementNode({
       <ElementNode
         element={element}
         selectedId={selectedId}
+        hoveredId={hoveredId}
         onSelect={onSelect}
+        onHover={onHover}
         onReorder={onReorder}
       />
     </div>
@@ -768,12 +789,16 @@ function SortableElementNode({
 function ElementNode({
   element,
   selectedId,
+  hoveredId,
   onSelect,
+  onHover,
   onReorder,
 }: {
   element: ExtendedElement;
   selectedId: string | null;
+  hoveredId: string | null;
   onSelect: (id: string) => void;
+  onHover: (id: string | null) => void;
   onReorder: (elements: ExtendedElement[]) => void;
 }) {
   const isSelected = selectedId === element.id;
@@ -924,11 +949,11 @@ function ElementNode({
 
         const containerStyle = embedContent.aspectRatio
           ? {
-              ...styles,
-              position: 'relative' as const,
-              width: '100%',
-              paddingBottom: embedContent.aspectRatio,
-            }
+            ...styles,
+            position: 'relative' as const,
+            width: '100%',
+            paddingBottom: embedContent.aspectRatio,
+          }
           : styles;
 
         // Get sandbox attributes for security
@@ -1026,7 +1051,9 @@ function ElementNode({
                 key={child.id}
                 element={child}
                 selectedId={selectedId}
+                hoveredId={hoveredId}
                 onSelect={onSelect}
+                onHover={onHover}
                 onReorder={onReorder}
               />
             ))}
@@ -1041,12 +1068,16 @@ function ElementNode({
 function SortableChildElement({
   element,
   selectedId,
+  hoveredId,
   onSelect,
+  onHover,
   onReorder,
 }: {
   element: ExtendedElement;
   selectedId: string | null;
+  hoveredId: string | null;
   onSelect: (id: string) => void;
+  onHover: (id: string | null) => void;
   onReorder: (elements: ExtendedElement[]) => void;
 }) {
   const {
@@ -1066,6 +1097,7 @@ function SortableChildElement({
   };
 
   const isSelected = selectedId === element.id;
+  const isHovered = hoveredId === element.id;
 
   return (
     <div
@@ -1075,6 +1107,11 @@ function SortableChildElement({
         'relative group/sortable-child',
         isDragging && 'opacity-50 z-50'
       )}
+      onMouseOver={(e) => {
+        e.stopPropagation();
+        onHover(element.id);
+      }}
+      onMouseLeave={() => onHover(null)}
     >
       {/* Drag Handle for child elements */}
       <div
@@ -1082,8 +1119,8 @@ function SortableChildElement({
         {...listeners}
         className={cn(
           'absolute top-1 left-1 z-50 p-1 rounded bg-white/90 border border-gray-200 shadow-sm cursor-grab active:cursor-grabbing transition-opacity',
-          'opacity-0 group-hover/sortable-child:opacity-100',
-          isSelected && 'opacity-100',
+          'opacity-0',
+          (isSelected || isHovered) && 'opacity-100',
           isDragging && 'cursor-grabbing'
         )}
         title="Drag to reorder"
@@ -1095,7 +1132,9 @@ function SortableChildElement({
       <ElementNode
         element={element}
         selectedId={selectedId}
+        hoveredId={hoveredId}
         onSelect={onSelect}
+        onHover={onHover}
         onReorder={onReorder}
       />
     </div>
