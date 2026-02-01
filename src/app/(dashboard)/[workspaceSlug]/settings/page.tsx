@@ -8,8 +8,22 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useWorkspace } from '@/hooks/use-workspace'
 import { useToast } from '@/hooks/use-toast'
-import { Trash2 } from 'lucide-react'
+import { Trash2, Plus, CheckCircle2, Clock, AlertCircle, RefreshCw } from 'lucide-react'
 import { StartingPageSelector } from '@/components/workspace/starting-page-selector'
+
+interface DnsRecord {
+  type: string
+  domain: string
+  value: string
+}
+
+interface CustomDomain {
+  id: string
+  domain: string
+  status: 'PENDING' | 'ACTIVE' | 'FAILED'
+  dnsRecords: DnsRecord[] | null
+  createdAt: string
+}
 
 export default function WorkspaceSettings() {
   const router = useRouter()
@@ -21,8 +35,12 @@ export default function WorkspaceSettings() {
   const [formData, setFormData] = useState({
     name: currentWorkspace?.name || '',
     slug: currentWorkspace?.slug || '',
-    domain: currentWorkspace?.domain || '',
   })
+
+  // Custom domain state
+  const [domains, setDomains] = useState<CustomDomain[]>([])
+  const [newDomain, setNewDomain] = useState('')
+  const [isDomainLoading, setIsDomainLoading] = useState(false)
 
   // Update form data when workspace loads
   useEffect(() => {
@@ -30,10 +48,23 @@ export default function WorkspaceSettings() {
       setFormData({
         name: currentWorkspace.name || '',
         slug: currentWorkspace.slug || '',
-        domain: currentWorkspace.domain || '',
       })
+      fetchDomains()
     }
   }, [currentWorkspace])
+
+  const fetchDomains = async () => {
+    if (!currentWorkspace) return
+    try {
+      const res = await fetch(`/api/workspaces/${currentWorkspace.id}/domains`)
+      if (res.ok) {
+        const data = await res.json()
+        setDomains(data.domains)
+      }
+    } catch (err) {
+      console.error('Failed to fetch domains:', err)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -58,6 +89,66 @@ export default function WorkspaceSettings() {
       })
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleAddDomain = async () => {
+    if (!currentWorkspace || !newDomain.trim()) return
+    setIsDomainLoading(true)
+    try {
+      const res = await fetch(`/api/workspaces/${currentWorkspace.id}/domains`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domain: newDomain.trim().toLowerCase() }),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.message)
+      }
+      toast({ title: 'Success', description: 'Domain added. Configure the DNS record below to activate it.' })
+      setNewDomain('')
+      await fetchDomains()
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message || 'Failed to add domain', variant: 'destructive' })
+    } finally {
+      setIsDomainLoading(false)
+    }
+  }
+
+  const handleRemoveDomain = async (domain: string) => {
+    if (!currentWorkspace) return
+    if (!confirm(`Remove ${domain}? This will also remove it from your Vercel project.`)) return
+    setIsDomainLoading(true)
+    try {
+      const res = await fetch(`/api/workspaces/${currentWorkspace.id}/domains/${domain}`, {
+        method: 'DELETE',
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.message)
+      }
+      toast({ title: 'Success', description: `${domain} has been removed` })
+      await fetchDomains()
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message || 'Failed to remove domain', variant: 'destructive' })
+    } finally {
+      setIsDomainLoading(false)
+    }
+  }
+
+  const handleRefreshStatus = async (domain: string) => {
+    if (!currentWorkspace) return
+    setIsDomainLoading(true)
+    try {
+      const res = await fetch(`/api/workspaces/${currentWorkspace.id}/domains/${domain}`)
+      if (res.ok) {
+        await fetchDomains()
+        toast({ title: 'Refreshed', description: 'Domain status updated' })
+      }
+    } catch (error: any) {
+      toast({ title: 'Error', description: 'Failed to refresh status', variant: 'destructive' })
+    } finally {
+      setIsDomainLoading(false)
     }
   }
 
@@ -102,6 +193,7 @@ export default function WorkspaceSettings() {
         <p className="text-muted-foreground">Manage your workspace configuration</p>
       </div>
 
+      {/* General Settings */}
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card>
           <CardHeader>
@@ -133,19 +225,6 @@ export default function WorkspaceSettings() {
                 This will be used in your workspace URL
               </p>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="domain">Custom Domain</Label>
-              <Input
-                id="domain"
-                value={formData.domain}
-                onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
-                disabled={!isAdmin || isLoading}
-                placeholder="example.com"
-              />
-              <p className="text-xs text-muted-foreground">
-                Optional: Connect your custom domain
-              </p>
-            </div>
             {isAdmin && (
               <Button type="submit" disabled={isLoading}>
                 {isLoading ? 'Saving...' : 'Save Changes'}
@@ -155,6 +234,142 @@ export default function WorkspaceSettings() {
         </Card>
       </form>
 
+      {/* Custom Domains */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Custom Domains</CardTitle>
+          <CardDescription>
+            Connect your own domain to serve your public pages instead of the default subdomain.
+            Vercel handles SSL automatically.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Add domain form */}
+          {isAdmin && (
+            <div className="flex gap-2">
+              <Input
+                placeholder="example.com"
+                value={newDomain}
+                onChange={(e) => setNewDomain(e.target.value)}
+                disabled={isDomainLoading}
+                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddDomain())}
+              />
+              <Button
+                type="button"
+                onClick={handleAddDomain}
+                disabled={isDomainLoading || !newDomain.trim()}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                {isDomainLoading ? 'Adding...' : 'Add'}
+              </Button>
+            </div>
+          )}
+
+          {/* Domain list */}
+          {domains.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No custom domains configured yet.
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {domains.map((d) => (
+                <div key={d.id} className="border rounded-lg p-4 space-y-3">
+                  {/* Domain header row */}
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      {d.status === 'ACTIVE' && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                      {d.status === 'PENDING' && <Clock className="h-4 w-4 text-amber-500" />}
+                      {d.status === 'FAILED' && <AlertCircle className="h-4 w-4 text-red-500" />}
+                      <span className="font-medium text-sm">{d.domain}</span>
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded-full ${
+                          d.status === 'ACTIVE'
+                            ? 'bg-green-100 text-green-700'
+                            : d.status === 'PENDING'
+                            ? 'bg-amber-100 text-amber-700'
+                            : 'bg-red-100 text-red-700'
+                        }`}
+                      >
+                        {d.status === 'ACTIVE' ? 'Active' : d.status === 'PENDING' ? 'Pending' : 'Failed'}
+                      </span>
+                    </div>
+                    {isAdmin && (
+                      <div className="flex gap-1">
+                        {d.status !== 'ACTIVE' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRefreshStatus(d.domain)}
+                            disabled={isDomainLoading}
+                            title="Refresh verification status"
+                          >
+                            <RefreshCw className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveDomain(d.domain)}
+                          disabled={isDomainLoading}
+                          className="text-destructive hover:text-destructive"
+                          title="Remove domain"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* DNS instructions for pending domains */}
+                  {d.status !== 'ACTIVE' && d.dnsRecords && d.dnsRecords.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        Add the following DNS record at your domain registrar to verify ownership:
+                      </p>
+                      <div className="bg-muted rounded p-3 overflow-x-auto">
+                        <table className="w-full text-xs font-mono">
+                          <thead>
+                            <tr className="text-muted-foreground">
+                              <th className="text-left pb-1 pr-4">Type</th>
+                              <th className="text-left pb-1 pr-4">Name</th>
+                              <th className="text-left pb-1">Value</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {d.dnsRecords.map((rec, i) => (
+                              <tr key={i}>
+                                <td className="pr-4">{rec.type}</td>
+                                <td className="pr-4">{rec.domain}</td>
+                                <td className="break-all">{rec.value}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* General DNS reference */}
+          <div className="border-t pt-4 mt-2">
+            <p className="text-xs text-muted-foreground">
+              <strong>How it works:</strong> For subdomains (e.g.{' '}
+              <code className="bg-muted px-1 rounded">www.example.com</code>), add a{' '}
+              <strong>CNAME</strong> record pointing to{' '}
+              <code className="bg-muted px-1 rounded">cname.vercel.app</code>. For apex/root
+              domains (e.g. <code className="bg-muted px-1 rounded">example.com</code>), add an{' '}
+              <strong>A</strong> record pointing to{' '}
+              <code className="bg-muted px-1 rounded">76.76.21.21</code>. DNS changes can take
+              up to 24 hours to propagate.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Starting Page */}
       {currentWorkspace && (
         <StartingPageSelector
           workspaceId={currentWorkspace.id}
@@ -165,6 +380,7 @@ export default function WorkspaceSettings() {
         />
       )}
 
+      {/* Danger Zone */}
       {isOwner && (
         <Card className="border-destructive">
           <CardHeader>

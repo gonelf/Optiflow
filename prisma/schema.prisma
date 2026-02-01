@@ -57,6 +57,7 @@ model Workspace {
   webhooks      Webhook[]
   designSystem  DesignSystem?
   customFonts   CustomFont[]
+  customDomains CustomDomain[]
 
   @@index([slug])
 }
@@ -818,6 +819,29 @@ model DesignSystem {
   updatedAt     DateTime  @updatedAt
 
   workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+// CUSTOM DOMAINS
+enum CustomDomainStatus {
+  PENDING
+  ACTIVE
+  FAILED
+}
+
+model CustomDomain {
+  id          String             @id @default(cuid())
+  workspaceId String
+  domain      String             @unique
+  status      CustomDomainStatus @default(PENDING)
+  dnsRecords  Json?              // Verification DNS records returned by Vercel
+  verifiedAt  DateTime?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  workspace   Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([domain])
 }
 
 // CUSTOM FONTS

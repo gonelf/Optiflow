@@ -377,6 +377,29 @@ CREATE INDEX "Session_token_idx" ON "Session"("token");
 CREATE INDEX "Session_userId_idx" ON "Session"("userId");
 
 -- ============================================================================
+-- CUSTOM DOMAINS
+-- ============================================================================
+
+CREATE TYPE "CustomDomainStatus" AS ENUM ('PENDING', 'ACTIVE', 'FAILED');
+
+CREATE TABLE "CustomDomain" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "workspaceId" TEXT NOT NULL,
+    "domain" TEXT NOT NULL UNIQUE,
+    "status" "CustomDomainStatus" NOT NULL DEFAULT 'PENDING',
+    "dnsRecords" JSONB,
+    "verifiedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL
+);
+
+ALTER TABLE "CustomDomain" ADD CONSTRAINT "CustomDomain_workspaceId_fkey"
+    FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+CREATE INDEX "CustomDomain_workspaceId_idx" ON "CustomDomain"("workspaceId");
+CREATE INDEX "CustomDomain_domain_idx" ON "CustomDomain"("domain");
+
+-- ============================================================================
 -- ENABLE ROW LEVEL SECURITY (RLS)
 -- ============================================================================
 
@@ -393,5 +416,6 @@ ALTER TABLE "AnalyticsEvent" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "AIOptimization" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "PersonalizationRule" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Integration" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "CustomDomain" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "ApiKey" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Session" ENABLE ROW LEVEL SECURITY;
