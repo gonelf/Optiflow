@@ -22,7 +22,12 @@ import {
   Layers,
   Layout,
   Search,
-  Plus
+  Plus,
+  Code,
+  Video,
+  FileCode,
+  ExternalLink,
+  FormInput
 } from 'lucide-react';
 import { Element } from '@prisma/client';
 import { AIEditPopover } from '@/components/builder/ai/AIEditPopover';
@@ -430,6 +435,82 @@ const TAILWIND_ELEMENTS: TailwindElement[] = [
     },
     preview: 'Blue badge'
   },
+  // Embeds
+  {
+    id: 'tw-embed-html',
+    name: 'HTML Embed',
+    type: 'embed',
+    category: 'embeds',
+    icon: Code,
+    template: {
+      type: 'embed',
+      name: 'HTML Embed',
+      content: { type: 'html', code: '' },
+      styles: {},
+      className: ''
+    },
+    preview: 'Embed custom HTML code'
+  },
+  {
+    id: 'tw-embed-iframe',
+    name: 'iFrame Embed',
+    type: 'embed',
+    category: 'embeds',
+    icon: ExternalLink,
+    template: {
+      type: 'embed',
+      name: 'iFrame Embed',
+      content: { type: 'iframe', code: '', aspectRatio: '56.25%', allowFullscreen: true },
+      styles: {},
+      className: ''
+    },
+    preview: 'Embed external content via iFrame'
+  },
+  {
+    id: 'tw-embed-video',
+    name: 'Video Embed',
+    type: 'embed',
+    category: 'embeds',
+    icon: Video,
+    template: {
+      type: 'embed',
+      name: 'Video Embed',
+      content: { type: 'iframe', code: '', aspectRatio: '56.25%', allowFullscreen: true },
+      styles: {},
+      className: ''
+    },
+    preview: 'Embed YouTube, Vimeo, etc.'
+  },
+  {
+    id: 'tw-embed-form',
+    name: 'Form Embed',
+    type: 'embed',
+    category: 'embeds',
+    icon: FormInput,
+    template: {
+      type: 'embed',
+      name: 'Form Embed',
+      content: { type: 'html', code: '' },
+      styles: {},
+      className: ''
+    },
+    preview: 'Embed Typeform, HubSpot forms, etc.'
+  },
+  {
+    id: 'tw-embed-script',
+    name: 'Script Embed',
+    type: 'embed',
+    category: 'embeds',
+    icon: FileCode,
+    template: {
+      type: 'embed',
+      name: 'Script Embed',
+      content: { type: 'script', code: '' },
+      styles: {},
+      className: ''
+    },
+    preview: 'Embed inline JavaScript'
+  },
 ];
 
 const ELEMENT_CATEGORIES = [
@@ -440,6 +521,7 @@ const ELEMENT_CATEGORIES = [
   { id: 'layout', name: 'Layout' },
   { id: 'alerts', name: 'Alerts' },
   { id: 'badges', name: 'Badges' },
+  { id: 'embeds', name: 'Embeds' },
 ];
 
 // Draggable pool item component
@@ -823,6 +905,82 @@ export function EditorSidebar({
                           className="h-9"
                         />
                       </div>
+                    </>
+                  )}
+
+                  {selectedElement.type === 'embed' && (
+                    <>
+                      <div className="space-y-2">
+                        <Label className="text-xs">Embed Type</Label>
+                        <select
+                          value={content?.type || 'html'}
+                          onChange={(e) => onElementUpdate(selectedElement.id, {
+                            content: { ...content, type: e.target.value }
+                          })}
+                          className="w-full h-9 px-3 border rounded text-sm bg-background"
+                        >
+                          <option value="html">HTML</option>
+                          <option value="iframe">iFrame</option>
+                          <option value="script">Script</option>
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs">
+                          {content?.type === 'iframe' ? 'iFrame URL' : 'Embed Code'}
+                        </Label>
+                        <textarea
+                          value={content?.code || ''}
+                          onChange={(e) => onElementUpdate(selectedElement.id, {
+                            content: { ...content, code: e.target.value }
+                          })}
+                          placeholder={
+                            content?.type === 'iframe'
+                              ? 'https://www.youtube.com/embed/...'
+                              : content?.type === 'script'
+                              ? 'console.log("Hello");'
+                              : '<div>Your HTML here</div>'
+                          }
+                          className="w-full h-32 px-3 py-2 border rounded font-mono text-xs bg-muted/20 resize-none focus:ring-1 focus:ring-primary focus:border-primary"
+                        />
+                        <p className="text-[10px] text-muted-foreground">
+                          {content?.type === 'iframe'
+                            ? 'Enter the URL of the content to embed'
+                            : content?.type === 'script'
+                            ? 'Enter JavaScript code (runs on published page)'
+                            : 'Enter HTML code to embed (forms, widgets, etc.)'}
+                        </p>
+                      </div>
+                      {content?.type === 'iframe' && (
+                        <>
+                          <div className="space-y-2">
+                            <Label className="text-xs">Aspect Ratio</Label>
+                            <select
+                              value={content?.aspectRatio || '56.25%'}
+                              onChange={(e) => onElementUpdate(selectedElement.id, {
+                                content: { ...content, aspectRatio: e.target.value }
+                              })}
+                              className="w-full h-9 px-3 border rounded text-sm bg-background"
+                            >
+                              <option value="56.25%">16:9 (Video)</option>
+                              <option value="75%">4:3</option>
+                              <option value="100%">1:1 (Square)</option>
+                              <option value="">Auto</option>
+                            </select>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              id="allowFullscreen"
+                              checked={content?.allowFullscreen ?? true}
+                              onChange={(e) => onElementUpdate(selectedElement.id, {
+                                content: { ...content, allowFullscreen: e.target.checked }
+                              })}
+                              className="h-4 w-4"
+                            />
+                            <Label htmlFor="allowFullscreen" className="text-xs">Allow Fullscreen</Label>
+                          </div>
+                        </>
+                      )}
                     </>
                   )}
                 </TabsContent>

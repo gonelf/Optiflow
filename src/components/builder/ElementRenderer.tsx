@@ -96,6 +96,79 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({ element, onEle
             // Input elements
             return React.createElement(tagName, props);
 
+        case 'embed': {
+            // Embed elements (HTML, iFrame, or Script)
+            const embedContent = content as { type?: string; code?: string; aspectRatio?: string; allowFullscreen?: boolean };
+
+            // Empty embed
+            if (!embedContent?.code) {
+                return (
+                    <div
+                        {...props}
+                        style={{ ...inlineStyles, backgroundColor: '#f3f4f6', minHeight: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}
+                    >
+                        No embed content
+                    </div>
+                );
+            }
+
+            // iFrame embed
+            if (embedContent.type === 'iframe') {
+                const containerStyle = embedContent.aspectRatio
+                    ? {
+                        ...inlineStyles,
+                        position: 'relative' as const,
+                        width: '100%',
+                        paddingBottom: embedContent.aspectRatio,
+                    }
+                    : inlineStyles;
+
+                return (
+                    <div
+                        {...props}
+                        style={containerStyle}
+                    >
+                        <iframe
+                            src={embedContent.code}
+                            allowFullScreen={embedContent.allowFullscreen}
+                            style={embedContent.aspectRatio ? {
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '100%',
+                                border: 'none',
+                            } : {
+                                width: '100%',
+                                border: 'none',
+                            }}
+                        />
+                    </div>
+                );
+            }
+
+            // Script embed - renders and executes script in production
+            if (embedContent.type === 'script') {
+                return (
+                    <div
+                        {...props}
+                        style={inlineStyles}
+                    >
+                        <script dangerouslySetInnerHTML={{ __html: embedContent.code }} />
+                    </div>
+                );
+            }
+
+            // HTML embed (default)
+            return (
+                <div
+                    {...props}
+                    style={inlineStyles}
+                    dangerouslySetInnerHTML={{ __html: embedContent.code || '' }}
+                />
+            );
+        }
+
         case 'container':
         default:
             // Container elements (div, section, header, footer, etc.)
