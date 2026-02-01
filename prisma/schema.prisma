@@ -540,7 +540,7 @@ model Element {
   @@index([order])
   @@index([pageId, order])
   @@index([path])
-  @@index([order])
+
 }
 
 // ============================================================================
@@ -648,38 +648,7 @@ model CustomFont {
   @@index([workspaceId])
 }
 
-model InviteCode {
-  id         String    @id
-  code       String    @unique
-  maxUses    Int       @default(1)
-  usedCount  Int       @default(0)
-  expiryDate DateTime?
-  createdBy  String?
-  isActive   Boolean   @default(true)
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime
 
-  @@index([code])
-  @@index([isActive])
-}
-
-model WaitlistUser {
-  id            String         @id
-  email         String         @unique
-  name          String?
-  referralCode  String         @unique
-  referredBy    String?
-  referralCount Int            @default(0)
-  position      Int            @default(0)
-  status        WaitlistStatus @default(PENDING)
-  invitedAt     DateTime?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime
-
-  @@index([email])
-  @@index([referralCode])
-  @@index([status])
-}
 
 enum Role {
   OWNER
@@ -800,14 +769,4 @@ enum CustomDomainStatus {
   FAILED
 }
 
-enum SystemRole {
-  USER
-  ADMIN
-}
 
-enum WaitlistStatus {
-  PENDING
-  INVITED
-  REGISTERED
-  REMOVED
-}

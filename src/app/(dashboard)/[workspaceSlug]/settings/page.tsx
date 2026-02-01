@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -42,18 +42,7 @@ export default function WorkspaceSettings() {
   const [newDomain, setNewDomain] = useState('')
   const [isDomainLoading, setIsDomainLoading] = useState(false)
 
-  // Update form data when workspace loads
-  useEffect(() => {
-    if (currentWorkspace) {
-      setFormData({
-        name: currentWorkspace.name || '',
-        slug: currentWorkspace.slug || '',
-      })
-      fetchDomains()
-    }
-  }, [currentWorkspace])
-
-  const fetchDomains = async () => {
+  const fetchDomains = useCallback(async () => {
     if (!currentWorkspace) return
     try {
       const res = await fetch(`/api/workspaces/${currentWorkspace.id}/domains`)
@@ -64,7 +53,18 @@ export default function WorkspaceSettings() {
     } catch (err) {
       console.error('Failed to fetch domains:', err)
     }
-  }
+  }, [currentWorkspace])
+
+  // Update form data when workspace loads
+  useEffect(() => {
+    if (currentWorkspace) {
+      setFormData({
+        name: currentWorkspace.name || '',
+        slug: currentWorkspace.slug || '',
+      })
+      fetchDomains()
+    }
+  }, [currentWorkspace, fetchDomains])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -282,13 +282,12 @@ export default function WorkspaceSettings() {
                       {d.status === 'FAILED' && <AlertCircle className="h-4 w-4 text-red-500" />}
                       <span className="font-medium text-sm">{d.domain}</span>
                       <span
-                        className={`text-xs px-2 py-0.5 rounded-full ${
-                          d.status === 'ACTIVE'
-                            ? 'bg-green-100 text-green-700'
-                            : d.status === 'PENDING'
+                        className={`text-xs px-2 py-0.5 rounded-full ${d.status === 'ACTIVE'
+                          ? 'bg-green-100 text-green-700'
+                          : d.status === 'PENDING'
                             ? 'bg-amber-100 text-amber-700'
                             : 'bg-red-100 text-red-700'
-                        }`}
+                          }`}
                       >
                         {d.status === 'ACTIVE' ? 'Active' : d.status === 'PENDING' ? 'Pending' : 'Failed'}
                       </span>
