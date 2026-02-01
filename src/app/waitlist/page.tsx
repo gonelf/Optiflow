@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast'
 import { motion } from 'framer-motion'
 import { Copy, Check, Users, Zap, Twitter, Linkedin, Mail } from 'lucide-react'
 
-export default function WaitlistPage() {
+function WaitlistContent() {
     const searchParams = useSearchParams()
     const refCode = searchParams.get('ref')
     const { toast } = useToast()
@@ -142,7 +142,7 @@ export default function WaitlistPage() {
                                     </Button>
                                 </div>
                                 <p className="text-xs text-muted-foreground text-center">
-                                    For every friend who joins using your link, you'll drop one spot in line.
+                                    For every friend who joins using your link, you&apos;ll drop one spot in line.
                                 </p>
 
                                 <div className="text-center text-sm font-medium pt-2">
@@ -183,6 +183,15 @@ export default function WaitlistPage() {
             {/* Background decoration */}
             <div className="fixed inset-0 -z-10 h-full w-full bg-white dark:bg-black bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
         </div>
+    )
+}
+
+
+export default function WaitlistPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <WaitlistContent />
+        </Suspense>
     )
 }
 

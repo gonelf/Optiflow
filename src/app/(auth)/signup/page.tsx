@@ -144,7 +144,7 @@ export default function SignupPage() {
         </form>
 
         <div className="mt-4 text-center text-sm">
-          <span className="text-muted-foreground">Don't have an invite code? </span>
+          <span className="text-muted-foreground">Don&apos;t have an invite code? </span>
           <Link href="/waitlist" className="text-primary hover:underline font-medium">
             Join the waitlist
           </Link>
