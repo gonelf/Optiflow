@@ -1,4 +1,4 @@
--- OptiFlow Database Migration
+-- OptiVibe Database Migration
 -- Run this in Supabase SQL Editor
 
 -- Enable necessary extensions

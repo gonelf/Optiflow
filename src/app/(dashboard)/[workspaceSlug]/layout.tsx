@@ -49,7 +49,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="flex h-full flex-col">
           {/* Logo & Toggle */}
           <div className="flex h-16 items-center justify-between border-b px-4">
-            {!isCollapsed && <h1 className="text-xl font-bold">OptiFlow</h1>}
+            {!isCollapsed && <h1 className="text-xl font-bold">OptiVibe</h1>}
             <Button
               variant="ghost"
               size="icon"

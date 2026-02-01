@@ -338,4 +338,4 @@ Client Event → Beacon API → Validation
 
 **Last Updated**: 2026-01-22
 **Version**: 1.0.0
-**Maintainers**: OptiFlow Team
+**Maintainers**: OptiVibe Team

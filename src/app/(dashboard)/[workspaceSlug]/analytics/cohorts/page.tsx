@@ -27,6 +27,6 @@ export default function CohortsPage({ params }: CohortsPageProps) {
 }
 
 export const metadata = {
-  title: 'Cohort Analysis - OptiFlow',
+  title: 'Cohort Analysis - OptiVibe',
   description: 'Analyze user cohorts and retention',
 };
