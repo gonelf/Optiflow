@@ -23,6 +23,14 @@ import {
   MouseSensor,
   TouchSensor
 } from '@dnd-kit/core';
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { GripVertical } from 'lucide-react';
 
 interface ExtendedElement extends Element {
   children?: ExtendedElement[];
@@ -411,6 +419,7 @@ export default function BuilderPage() {
 
     if (!over) return;
 
+    // Check if this is an element being added from the pool
     const elementData = active.data.current?.element;
     if (active.data.current?.isFromPool && elementData) {
       // Logic:
@@ -420,6 +429,76 @@ export default function BuilderPage() {
 
       const targetId = over.id === 'canvas-root' ? null : (over.id as string);
       addElementToState(elementData, targetId);
+      return;
+    }
+
+    // Handle reordering existing elements
+    if (active.id !== over.id) {
+      reorderElements(active.id as string, over.id as string);
+    }
+  };
+
+  // Reorder elements when dragging within the same level
+  const reorderElements = (activeId: string, overId: string) => {
+    const clone = (data: ExtendedElement[]): ExtendedElement[] =>
+      JSON.parse(JSON.stringify(data));
+
+    // Find element and its parent in tree
+    const findElementAndParent = (
+      nodes: ExtendedElement[],
+      id: string,
+      parent: ExtendedElement | null = null
+    ): { element: ExtendedElement | null; parent: ExtendedElement | null; siblings: ExtendedElement[] | null } => {
+      for (const node of nodes) {
+        if (node.id === id) {
+          return { element: node, parent, siblings: parent ? parent.children! : nodes };
+        }
+        if (node.children && node.children.length > 0) {
+          const result = findElementAndParent(node.children, id, node);
+          if (result.element) return result;
+        }
+      }
+      return { element: null, parent: null, siblings: null };
+    };
+
+    const activeResult = findElementAndParent(elements, activeId);
+    const overResult = findElementAndParent(elements, overId);
+
+    // Only reorder if elements are at the same level (same parent)
+    if (!activeResult.element || !overResult.element) return;
+    if (activeResult.parent?.id !== overResult.parent?.id) return;
+
+    // Reorder within the array
+    const reorderInArray = (arr: ExtendedElement[], fromId: string, toId: string): ExtendedElement[] => {
+      const oldIndex = arr.findIndex(el => el.id === fromId);
+      const newIndex = arr.findIndex(el => el.id === toId);
+      if (oldIndex === -1 || newIndex === -1) return arr;
+      return arrayMove(arr, oldIndex, newIndex);
+    };
+
+    if (!activeResult.parent) {
+      // Reordering at root level
+      const newElements = reorderInArray(clone(elements), activeId, overId);
+      setElements(newElements.map((el, i) => ({ ...el, order: i })));
+    } else {
+      // Reordering inside a container
+      const updateChildrenRecursively = (nodes: ExtendedElement[]): ExtendedElement[] => {
+        return nodes.map(node => {
+          if (node.id === activeResult.parent!.id) {
+            const newChildren = reorderInArray(node.children || [], activeId, overId);
+            return {
+              ...node,
+              children: newChildren.map((c, i) => ({ ...c, order: i })),
+            };
+          }
+          if (node.children && node.children.length > 0) {
+            return { ...node, children: updateChildrenRecursively(node.children) };
+          }
+          return node;
+        });
+      };
+
+      setElements(updateChildrenRecursively(clone(elements)));
     }
   };
 
@@ -515,6 +594,7 @@ export default function BuilderPage() {
                   elements={elements}
                   selectedId={selectedElementId}
                   onSelect={setSelectedElementId}
+                  onReorder={setElements}
                 />
               )}
             </div>
@@ -581,11 +661,13 @@ export default function BuilderPage() {
 function AICanvas({
   elements,
   selectedId,
-  onSelect
+  onSelect,
+  onReorder,
 }: {
   elements: ExtendedElement[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  onReorder: (elements: ExtendedElement[]) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: 'canvas-root',
@@ -599,14 +681,85 @@ function AICanvas({
         isOver && "bg-primary/5 ring-2 ring-inset ring-primary/20"
       )}
     >
-      {elements.map(el => (
-        <ElementNode
-          key={el.id}
-          element={el}
-          selectedId={selectedId}
-          onSelect={onSelect}
-        />
-      ))}
+      <SortableContext
+        items={elements.map(el => el.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        {elements.map(el => (
+          <SortableElementNode
+            key={el.id}
+            element={el}
+            selectedId={selectedId}
+            onSelect={onSelect}
+            onReorder={onReorder}
+          />
+        ))}
+      </SortableContext>
+    </div>
+  );
+}
+
+// Sortable wrapper for root-level elements
+function SortableElementNode({
+  element,
+  selectedId,
+  onSelect,
+  onReorder,
+}: {
+  element: ExtendedElement;
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+  onReorder: (elements: ExtendedElement[]) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: element.id,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const isSelected = selectedId === element.id;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        'relative group/sortable',
+        isDragging && 'opacity-50 z-50'
+      )}
+    >
+      {/* Drag Handle */}
+      <div
+        {...attributes}
+        {...listeners}
+        className={cn(
+          'absolute top-2 left-2 z-50 p-1.5 rounded bg-white/90 border border-gray-200 shadow-sm cursor-grab active:cursor-grabbing transition-opacity',
+          'opacity-0 group-hover/sortable:opacity-100',
+          isSelected && 'opacity-100',
+          isDragging && 'cursor-grabbing'
+        )}
+        title="Drag to reorder"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <GripVertical className="h-4 w-4 text-gray-500" />
+      </div>
+
+      <ElementNode
+        element={element}
+        selectedId={selectedId}
+        onSelect={onSelect}
+        onReorder={onReorder}
+      />
     </div>
   );
 }
@@ -616,10 +769,12 @@ function ElementNode({
   element,
   selectedId,
   onSelect,
+  onReorder,
 }: {
   element: ExtendedElement;
   selectedId: string | null;
   onSelect: (id: string) => void;
+  onReorder: (elements: ExtendedElement[]) => void;
 }) {
   const isSelected = selectedId === element.id;
   const content = element.content as any;
@@ -850,6 +1005,7 @@ function ElementNode({
     case 'container':
     default: {
       const ContainerTag = (content?.tagName || 'div') as any;
+      const childElements = element.children || [];
       return (
         <ContainerTag
           ref={setNodeRef}
@@ -861,17 +1017,88 @@ function ElementNode({
           )}
           onClick={handleClick}
         >
-          {element.children?.map(child => (
-            <ElementNode
-              key={child.id}
-              element={child}
-              selectedId={selectedId}
-              onSelect={onSelect}
-            />
-          ))}
+          <SortableContext
+            items={childElements.map(c => c.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            {childElements.map(child => (
+              <SortableChildElement
+                key={child.id}
+                element={child}
+                selectedId={selectedId}
+                onSelect={onSelect}
+                onReorder={onReorder}
+              />
+            ))}
+          </SortableContext>
         </ContainerTag>
       );
     }
   }
+}
+
+// Sortable wrapper for child elements inside containers
+function SortableChildElement({
+  element,
+  selectedId,
+  onSelect,
+  onReorder,
+}: {
+  element: ExtendedElement;
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+  onReorder: (elements: ExtendedElement[]) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: element.id,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const isSelected = selectedId === element.id;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        'relative group/sortable-child',
+        isDragging && 'opacity-50 z-50'
+      )}
+    >
+      {/* Drag Handle for child elements */}
+      <div
+        {...attributes}
+        {...listeners}
+        className={cn(
+          'absolute top-1 left-1 z-50 p-1 rounded bg-white/90 border border-gray-200 shadow-sm cursor-grab active:cursor-grabbing transition-opacity',
+          'opacity-0 group-hover/sortable-child:opacity-100',
+          isSelected && 'opacity-100',
+          isDragging && 'cursor-grabbing'
+        )}
+        title="Drag to reorder"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <GripVertical className="h-3 w-3 text-gray-500" />
+      </div>
+
+      <ElementNode
+        element={element}
+        selectedId={selectedId}
+        onSelect={onSelect}
+        onReorder={onReorder}
+      />
+    </div>
+  );
 }
 
