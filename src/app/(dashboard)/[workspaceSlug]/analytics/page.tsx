@@ -20,6 +20,6 @@ export default function AnalyticsPage({ params }: AnalyticsPageProps) {
 }
 
 export const metadata = {
-  title: 'Analytics - OptiFlow',
+  title: 'Analytics - OptiVibe',
   description: 'View analytics and insights for your pages',
 };

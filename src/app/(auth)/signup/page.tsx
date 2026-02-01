@@ -84,7 +84,7 @@ export default function SignupPage() {
     <Card>
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
-        <CardDescription>Get started with OptiFlow for free</CardDescription>
+        <CardDescription>Get started with OptiVibe for free</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">

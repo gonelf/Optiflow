@@ -1,5 +1,5 @@
 /**
- * Centralized logging utility for OptiFlow
+ * Centralized logging utility for OptiVibe
  * Provides structured logging with different levels
  */
 

@@ -10,7 +10,7 @@ test.describe('Authentication', () => {
     test('should display sign up page', async ({ page }) => {
       await page.goto('/signup');
 
-      await expect(page).toHaveTitle(/Sign Up|OptiFlow/i);
+      await expect(page).toHaveTitle(/Sign Up|OptiVibe/i);
       await expect(page.getByRole('heading', { name: /sign up/i })).toBeVisible();
     });
 
@@ -56,7 +56,7 @@ test.describe('Authentication', () => {
     test('should display login page', async ({ page }) => {
       await page.goto('/login');
 
-      await expect(page).toHaveTitle(/Sign In|Login|OptiFlow/i);
+      await expect(page).toHaveTitle(/Sign In|Login|OptiVibe/i);
       await expect(page.getByRole('heading', { name: /sign in|log in/i })).toBeVisible();
     });
 
