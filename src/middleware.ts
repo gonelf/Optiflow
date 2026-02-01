@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getToken } from 'next-auth/jwt'
 import { logger } from './lib/logger'
-import { prisma } from './lib/prisma'
 
 // Helper function to extract workspace subdomain from hostname
 function getWorkspaceSubdomain(hostname: string): string | null {
@@ -141,15 +140,16 @@ export async function middleware(request: NextRequest) {
     if (!isAppDomain(hostname)) {
       try {
         const hostnameClean = hostname.split(':')[0]
-        const customDomain = await prisma.customDomain.findUnique({
-          where: { domain: hostnameClean },
-          select: {
-            workspace: { select: { slug: true } },
-          },
-        })
 
-        if (customDomain) {
-          const customWorkspaceSlug = customDomain.workspace.slug
+        // Resolve domain → workspace via an internal Node.js API route.
+        // Prisma cannot run on Edge, so we delegate the DB query.
+        const resolveUrl = new URL('/api/domains/resolve', request.url)
+        resolveUrl.searchParams.set('domain', hostnameClean)
+        const resolveRes = await fetch(resolveUrl.toString())
+        const resolveData = await resolveRes.json()
+
+        if (resolveData.workspaceSlug) {
+          const customWorkspaceSlug = resolveData.workspaceSlug as string
 
           logger.debug(`Custom domain matched`, {
             requestId,
