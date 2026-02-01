@@ -4,25 +4,11 @@ import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Save, Eye, Settings, ArrowLeft, Layout, Globe, GlobeLock } from 'lucide-react';
+import { Save, Eye, ArrowLeft, Globe, GlobeLock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Element } from '@prisma/client';
-import { AIEditPopover } from '@/components/builder/ai/AIEditPopover';
-import { styleObjectToString, stringToStyleObject } from '@/lib/css';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Label } from '@/components/ui/label';
-import {
-  BoxModelEditor,
-  LayoutPanel,
-  TypographyPanel,
-  SizingPanel,
-  BorderPanel,
-  BackgroundPanel
-} from '@/components/builder/style-panel';
-import { ElementActions } from '@/components/builder/ElementActions';
-import { ElementPoolPalette } from '@/components/builder/ElementPoolPalette';
-import { TailwindElementsPalette } from '@/components/builder/TailwindElementsPalette';
 import { ThemeChanger } from '@/components/builder/ThemeChanger';
+import { EditorSidebar } from '@/components/builder/EditorSidebar';
 import {
   DndContext,
   DragOverlay,
@@ -52,8 +38,6 @@ export default function BuilderPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
-  const [showElementPool, setShowElementPool] = useState(false);
-  const [showTailwindPalette, setShowTailwindPalette] = useState(false);
   const [currentTheme, setCurrentTheme] = useState('default');
   const [draggedElement, setDraggedElement] = useState<any>(null);
 
@@ -434,30 +418,6 @@ export default function BuilderPage() {
               }}
               elements={elements}
             />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setShowTailwindPalette(!showTailwindPalette);
-                if (!showTailwindPalette) setShowElementPool(false);
-              }}
-              className={showTailwindPalette ? 'bg-primary/10 border-primary' : ''}
-            >
-              <Layout className="h-4 w-4 mr-2" />
-              {showTailwindPalette ? 'Hide Elements' : 'Tailwind'}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setShowElementPool(!showElementPool);
-                if (!showElementPool) setShowTailwindPalette(false);
-              }}
-              className={showElementPool ? 'bg-primary/10 border-primary' : ''}
-            >
-              <Save className="h-4 w-4 mr-2" />
-              {showElementPool ? 'Hide Pool' : 'My Pool'}
-            </Button>
             <Button variant="outline" size="sm" onClick={handlePreview}>
               <Eye className="h-4 w-4 mr-2" />
               Preview
@@ -511,53 +471,29 @@ export default function BuilderPage() {
           </div>
 
           {/* Right Sidebar */}
-          <div className="flex">
-            {/* Property Panel */}
-            {selectedElementId && (
-              <AIPropertyPanel
-                elementId={selectedElementId}
-                elements={elements}
-                onUpdate={(id, updates) => {
-                  // Update element in tree
-                  const updateInTree = (els: ExtendedElement[]): ExtendedElement[] => {
-                    return els.map(el => {
-                      if (el.id === id) {
-                        return { ...el, ...updates };
-                      }
-                      if (el.children) {
-                        return { ...el, children: updateInTree(el.children) };
-                      }
-                      return el;
-                    });
-                  };
-                  setElements(updateInTree(elements));
-                }}
-                onClose={() => setSelectedElementId(null)}
-                setShowElementPool={setShowElementPool}
-                setElements={setElements}
-              />
-            )}
-
-            {/* Tailwind Elements Palette */}
-            {showTailwindPalette && (
-              <TailwindElementsPalette
-                onAddElement={(element) => {
-                  addElementToState(element, selectedElementId);
-                }}
-              />
-            )}
-
-            {/* Element Pool Palette */}
-            {showElementPool && (
-              <div className="w-64 border-l bg-white overflow-hidden">
-                <ElementPoolPalette
-                  onAddToCanvas={(element) => {
-                    addElementToState(element, selectedElementId);
-                  }}
-                />
-              </div>
-            )}
-          </div>
+          <EditorSidebar
+            selectedElementId={selectedElementId}
+            elements={elements}
+            onElementUpdate={(id, updates) => {
+              const updateInTree = (els: ExtendedElement[]): ExtendedElement[] => {
+                return els.map(el => {
+                  if (el.id === id) {
+                    return { ...el, ...updates };
+                  }
+                  if (el.children) {
+                    return { ...el, children: updateInTree(el.children) };
+                  }
+                  return el;
+                });
+              };
+              setElements(updateInTree(elements));
+            }}
+            onElementSelect={setSelectedElementId}
+            onAddElement={(element, targetId) => {
+              addElementToState(element, targetId);
+            }}
+            setElements={setElements}
+          />
         </div>
 
         <DragOverlay>
@@ -741,251 +677,3 @@ function ElementNode({
   }
 }
 
-function AIPropertyPanel({
-  elementId,
-  elements,
-  onUpdate,
-  onClose,
-  setShowElementPool,
-  setElements,
-}: {
-  elementId: string;
-  elements: ExtendedElement[];
-  onUpdate: (id: string, updates: Partial<Element>) => void;
-  onClose: () => void;
-  setShowElementPool: (show: boolean) => void;
-  setElements: (elements: ExtendedElement[]) => void;
-}) {
-  // Find element in tree
-  const findElement = (els: ExtendedElement[]): ExtendedElement | null => {
-    for (const el of els) {
-      if (el.id === elementId) return el;
-      if (el.children) {
-        const found = findElement(el.children);
-        if (found) return found;
-      }
-    }
-    return null;
-  };
-
-  const element = findElement(elements);
-  if (!element) return null;
-
-  const content = element.content as any;
-  const styles = (element.styles || {}) as any;
-
-  // Handler for AI updates
-  const handleAIUpdate = (updatedElement: any) => {
-    onUpdate(element.id, {
-      content: updatedElement.content,
-      styles: updatedElement.styles,
-    });
-  };
-
-  const handleStyleChange = (newStyles: any) => {
-    onUpdate(element.id, {
-      styles: {
-        ...styles,
-        ...newStyles
-      }
-    });
-  }
-
-  const handleCssChange = (css: string) => {
-    const newStyles = stringToStyleObject(css);
-    onUpdate(element.id, {
-      styles: newStyles,
-    });
-  };
-
-  return (
-    <div className="w-80 border-l bg-white flex flex-col h-full shadow-xl z-10">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b bg-white">
-        <div className="flex items-center gap-2">
-          <h3 className="font-semibold text-sm">Edit Element</h3>
-          <AIEditPopover element={element} onUpdate={handleAIUpdate} />
-        </div>
-        <div className="flex items-center gap-1">
-          <ElementActions
-            elementId={elementId}
-            element={element}
-            onActionComplete={(action) => {
-              if (action === 'delete') {
-                // Find and remove element from tree
-                const removeFromTree = (els: ExtendedElement[]): ExtendedElement[] => {
-                  return els.filter(el => {
-                    if (el.id === elementId) return false;
-                    if (el.children) {
-                      el.children = removeFromTree(el.children);
-                    }
-                    return true;
-                  });
-                };
-                setElements(removeFromTree(elements));
-                onClose();
-              } else if (action === 'duplicate') {
-                // Find element and duplicate it
-                const findAndDuplicate = (els: ExtendedElement[]): ExtendedElement[] => {
-                  const result: ExtendedElement[] = [];
-                  for (const el of els) {
-                    if (el.id === elementId) {
-                      const duplicated: ExtendedElement = {
-                        ...JSON.parse(JSON.stringify(el)),
-                        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                        order: el.order + 1,
-                      };
-                      result.push(el);
-                      result.push(duplicated);
-                    } else if (el.children) {
-                      el.children = findAndDuplicate(el.children);
-                      result.push(el);
-                    } else {
-                      result.push(el);
-                    }
-                  }
-                  return result;
-                };
-                setElements(findAndDuplicate(elements));
-              } else if (action === 'save') {
-                setShowElementPool(true);
-              }
-            }}
-          />
-          <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
-            <Settings className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto">
-        <Tabs defaultValue="style" className="w-full">
-          <div className="sticky top-0 bg-white z-10 border-b">
-            <TabsList className="w-full justify-start rounded-none bg-transparent p-0">
-              <TabsTrigger
-                value="content"
-                className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary py-3 text-xs"
-              >
-                Content
-              </TabsTrigger>
-              <TabsTrigger
-                value="style"
-                className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary py-3 text-xs"
-              >
-                Style
-              </TabsTrigger>
-              <TabsTrigger
-                value="advanced"
-                className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary py-3 text-xs"
-              >
-                Advanced
-              </TabsTrigger>
-            </TabsList>
-          </div>
-
-          {/* Content Tab */}
-          <TabsContent value="content" className="p-4 space-y-6">
-            <div className="space-y-4">
-              <div>
-                <Label className="text-xs text-muted-foreground">Type</Label>
-                <p className="text-sm font-medium capitalize">{element.type}</p>
-              </div>
-
-              {(element.type === 'text' || element.type === 'button') && (
-                <div className="space-y-2">
-                  <Label className="text-xs">Content</Label>
-                  <input
-                    type="text"
-                    value={content?.content || ''}
-                    onChange={(e) => onUpdate(element.id, {
-                      content: { ...content, content: e.target.value }
-                    })}
-                    className="w-full px-3 py-2 text-sm border rounded bg-background"
-                  />
-                </div>
-              )}
-
-              {element.type === 'image' && (
-                <>
-                  <div className="space-y-2">
-                    <Label className="text-xs">Image URL</Label>
-                    <input
-                      type="text"
-                      value={content?.src || ''}
-                      onChange={(e) => onUpdate(element.id, {
-                        content: { ...content, src: e.target.value }
-                      })}
-                      className="w-full px-3 py-2 text-sm border rounded bg-background"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs">Alt Text</Label>
-                    <input
-                      type="text"
-                      value={content?.alt || ''}
-                      onChange={(e) => onUpdate(element.id, {
-                        content: { ...content, alt: e.target.value }
-                      })}
-                      className="w-full px-3 py-2 text-sm border rounded bg-background"
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-          </TabsContent>
-
-          {/* Style Tab */}
-          <TabsContent value="style" className="p-0">
-            <div className="divide-y">
-              <div className="p-4">
-                <LayoutPanel styles={styles} onChange={handleStyleChange} />
-              </div>
-              <div className="p-4">
-                <SizingPanel styles={styles} onChange={handleStyleChange} />
-              </div>
-              <div className="p-4">
-                <BoxModelEditor styles={styles} onChange={handleStyleChange} />
-              </div>
-              <div className="p-4">
-                <TypographyPanel styles={styles} onChange={handleStyleChange} />
-              </div>
-              <div className="p-4">
-                <BackgroundPanel styles={styles} onChange={handleStyleChange} />
-              </div>
-              <div className="p-4">
-                <BorderPanel styles={styles} onChange={handleStyleChange} />
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* Advanced Tab */}
-          <TabsContent value="advanced" className="p-4 space-y-6">
-            <div className="space-y-2">
-              <Label className="text-xs font-medium">Custom CSS</Label>
-              <textarea
-                value={styleObjectToString(styles)}
-                onChange={(e) => handleCssChange(e.target.value)}
-                placeholder="color: red; padding: 10px;"
-                className="w-full h-48 px-3 py-2 border rounded font-mono text-xs bg-muted/20 resize-none focus:ring-1 focus:ring-primary focus:border-primary"
-              />
-              <p className="text-[10px] text-muted-foreground">
-                Write standard CSS. It will be applied to the element.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-xs">CSS Classes</Label>
-              <input
-                className="w-full px-3 py-2 text-sm border rounded bg-background"
-                placeholder="class-name another-class"
-                value={element.className || ''}
-                onChange={(e) => onUpdate(element.id, { className: e.target.value })}
-              />
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
-    </div>
-  );
-}
