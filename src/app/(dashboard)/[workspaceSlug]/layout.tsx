@@ -5,8 +5,8 @@ import { useParams, usePathname } from 'next/navigation'
 import { WorkspaceSwitcher } from '@/components/workspace/workspace-switcher'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { Home, FileText, TestTube, BarChart, Settings, LogOut, PanelLeft } from 'lucide-react'
-import { signOut } from 'next-auth/react'
+import { Home, FileText, TestTube, BarChart, Settings, LogOut, PanelLeft, Shield } from 'lucide-react'
+import { signOut, useSession } from 'next-auth/react'
 import { cn } from '@/lib/utils'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -14,6 +14,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const params = useParams()
   const pathname = usePathname()
   const workspaceSlug = params.workspaceSlug as string
+  const { data: session } = useSession()
 
   // Auto-collapse on editor pages (e.g. /workspace/pages/pageId)
   // We check if we are deep enough in the 'pages' route.
@@ -66,7 +67,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
 
           {/* Navigation */}
-          {/* Navigation */}
           <nav className="flex-1 space-y-1 px-3">
             {navigation.map((item) => (
               <Link key={item.name} href={item.href}>
@@ -82,6 +82,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </Button>
               </Link>
             ))}
+
+            {/* Admin Link */}
+            {session?.user?.systemRole === 'ADMIN' && (
+              <Link href="/admin/dashboard">
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    'w-full text-red-500 hover:text-red-600 hover:bg-red-50',
+                    isCollapsed ? 'justify-center px-2' : 'justify-start'
+                  )}
+                >
+                  <Shield className={cn('h-4 w-4', !isCollapsed && 'mr-2')} />
+                  {!isCollapsed && 'Admin Dashboard'}
+                </Button>
+              </Link>
+            )}
           </nav>
 
           {/* Footer */}
