@@ -4,11 +4,13 @@ import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Save, Eye, ArrowLeft, Globe, GlobeLock } from 'lucide-react';
+import { Save, Eye, ArrowLeft, Globe, GlobeLock, Settings2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Element } from '@prisma/client';
 import { ThemeChanger } from '@/components/builder/ThemeChanger';
 import { EditorSidebar } from '@/components/builder/EditorSidebar';
+import { PageSettingsDialog } from '@/components/builder/PageSettingsDialog';
+import { sanitizeHtml, isUrlSafe, getIframeSandbox } from '@/lib/embed-security';
 import {
   DndContext,
   DragOverlay,
@@ -40,6 +42,7 @@ export default function BuilderPage() {
   const [isPublishing, setIsPublishing] = useState(false);
   const [currentTheme, setCurrentTheme] = useState('default');
   const [draggedElement, setDraggedElement] = useState<any>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 10 } }),
@@ -62,6 +65,9 @@ export default function BuilderPage() {
           title: data.title,
           slug: data.slug,
           description: data.description,
+          seoTitle: data.seoTitle || '',
+          seoDescription: data.seoDescription || '',
+          customHead: data.customHead || '',
         });
         setPageStatus(data.status || 'DRAFT');
 
@@ -221,6 +227,46 @@ export default function BuilderPage() {
 
   const handleBack = () => {
     router.push(`/${params.workspaceSlug}/pages`);
+  };
+
+  const handleSaveSettings = async (settings: {
+    title: string;
+    slug: string;
+    description: string;
+    seoTitle: string;
+    seoDescription: string;
+    customHead: string;
+  }) => {
+    try {
+      const response = await fetch(`/api/pages/${params.pageId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save settings');
+      }
+
+      setPageMetadata({
+        ...pageMetadata,
+        ...settings,
+      });
+
+      toast({
+        title: 'Settings saved',
+        description: 'Page settings have been updated',
+      });
+    } catch (error) {
+      console.error('Save settings error:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to save settings',
+        variant: 'destructive',
+      });
+      throw error;
+    }
   };
 
   const addElementToState = (elementTemplate: any, targetId?: string | null) => {
@@ -418,6 +464,10 @@ export default function BuilderPage() {
               }}
               elements={elements}
             />
+            <Button variant="outline" size="sm" onClick={() => setIsSettingsOpen(true)}>
+              <Settings2 className="h-4 w-4 mr-2" />
+              Settings
+            </Button>
             <Button variant="outline" size="sm" onClick={handlePreview}>
               <Eye className="h-4 w-4 mr-2" />
               Preview
@@ -504,6 +554,24 @@ export default function BuilderPage() {
             </div>
           ) : null}
         </DragOverlay>
+
+        {/* Page Settings Dialog */}
+        {pageMetadata && (
+          <PageSettingsDialog
+            open={isSettingsOpen}
+            onOpenChange={setIsSettingsOpen}
+            pageId={params.pageId as string}
+            initialSettings={{
+              title: pageMetadata.title || '',
+              slug: pageMetadata.slug || '',
+              description: pageMetadata.description || '',
+              seoTitle: pageMetadata.seoTitle || '',
+              seoDescription: pageMetadata.seoDescription || '',
+              customHead: pageMetadata.customHead || '',
+            }}
+            onSave={handleSaveSettings}
+          />
+        )}
       </div>
     </DndContext>
   );
@@ -646,6 +714,136 @@ function ElementNode({
             )}
           />
         </div>
+      );
+    }
+
+    case 'embed': {
+      // Render embed element with builder preview mode
+      const embedContent = content as { type?: string; code?: string; aspectRatio?: string; allowFullscreen?: boolean };
+
+      // Empty embed placeholder
+      if (!embedContent?.code) {
+        return (
+          <div
+            style={styles}
+            data-label={element.type}
+            className={cn(
+              selectionClasses,
+              element.className || '',
+              'bg-gray-100 flex items-center justify-center min-h-[200px] text-gray-400'
+            )}
+            onClick={handleClick}
+          >
+            <div className="text-center">
+              <p className="text-sm font-medium">Click to add embed code</p>
+              <p className="text-xs">HTML, iFrame, or Script</p>
+            </div>
+          </div>
+        );
+      }
+
+      // iFrame embed - with URL validation
+      if (embedContent.type === 'iframe') {
+        // Validate URL
+        if (!isUrlSafe(embedContent.code)) {
+          return (
+            <div
+              data-label={element.type}
+              className={cn(selectionClasses, element.className || '')}
+              style={{
+                ...styles,
+                backgroundColor: '#fef2f2',
+                padding: '1rem',
+                borderRadius: '0.375rem',
+                color: '#dc2626',
+              }}
+              onClick={handleClick}
+            >
+              <strong>Invalid URL</strong>
+              <p style={{ marginTop: '0.5rem', fontSize: '0.75rem' }}>
+                The URL appears to be invalid or unsafe. Please check the URL.
+              </p>
+            </div>
+          );
+        }
+
+        const containerStyle = embedContent.aspectRatio
+          ? {
+              ...styles,
+              position: 'relative' as const,
+              width: '100%',
+              paddingBottom: embedContent.aspectRatio,
+            }
+          : styles;
+
+        // Get sandbox attributes for security
+        const sandboxAttr = getIframeSandbox(embedContent.code);
+
+        return (
+          <div
+            data-label={element.type}
+            className={cn(selectionClasses, element.className || '')}
+            style={containerStyle}
+            onClick={handleClick}
+          >
+            <iframe
+              src={embedContent.code}
+              allowFullScreen={embedContent.allowFullscreen}
+              sandbox={sandboxAttr}
+              referrerPolicy="strict-origin-when-cross-origin"
+              style={embedContent.aspectRatio ? {
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                border: 'none',
+              } : {
+                width: '100%',
+                border: 'none',
+              }}
+            />
+          </div>
+        );
+      }
+
+      // Script embed (show preview in builder - never execute)
+      if (embedContent.type === 'script') {
+        return (
+          <div
+            data-label={element.type}
+            className={cn(selectionClasses, element.className || '')}
+            style={{
+              ...styles,
+              backgroundColor: '#fef3c7',
+              padding: '1rem',
+              borderRadius: '0.375rem',
+              fontFamily: 'monospace',
+              fontSize: '0.875rem',
+            }}
+            onClick={handleClick}
+          >
+            <strong>Script Embed (Preview Only)</strong>
+            <p style={{ fontSize: '0.75rem', color: '#92400e', marginTop: '0.25rem' }}>
+              Scripts only execute on published pages
+            </p>
+            <pre style={{ marginTop: '0.5rem', overflow: 'auto', maxHeight: '150px' }}>
+              {embedContent.code}
+            </pre>
+          </div>
+        );
+      }
+
+      // HTML embed (show sanitized preview in builder)
+      const sanitizedHtml = sanitizeHtml(embedContent.code || '');
+      return (
+        <div
+          data-label={element.type}
+          className={cn(selectionClasses, element.className || '')}
+          style={styles}
+          onClick={handleClick}
+          dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
+        />
       );
     }
 
