@@ -375,6 +375,110 @@ Ensure a logical flow that tells a story and guides the user towards the primary
 Generate the HTML string now. Return ONLY valid HTML code, no markdown fencing needed.`;
 }
 
+// ---------------------------------------------------------------------------
+// A/B Testing: variant text generation
+// ---------------------------------------------------------------------------
+
+export interface ABVariantGenerationInput {
+  testName: string;
+  testDescription: string;
+  primaryGoal: string;
+  originalText: string;
+  textType: 'headline' | 'cta' | 'body' | 'subheadline' | 'description';
+  count: number;
+}
+
+export function generateABVariantsPrompt(input: ABVariantGenerationInput): string {
+  const { testName, testDescription, primaryGoal, originalText, textType, count } = input;
+
+  const guidelines: Record<string, string> = {
+    headline: 'Keep each headline under 12 words. Lead with benefits or curiosity. Use power words.',
+    cta: 'Keep each CTA 2\u20134 words. Use action verbs. Create urgency or clarity.',
+    body: 'Keep body copy concise (1\u20133 sentences). Match the tone of the original. Focus on value.',
+    subheadline: 'Keep under 15 words. Expand on the headline without repeating it.',
+    description: 'Write 1\u20132 sentences. Clarify the value proposition clearly.',
+  };
+
+  return `You are a conversion rate optimization (CRO) expert. Generate exactly ${count} distinct text variations for an A/B test.
+
+TEST CONTEXT:
+- Test Name: ${testName}
+- Test Description: ${testDescription}
+- Primary Goal: ${primaryGoal}
+- Text Type: ${textType}
+- Original Text: "${originalText}"
+
+GUIDELINES:
+${guidelines[textType] || 'Write clear, compelling copy.'}
+- Every variation must be meaningfully different from the others and from the original.
+- Optimise each variation for the stated primary goal.
+- Do NOT number the variations or add labels.
+
+Return a JSON array of exactly ${count} strings. Example: ["Variation 1", "Variation 2"]
+Return ONLY the JSON array, nothing else.`;
+}
+
+// ---------------------------------------------------------------------------
+// A/B Testing: AI winner suggestion
+// ---------------------------------------------------------------------------
+
+export interface ABWinnerSuggestionInput {
+  testName: string;
+  testDescription: string;
+  primaryGoal: string;
+  conversionEvent: string;
+  confidenceLevel: number;
+  variants: Array<{
+    name: string;
+    isControl: boolean;
+    impressions: number;
+    conversions: number;
+    conversionRate: number;
+  }>;
+  hasStatisticalSignificance: boolean;
+  pValue: number;
+  minimumSampleSize: number;
+}
+
+export function generateABWinnerSuggestionPrompt(input: ABWinnerSuggestionInput): string {
+  const variantRows = input.variants
+    .map(
+      (v) =>
+        `- "${v.name}"${v.isControl ? ' (Control)' : ''}: ${v.impressions} impressions, ${v.conversions} conversions, ${(v.conversionRate * 100).toFixed(2)}% conversion rate`
+    )
+    .join('\n');
+
+  return `You are a data-driven A/B testing analyst. Analyse the following test results and recommend a winning variant.
+
+TEST DETAILS:
+- Name: ${input.testName}
+- Description: ${input.testDescription}
+- Primary Goal: ${input.primaryGoal}
+- Conversion Event: ${input.conversionEvent}
+- Confidence Level Target: ${(input.confidenceLevel * 100).toFixed(0)}%
+- Minimum Sample Size: ${input.minimumSampleSize} per variant
+- Statistical Significance Reached: ${input.hasStatisticalSignificance ? 'Yes' : 'No'}
+- P-Value: ${input.pValue.toFixed(4)}
+
+VARIANT RESULTS:
+${variantRows}
+
+ANALYSIS INSTRUCTIONS:
+1. Identify the variant with the best conversion rate.
+2. Assess whether the data is statistically reliable (sufficient sample sizes, p-value vs confidence target).
+3. If significance has NOT been reached, flag that the recommendation is preliminary.
+4. Explain WHY you recommend this variant in 2\u20133 sentences.
+5. Note any risks or caveats (e.g., small sample, borderline significance).
+
+Return ONLY a valid JSON object with this exact shape:
+{
+  "recommendedVariant": "<name of the variant you recommend>",
+  "confidence": "high" | "medium" | "low",
+  "reasoning": "<2-3 sentence explanation>",
+  "caveats": "<any risks or caveats, or empty string if none>"
+}`;
+}
+
 export const SYSTEM_PROMPTS = {
   PAGE_GENERATOR: 'You are an expert web developer who writes clean, semantic HTML structure and modern CSS styles generated as JSON.',
   COPY_OPTIMIZER: 'You are a conversion copywriting expert who optimizes headlines, CTAs, and body copy for maximum engagement.',
