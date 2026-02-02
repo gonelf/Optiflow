@@ -107,6 +107,7 @@ export const createABTestSchema = z.object({
   name: z.string().min(1).max(200),
   description: z.string().max(500).optional(),
   pageId: z.string().cuid(),
+  testType: z.enum(['PAGE_REDIRECT', 'ELEMENT_TEST']).default('ELEMENT_TEST'),
   primaryGoal: z.string().min(1).max(100),
   conversionEvent: z.string().min(1).max(100),
   trafficSplit: z.record(z.number().min(0).max(100)),
@@ -128,6 +129,8 @@ export const createVariantSchema = z.object({
   abTestId: z.string().cuid(),
   pageId: z.string().cuid(),
   isControl: z.boolean().optional(),
+  redirectUrl: z.string().url().optional(), // For PAGE_REDIRECT test type
+  elementChanges: z.record(z.any()).optional(), // For ELEMENT_TEST type
 });
 
 // ============================================================================

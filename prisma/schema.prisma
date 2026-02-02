@@ -180,6 +180,7 @@ model ABTest {
   name              String
   description       String?
   pageId            String
+  testType          ABTestType    @default(ELEMENT_TEST)
   status            TestStatus    @default(DRAFT)
   trafficSplit      Json
   startDate         DateTime?
@@ -198,6 +199,7 @@ model ABTest {
 
   @@index([pageId])
   @@index([status])
+  @@index([testType])
 }
 
 model PageVariant {
@@ -207,6 +209,8 @@ model PageVariant {
   isControl      Boolean          @default(false)
   abTestId       String
   pageId         String
+  redirectUrl    String?          // For PAGE_REDIRECT test type
+  elementChanges Json?            // For ELEMENT_TEST type - stores element modifications
   impressions    Int              @default(0)
   conversions    Int              @default(0)
   conversionRate Float            @default(0)
@@ -692,6 +696,11 @@ enum TemplateCategory {
   FUNNEL
   WAITLIST
   COMING_SOON
+}
+
+enum ABTestType {
+  PAGE_REDIRECT
+  ELEMENT_TEST
 }
 
 enum TestStatus {
