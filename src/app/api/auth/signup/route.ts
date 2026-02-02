@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { Prisma } from '@prisma/client'
+import bcrypt from 'bcrypt'
 
 const signupSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -73,6 +74,9 @@ export async function POST(req: NextRequest) {
     // Assign Admin Role if email matches specific user
     const sysRole = isAdminEmail ? 'ADMIN' : 'USER'
 
+    // Hash the password
+    const passwordHash = await bcrypt.hash(validatedData.password, 10)
+
     // Create user and update invite code in transaction
     console.log('[Signup] Creating new user:', validatedData.email)
 
@@ -82,6 +86,7 @@ export async function POST(req: NextRequest) {
           id: crypto.randomUUID(),
           name: validatedData.name,
           email: validatedData.email,
+          passwordHash,
           systemRole: sysRole,
           createdAt: new Date(),
           updatedAt: new Date(),

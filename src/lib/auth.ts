@@ -32,10 +32,17 @@ export const authOptions: NextAuthOptions = {
           throw new Error('User not found')
         }
 
-        // For demo purposes - in production, you'd hash passwords
-        // const isPasswordValid = await bcrypt.compare(credentials.password, user.passwordHash)
+        // Validate password
+        if (!user.passwordHash) {
+          throw new Error('Password not set for this account. Please use OAuth login.')
+        }
 
-        // For now, just return the user
+        const isPasswordValid = await bcrypt.compare(credentials.password, user.passwordHash)
+
+        if (!isPasswordValid) {
+          throw new Error('Invalid password')
+        }
+
         return {
           id: user.id,
           email: user.email,
