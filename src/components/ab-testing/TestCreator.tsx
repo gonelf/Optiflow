@@ -3,17 +3,22 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2 } from 'lucide-react';
+import TestTypeSelector, { TestType } from './TestTypeSelector';
+import PageRedirectTestSetup, { PageVariantConfig } from './PageRedirectTestSetup';
+import ElementTestEditor, { ElementVariantConfig } from './ElementTestEditor';
 
 interface TestCreatorProps {
   workspaceSlug: string;
   pageId?: string;
-  pages?: Array<{ id: string; title: string }>;
+  pages?: Array<{ id: string; title: string; publishedUrl?: string | null }>;
 }
 
 export default function TestCreator({ workspaceSlug, pageId, pages = [] }: TestCreatorProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [testType, setTestType] = useState<TestType>('ELEMENT_TEST');
+
+  // Common form data
   const [formData, setFormData] = useState({
     pageId: pageId || '',
     name: '',
@@ -22,69 +27,99 @@ export default function TestCreator({ workspaceSlug, pageId, pages = [] }: TestC
     conversionEvent: 'button_click',
     minimumSampleSize: 1000,
     confidenceLevel: 0.95,
-    variantNames: ['Control', 'Variant A'],
   });
+
+  // Page redirect test data
+  const [pageVariants, setPageVariants] = useState<PageVariantConfig[]>([
+    { name: 'Control', pageId: '', redirectUrl: '' },
+    { name: 'Variant A', pageId: '', redirectUrl: '' },
+  ]);
+
+  // Element test data
+  const [elementVariants, setElementVariants] = useState<ElementVariantConfig[]>([
+    { name: 'Control', description: 'Original version', isControl: true, changes: [] },
+    { name: 'Variant A', description: '', isControl: false, changes: [] },
+  ]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.pageId || !formData.name) {
-      alert('Please fill in all required fields');
+    // Validation
+    if (!formData.name) {
+      alert('Please enter a test name');
       return;
+    }
+
+    if (testType === 'PAGE_REDIRECT') {
+      if (pageVariants.length < 2) {
+        alert('Page redirect tests require at least 2 page variants');
+        return;
+      }
+      if (pageVariants.some((v) => !v.pageId || !v.redirectUrl)) {
+        alert('Please fill in all page variant details');
+        return;
+      }
+      if (!formData.pageId) {
+        // Use the first variant's pageId as the test's pageId
+        formData.pageId = pageVariants[0].pageId;
+      }
+    } else {
+      if (!formData.pageId) {
+        alert('Please select a page');
+        return;
+      }
     }
 
     try {
       setLoading(true);
+
+      const payload: any = {
+        ...formData,
+        testType,
+      };
+
+      if (testType === 'PAGE_REDIRECT') {
+        payload.variantConfigs = pageVariants;
+      } else {
+        payload.variantNames = elementVariants.map((v) => v.name);
+        // Store element changes in the first API call or handle separately
+        // For now, we'll pass empty variants and update them later with element changes
+      }
 
       const response = await fetch('/api/ab-tests', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create A/B test');
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create A/B test');
       }
 
       const { test } = await response.json();
+
+      // For element tests, we might need to update variants with element changes
+      // This would require additional API calls to update each variant
+      if (testType === 'ELEMENT_TEST') {
+        // TODO: Update variants with element changes
+        // This can be done via a separate API endpoint or as part of the test editor
+      }
 
       // Redirect to test detail page
       router.push(`/${workspaceSlug}/ab-tests/${test.id}`);
     } catch (error) {
       console.error('Failed to create A/B test:', error);
-      alert('Failed to create A/B test. Please try again.');
+      alert(error instanceof Error ? error.message : 'Failed to create A/B test. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const addVariant = () => {
-    setFormData({
-      ...formData,
-      variantNames: [...formData.variantNames, `Variant ${String.fromCharCode(65 + formData.variantNames.length - 1)}`],
-    });
-  };
-
-  const removeVariant = (index: number) => {
-    if (formData.variantNames.length <= 2) {
-      alert('You must have at least 2 variants (control and one test variant)');
-      return;
-    }
-
-    const newVariantNames = formData.variantNames.filter((_, i) => i !== index);
-    setFormData({ ...formData, variantNames: newVariantNames });
-  };
-
-  const updateVariantName = (index: number, name: string) => {
-    const newVariantNames = [...formData.variantNames];
-    newVariantNames[index] = name;
-    setFormData({ ...formData, variantNames: newVariantNames });
-  };
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-8">
       {/* Test Name */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -114,8 +149,11 @@ export default function TestCreator({ workspaceSlug, pageId, pages = [] }: TestC
         />
       </div>
 
-      {/* Page Selection */}
-      {!pageId && pages.length > 0 && (
+      {/* Test Type Selector */}
+      <TestTypeSelector selectedType={testType} onChange={setTestType} />
+
+      {/* Page Selection (for Element Test only) */}
+      {testType === 'ELEMENT_TEST' && !pageId && pages.length > 0 && (
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Page <span className="text-red-500">*</span>
@@ -136,45 +174,20 @@ export default function TestCreator({ workspaceSlug, pageId, pages = [] }: TestC
         </div>
       )}
 
-      {/* Variants */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <label className="block text-sm font-medium text-gray-700">
-            Variants <span className="text-red-500">*</span>
-          </label>
-          <Button type="button" onClick={addVariant} size="sm" variant="outline">
-            <Plus className="h-4 w-4 mr-1" />
-            Add Variant
-          </Button>
-        </div>
-        <div className="space-y-2">
-          {formData.variantNames.map((name, index) => (
-            <div key={index} className="flex items-center gap-2">
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => updateVariantName(index, e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder={index === 0 ? 'Control (original)' : `Variant ${String.fromCharCode(65 + index - 1)}`}
-                required
-              />
-              {index === 0 && (
-                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Control</span>
-              )}
-              {index > 0 && (
-                <Button
-                  type="button"
-                  onClick={() => removeVariant(index)}
-                  size="sm"
-                  variant="ghost"
-                  className="text-red-600"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          ))}
-        </div>
+      {/* Test Type Specific Configuration */}
+      {testType === 'PAGE_REDIRECT' ? (
+        <PageRedirectTestSetup
+          pages={pages}
+          variants={pageVariants}
+          onChange={setPageVariants}
+        />
+      ) : (
+        <ElementTestEditor variants={elementVariants} onChange={setElementVariants} />
+      )}
+
+      {/* Divider */}
+      <div className="border-t border-gray-200 pt-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Test Configuration</h3>
       </div>
 
       {/* Primary Goal */}
@@ -252,7 +265,7 @@ export default function TestCreator({ workspaceSlug, pageId, pages = [] }: TestC
       </div>
 
       {/* Submit Button */}
-      <div className="flex justify-end gap-3">
+      <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
         <Button
           type="button"
           variant="outline"

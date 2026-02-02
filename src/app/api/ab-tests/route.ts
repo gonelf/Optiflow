@@ -84,6 +84,7 @@ export async function GET(request: NextRequest) {
       id: test.id,
       name: test.name,
       description: test.description,
+      testType: test.testType,
       status: test.status,
       pageId: test.pageId,
       pageName: test.page.title,
@@ -119,16 +120,26 @@ export async function POST(request: NextRequest) {
       pageId,
       name,
       description,
+      testType = 'ELEMENT_TEST',
       primaryGoal,
       conversionEvent,
       minimumSampleSize = 1000,
       confidenceLevel = 0.95,
       variantNames = ['Control', 'Variant A'],
+      variantConfigs = [], // For PAGE_REDIRECT: [{ name, redirectUrl }]
     } = body;
 
     if (!pageId || !name || !primaryGoal || !conversionEvent) {
       return NextResponse.json(
         { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
+    // Validate test type specific requirements
+    if (testType === 'PAGE_REDIRECT' && variantConfigs.length < 2) {
+      return NextResponse.json(
+        { error: 'Page redirect tests require at least 2 page variants' },
         { status: 400 }
       );
     }
@@ -153,12 +164,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Page not found' }, { status: 404 });
     }
 
-    // Create A/B test with variants
+    // Create A/B test with variants based on test type
+    const variantsData = testType === 'PAGE_REDIRECT'
+      ? variantConfigs.map((config: any, index: number) => ({
+          name: config.name,
+          isControl: index === 0,
+          pageId: config.pageId || pageId, // Use specified pageId or default to test pageId
+          redirectUrl: config.redirectUrl, // URL to redirect to
+        }))
+      : variantNames.map((variantName: string, index: number) => ({
+          name: variantName,
+          isControl: index === 0,
+          pageId,
+          elementChanges: {}, // Will be populated by visual editor
+        }));
+
     const test = await prisma.aBTest.create({
       data: {
         name,
         description,
         pageId,
+        testType,
         primaryGoal,
         conversionEvent,
         minimumSampleSize,
@@ -166,11 +192,7 @@ export async function POST(request: NextRequest) {
         status: 'DRAFT',
         trafficSplit: {}, // Will be set when variants are created
         variants: {
-          create: variantNames.map((variantName: string, index: number) => ({
-            name: variantName,
-            isControl: index === 0,
-            pageId,
-          })),
+          create: variantsData,
         },
       },
       include: {
