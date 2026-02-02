@@ -12,6 +12,30 @@ function generateCode(length = 8) {
     return result
 }
 
+// Generate a unique referral code with collision handling
+async function generateUniqueReferralCode(maxAttempts = 10): Promise<string> {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        const code = generateCode(8)
+
+        // Check if code already exists
+        const existingCode = await prisma.waitlistUser.findUnique({
+            where: { referralCode: code }
+        })
+
+        if (!existingCode) {
+            return code
+        }
+
+        // If this is the last attempt, throw an error
+        if (attempt === maxAttempts - 1) {
+            throw new Error('Failed to generate unique referral code after multiple attempts')
+        }
+    }
+
+    // This should never be reached, but TypeScript needs it
+    throw new Error('Failed to generate unique referral code')
+}
+
 const waitlistSchema = z.object({
     email: z.string().email(),
     referredBy: z.string().nullable().optional(),
@@ -63,12 +87,15 @@ export async function POST(req: NextRequest) {
             })
         }
 
+        // Generate unique referral code
+        const uniqueReferralCode = await generateUniqueReferralCode()
+
         // Create User
         waitlistUser = await prisma.waitlistUser.create({
             data: {
                 id: crypto.randomUUID(),
                 email,
-                referralCode: generateCode(8), // Unique 8-char code
+                referralCode: uniqueReferralCode,
                 referredBy: referrer ? referrer.referralCode : null,
                 position: newPosition,
                 createdAt: new Date(),
