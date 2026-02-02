@@ -8,7 +8,7 @@ import TestResults from '@/components/ab-testing/TestResults';
 import VariantComparison from '@/components/ab-testing/VariantComparison';
 import ConfidenceIndicator from '@/components/ab-testing/ConfidenceIndicator';
 import TestCreator from '@/components/ab-testing/TestCreator';
-import AiVariantGenerator from '@/components/ab-testing/AiVariantGenerator';
+
 import AiWinnerSuggestion from '@/components/ab-testing/AiWinnerSuggestion';
 
 interface ABTestDetail {
@@ -16,6 +16,7 @@ interface ABTestDetail {
   name: string;
   description: string;
   status: 'DRAFT' | 'RUNNING' | 'PAUSED' | 'COMPLETED' | 'ARCHIVED';
+  testType: 'PAGE_REDIRECT' | 'ELEMENT_TEST';
   pageId: string;
   pageName?: string;
   primaryGoal: string;
@@ -174,10 +175,7 @@ export default function ABTestDetailPage() {
                 <TestCreator workspaceSlug={workspaceSlug} pages={pages} />
               </div>
 
-              <AiVariantGenerator
-                testName="New Test"
-                primaryGoal="conversion"
-              />
+
             </div>
           )}
         </div>
@@ -295,7 +293,13 @@ export default function ABTestDetailPage() {
         )}
 
         <div className="grid gap-6">
-          <VariantComparison variants={test.variants} winningVariantId={test.winningVariantId} />
+          <VariantComparison
+            variants={test.variants}
+            winningVariantId={test.winningVariantId}
+            pageId={test.pageId}
+            workspaceSlug={workspaceSlug}
+            testType={test.testType as any}
+          />
           <TestResults test={test} />
         </div>
 
@@ -307,11 +311,7 @@ export default function ABTestDetailPage() {
               hasData={test.variants.some((v) => v.impressions > 0)}
               onDeclareWinner={declareWinner}
             />
-            <AiVariantGenerator
-              testName={test.name}
-              testDescription={test.description}
-              primaryGoal={test.primaryGoal}
-            />
+
           </div>
         )}
 

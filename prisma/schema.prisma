@@ -102,6 +102,7 @@ model Page {
   description           String?
   status                PageStatus         @default(DRAFT)
   isTemplate            Boolean            @default(false)
+  screenshotUrl         String?
   seoTitle              String?
   seoDescription        String?
   ogImage               String?

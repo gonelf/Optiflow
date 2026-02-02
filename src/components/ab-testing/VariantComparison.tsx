@@ -1,6 +1,7 @@
 'use client';
 
-import { Trophy, TrendingUp, TrendingDown } from 'lucide-react';
+import { Trophy, TrendingUp, TrendingDown, Edit } from 'lucide-react';
+import Link from 'next/link';
 
 interface Variant {
   id: string;
@@ -15,9 +16,12 @@ interface Variant {
 interface VariantComparisonProps {
   variants: Variant[];
   winningVariantId?: string;
+  pageId?: string;
+  workspaceSlug?: string;
+  testType?: 'PAGE_REDIRECT' | 'ELEMENT_TEST';
 }
 
-export default function VariantComparison({ variants, winningVariantId }: VariantComparisonProps) {
+export default function VariantComparison({ variants, winningVariantId, pageId, workspaceSlug, testType }: VariantComparisonProps) {
   const controlVariant = variants.find((v) => v.isControl);
   const sortedVariants = [...variants].sort((a, b) => b.conversionRate - a.conversionRate);
 
@@ -53,6 +57,7 @@ export default function VariantComparison({ variants, winningVariantId }: Varian
               <th className="text-right py-3 px-4 font-medium text-gray-700">
                 vs Control
               </th>
+              <th className="py-3 px-4"></th>
             </tr>
           </thead>
           <tbody>
@@ -63,9 +68,8 @@ export default function VariantComparison({ variants, winningVariantId }: Varian
               return (
                 <tr
                   key={variant.id}
-                  className={`border-b border-gray-100 ${
-                    isWinner ? 'bg-yellow-50' : index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                  }`}
+                  className={`border-b border-gray-100 ${isWinner ? 'bg-yellow-50' : index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                    }`}
                 >
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-2">
@@ -101,9 +105,8 @@ export default function VariantComparison({ variants, winningVariantId }: Varian
                   <td className="py-4 px-4 text-right">
                     {performance ? (
                       <div
-                        className={`flex items-center justify-end gap-1 ${
-                          performance.isPositive ? 'text-green-600' : 'text-red-600'
-                        }`}
+                        className={`flex items-center justify-end gap-1 ${performance.isPositive ? 'text-green-600' : 'text-red-600'
+                          }`}
                       >
                         {performance.isPositive ? (
                           <TrendingUp className="h-4 w-4" />
@@ -117,6 +120,17 @@ export default function VariantComparison({ variants, winningVariantId }: Varian
                       </div>
                     ) : (
                       <span className="text-gray-400">—</span>
+                    )}
+                  </td>
+                  <td className="py-4 px-4 text-right">
+                    {!variant.isControl && testType === 'ELEMENT_TEST' && pageId && workspaceSlug && (
+                      <Link
+                        href={`/${workspaceSlug}/pages/${pageId}?variantId=${variant.id}`}
+                        className="inline-flex items-center justify-center p-2 text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
+                        title="Edit Variant in Visual Editor"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Link>
                     )}
                   </td>
                 </tr>

@@ -123,6 +123,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       components,
       elements,
       status,
+      screenshotUrl,
     } = body;
 
     // Update page
@@ -139,6 +140,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
         ...(ogImage !== undefined && { ogImage }),
         ...(favicon !== undefined && { favicon }),
         ...(status !== undefined && { status }),
+        ...(screenshotUrl !== undefined && { screenshotUrl }),
         // Set publishedAt when publishing, clear it when unpublishing
         ...(status === 'PUBLISHED' && { publishedAt: new Date() }),
         ...(status === 'DRAFT' && { publishedAt: null }),

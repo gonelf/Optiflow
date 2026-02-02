@@ -96,6 +96,7 @@ export async function GET(
       name: test.name,
       description: test.description,
       status: test.status,
+      testType: (test as any).testType,
       pageId: test.pageId,
       pageName: test.page.title,
       primaryGoal: test.primaryGoal,

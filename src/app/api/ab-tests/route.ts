@@ -45,8 +45,18 @@ export async function GET(request: NextRequest) {
     if (searchParams.get('_listPages') === 'true') {
       const pages = await prisma.page.findMany({
         where: { workspaceId: workspace.id },
-        select: { id: true, title: true },
-        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          updatedAt: true,
+          status: true,
+          screenshotUrl: true,
+          _count: {
+            select: { components: true }
+          }
+        },
+        orderBy: { updatedAt: 'desc' },
       });
       return NextResponse.json({ pages });
     }
@@ -167,17 +177,17 @@ export async function POST(request: NextRequest) {
     // Create A/B test with variants based on test type
     const variantsData = testType === 'PAGE_REDIRECT'
       ? variantConfigs.map((config: any, index: number) => ({
-          name: config.name,
-          isControl: index === 0,
-          pageId: config.pageId || pageId, // Use specified pageId or default to test pageId
-          redirectUrl: config.redirectUrl, // URL to redirect to
-        }))
+        name: config.name,
+        isControl: index === 0,
+        pageId: config.pageId || pageId, // Use specified pageId or default to test pageId
+        redirectUrl: config.redirectUrl, // URL to redirect to
+      }))
       : variantNames.map((variantName: string, index: number) => ({
-          name: variantName,
-          isControl: index === 0,
-          pageId,
-          elementChanges: {}, // Will be populated by visual editor
-        }));
+        name: variantName,
+        isControl: index === 0,
+        pageId,
+        elementChanges: {}, // Will be populated by visual editor
+      }));
 
     const test = await prisma.aBTest.create({
       data: {

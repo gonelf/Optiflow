@@ -46,6 +46,7 @@ interface Page {
   description: string;
   status: string;
   updatedAt: string;
+  screenshotUrl: string | null;
   author: {
     id: string;
     name: string;
@@ -392,84 +393,109 @@ export default function PagesListPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredPages.map((page) => (
-            <Card key={page.id} className="p-6 hover:shadow-lg transition-shadow">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg">{page.title}</h3>
-                  <p className="text-sm text-muted-foreground mt-1">/{page.slug}</p>
+            <Card key={page.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+              {/* Screenshot Area */}
+              <div
+                className="group relative aspect-video w-full cursor-pointer overflow-hidden bg-muted"
+                onClick={() => router.push(`/${workspaceSlug}/pages/${page.id}`)}
+              >
+                {page.screenshotUrl ? (
+                  <img
+                    src={page.screenshotUrl}
+                    alt={page.title}
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10 text-muted-foreground">
+                    <FileText className="h-12 w-12 opacity-50" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100 flex items-center justify-center">
+                  <span className="text-white font-medium flex items-center gap-2">
+                    <Edit className="h-4 w-4" />
+                    Edit Page
+                  </span>
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                      onClick={() => router.push(`/${workspaceSlug}/pages/${page.id}`)}
-                    >
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handlePreviewPage(page)}>
-                      <Eye className="mr-2 h-4 w-4" />
-                      Preview
-                    </DropdownMenuItem>
-                    {page.status === 'PUBLISHED' && (
-                      <DropdownMenuItem onClick={() => handleViewPublished(page)}>
-                        <ExternalLink className="mr-2 h-4 w-4" />
-                        View Published
+              </div>
+
+              {/* Card Footer */}
+              <div className="p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-lg truncate" title={page.title}>{page.title}</h3>
+                    <p className="text-sm text-muted-foreground truncate" title={`/${page.slug}`}>/{page.slug}</p>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 ml-2">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => router.push(`/${workspaceSlug}/pages/${page.id}`)}
+                      >
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit
                       </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem
-                      onClick={() => handlePublishPage(page.id, page.status)}
-                    >
-                      {page.status === 'PUBLISHED' ? (
-                        <>
-                          <GlobeLock className="mr-2 h-4 w-4" />
-                          Unpublish
-                        </>
-                      ) : (
-                        <>
-                          <Globe className="mr-2 h-4 w-4" />
-                          Publish
-                        </>
+                      <DropdownMenuItem onClick={() => handlePreviewPage(page)}>
+                        <Eye className="mr-2 h-4 w-4" />
+                        Preview
+                      </DropdownMenuItem>
+                      {page.status === 'PUBLISHED' && (
+                        <DropdownMenuItem onClick={() => handleViewPublished(page)}>
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          View Published
+                        </DropdownMenuItem>
                       )}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Copy className="mr-2 h-4 w-4" />
-                      Duplicate
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="text-red-600"
-                      onClick={() => handleDeletePage(page.id)}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+                      <DropdownMenuItem
+                        onClick={() => handlePublishPage(page.id, page.status)}
+                      >
+                        {page.status === 'PUBLISHED' ? (
+                          <>
+                            <GlobeLock className="mr-2 h-4 w-4" />
+                            Unpublish
+                          </>
+                        ) : (
+                          <>
+                            <Globe className="mr-2 h-4 w-4" />
+                            Publish
+                          </>
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Copy className="mr-2 h-4 w-4" />
+                        Duplicate
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-red-600"
+                        onClick={() => handleDeletePage(page.id)}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
 
-              <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <FileText className="h-3 w-3" />
-                  {page._count.components} components
-                </span>
-                <span
-                  className={`rounded-full px-2 py-0.5 ${page.status === 'PUBLISHED'
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-gray-100 text-gray-700'
-                    }`}
-                >
-                  {page.status}
-                </span>
-              </div>
+                <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <FileText className="h-3 w-3" />
+                    {page._count.components} components
+                  </span>
+                  <span
+                    className={`rounded-full px-2 py-0.5 ${page.status === 'PUBLISHED'
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-gray-100 text-gray-700'
+                      }`}
+                  >
+                    {page.status}
+                  </span>
+                </div>
 
-              <div className="mt-4 pt-4 border-t">
-                <p className="text-xs text-muted-foreground">
+                <div className="mt-2 pt-2 border-t text-xs text-muted-foreground">
                   Updated {new Date(page.updatedAt).toLocaleDateString()}
-                </p>
+                </div>
               </div>
             </Card>
           ))}
