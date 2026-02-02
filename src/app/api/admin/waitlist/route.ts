@@ -4,17 +4,25 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
 export async function GET(req: NextRequest) {
-    const session = await getServerSession(authOptions)
+    try {
+        const session = await getServerSession(authOptions)
 
-    if (session?.user?.systemRole !== 'ADMIN') {
-        return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+        if (session?.user?.systemRole !== 'ADMIN') {
+            return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+        }
+
+        const users = await prisma.waitlistUser.findMany({
+            orderBy: { position: 'asc' }
+        })
+
+        return NextResponse.json(users)
+    } catch (error) {
+        console.error('Error in GET /api/admin/waitlist:', error)
+        return NextResponse.json(
+            { error: 'Internal Server Error', details: error instanceof Error ? error.message : String(error) },
+            { status: 500 }
+        )
     }
-
-    const users = await prisma.waitlistUser.findMany({
-        orderBy: { position: 'asc' }
-    })
-
-    return NextResponse.json(users)
 }
 
 export async function DELETE(req: NextRequest) {

@@ -69,15 +69,23 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-    const session = await getServerSession(authOptions)
+    try {
+        const session = await getServerSession(authOptions)
 
-    if (session?.user?.systemRole !== 'ADMIN') {
-        return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+        if (session?.user?.systemRole !== 'ADMIN') {
+            return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+        }
+
+        const codes = await prisma.inviteCode.findMany({
+            orderBy: { createdAt: 'desc' }
+        })
+
+        return NextResponse.json(codes)
+    } catch (error) {
+        console.error('Error in GET /api/admin/invite-codes:', error)
+        return NextResponse.json(
+            { error: 'Internal Server Error', details: error instanceof Error ? error.message : String(error) },
+            { status: 500 }
+        )
     }
-
-    const codes = await prisma.inviteCode.findMany({
-        orderBy: { createdAt: 'desc' }
-    })
-
-    return NextResponse.json(codes)
 }
