@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -20,7 +20,7 @@ export default function WaitlistPage() {
     const [users, setUsers] = useState<any[]>([])
     const [isLoading, setIsLoading] = useState(false)
 
-    const fetchUsers = async () => {
+    const fetchUsers = useCallback(async () => {
         setIsLoading(true)
         try {
             const res = await fetch('/api/admin/waitlist')
@@ -33,11 +33,11 @@ export default function WaitlistPage() {
         } finally {
             setIsLoading(false)
         }
-    }
+    }, [])
 
     useEffect(() => {
         fetchUsers()
-    }, [])
+    }, [fetchUsers])
 
     const removeUser = async (id: string) => {
         if (!confirm('Are you sure?')) return

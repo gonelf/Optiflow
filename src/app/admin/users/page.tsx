@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -52,7 +52,7 @@ export default function UsersPage() {
     const [isLoading, setIsLoading] = useState(false)
     const [deleteUserId, setDeleteUserId] = useState<string | null>(null)
 
-    const fetchUsers = async () => {
+    const fetchUsers = useCallback(async () => {
         setIsLoading(true)
         try {
             const res = await fetch('/api/admin/users')
@@ -68,11 +68,11 @@ export default function UsersPage() {
         } finally {
             setIsLoading(false)
         }
-    }
+    }, [toast])
 
     useEffect(() => {
         fetchUsers()
-    }, [])
+    }, [fetchUsers])
 
     const updateUserRole = async (userId: string, newRole: 'USER' | 'ADMIN') => {
         try {
