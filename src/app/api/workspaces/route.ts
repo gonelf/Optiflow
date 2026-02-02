@@ -15,10 +15,11 @@ const createWorkspaceSchema = z.object({
 })
 
 export async function GET(req: NextRequest) {
+  let session;
   try {
     logger.info('Fetching user workspaces')
 
-    const session = await getServerSession(authOptions)
+    session = await getServerSession(authOptions)
 
     if (!session?.user?.id) {
       logger.warn('Unauthorized workspace access attempt')
@@ -59,7 +60,11 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ workspaces })
   } catch (error) {
-    logger.error('Get workspaces error', error)
+    logger.error('Get workspaces error:', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      user: session?.user?.id
+    })
     return NextResponse.json(
       {
         message: 'Failed to fetch workspaces',

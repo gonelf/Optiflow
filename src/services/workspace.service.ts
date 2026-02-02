@@ -116,26 +116,31 @@ export class WorkspaceService {
   }
 
   static async findUserWorkspaces(userId: string) {
-    const memberships = await prisma.workspaceMember.findMany({
-      where: { userId },
-      include: {
-        workspace: {
-          include: {
-            _count: {
-              select: { members: true, pages: true },
+    try {
+      const memberships = await prisma.workspaceMember.findMany({
+        where: { userId },
+        include: {
+          workspace: {
+            include: {
+              _count: {
+                select: { members: true, pages: true },
+              },
             },
           },
         },
-      },
-      orderBy: {
-        joinedAt: 'desc',
-      },
-    })
+        orderBy: {
+          joinedAt: 'desc',
+        },
+      })
 
-    return memberships.map((m: any) => ({
-      ...m.workspace,
-      role: m.role,
-    }))
+      return memberships.map((m: any) => ({
+        ...m.workspace,
+        role: m.role,
+      }))
+    } catch (error) {
+      console.error('WorkspaceService.findUserWorkspaces Error:', error)
+      throw error
+    }
   }
 
   static async update(workspaceId: string, data: UpdateWorkspaceInput) {
