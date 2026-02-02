@@ -34,8 +34,7 @@ yarn-error.log*
 next-env.d.ts
 
 # Prisma
-prisma/migrations/*
-!prisma/migrations/.gitkeep
+# Note: Migration files should be committed to ensure they run in production
 
 # IDE
 .vscode
