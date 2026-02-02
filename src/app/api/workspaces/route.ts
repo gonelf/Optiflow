@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getServerSession, Session } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { WorkspaceService } from '@/services/workspace.service'
 import { logger } from '@/lib/logger'
@@ -15,7 +15,7 @@ const createWorkspaceSchema = z.object({
 })
 
 export async function GET(req: NextRequest) {
-  let session;
+  let session: Session | null = null;
   try {
     logger.info('Fetching user workspaces')
 
