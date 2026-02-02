@@ -15,10 +15,11 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { SavingsCalculator } from '@/components/savings-calculator'
 
 export const metadata: Metadata = {
-  title: 'OptiVibe - No-Code Marketing Site Builder with Native A/B Testing',
-  description: 'Build, test, and optimize marketing pages without code. Integrated A/B testing and real-time analytics for SaaS growth teams. Lift conversions by 10-50% with seamless experimentation.',
+  title: 'OptiVibe - The Webflow Killer for Marketing Teams | Vibe Code Builder with Native A/B Testing',
+  description: 'Replace Webflow, VWO, and Mixpanel with one powerful platform. Build, test, and optimize marketing pages with vibe code. Native A/B testing and analytics for marketing teams. Lift conversions by 10-50%.',
 }
 
 export default function Home() {
@@ -65,7 +66,7 @@ export default function Home() {
         <div className="text-center max-w-4xl mx-auto">
           <div className="inline-flex items-center rounded-full border px-4 py-1.5 text-sm mb-8 bg-muted/50">
             <Sparkles className="mr-2 h-4 w-4 text-primary" />
-            <span className="font-medium">The No-Code Builder Built for Experimentation</span>
+            <span className="font-medium">The Webflow Killer for Marketing Teams</span>
           </div>
 
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
@@ -74,8 +75,7 @@ export default function Home() {
           </h1>
 
           <p className="text-xl md:text-2xl text-muted-foreground mb-10 max-w-3xl mx-auto leading-relaxed">
-            The only no-code website builder with <strong className="text-foreground">native A/B testing</strong> and <strong className="text-foreground">deep analytics</strong> built in.
-            No integrations, no friction—just data-driven growth.
+            Replace Webflow, VWO, and Mixpanel with one platform. Build with <strong className="text-foreground">vibe code</strong>, ship <strong className="text-foreground">native A/B tests</strong>, and track <strong className="text-foreground">real revenue impact</strong>—all in one seamless workflow.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
@@ -133,17 +133,32 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Savings Calculator Section */}
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-5xl font-bold mb-6">
+              How Much Could You Save?
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              See the real cost of your current Webflow + VWO + Mixpanel stack vs. OptiVibe&apos;s all-in-one platform
+            </p>
+          </div>
+          <SavingsCalculator />
+        </div>
+      </section>
+
       {/* Problem Section */}
       <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
-            Stop Duct-Taping Your Growth Stack
+            Webflow is Great. Your Franken-Stack Isn&apos;t.
           </h2>
           <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-            Most no-code builders (Webflow, Framer, Wix) let you create beautiful sites—but then you&apos;re stuck juggling
-            <strong className="text-foreground"> separate A/B testing tools</strong> (VWO, Optimizely),
-            <strong className="text-foreground"> analytics platforms</strong> (Google Analytics, Mixpanel), and
-            <strong className="text-foreground"> endless integrations</strong>.
+            Webflow lets you build beautiful sites. But then you need
+            <strong className="text-foreground"> VWO or Optimizely</strong> for A/B testing ($200-800/mo),
+            <strong className="text-foreground"> Mixpanel or Amplitude</strong> for analytics ($90-300/mo), and
+            <strong className="text-foreground"> countless hours</strong> maintaining integrations. Marketing teams deserve better.
           </p>
           <div className="grid md:grid-cols-3 gap-6 mt-12">
             <Card className="p-6 bg-destructive/5 border-destructive/20">
@@ -183,11 +198,11 @@ export default function Home() {
               <div className="rounded-full w-12 h-12 bg-primary/10 flex items-center justify-center mb-4">
                 <Code2 className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-3">Visual No-Code Builder</h3>
+              <h3 className="text-xl font-semibold mb-3">Vibe Code Builder</h3>
               <p className="text-muted-foreground mb-4">
-                Drag-and-drop editor with AI prompts. Generate high-converting pages from templates—heroes, CTAs, pricing tables, funnels, and more.
+                Visual editor that vibes with marketing teams. AI-powered prompts generate high-converting pages—heroes, CTAs, pricing tables, funnels, and more. Like Webflow, but better.
               </p>
-              <div className="text-sm text-primary font-medium">No coding required →</div>
+              <div className="text-sm text-primary font-medium">Pure vibes, zero code →</div>
             </Card>
 
             {/* Feature 2 */}
@@ -258,10 +273,10 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold mb-6">
-              Why Growth Teams Choose OptiVibe
+              Why Marketing Teams Ditch Webflow for OptiVibe
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Stop switching tools. Start shipping winning experiments.
+              One platform. Zero tool sprawl. Pure marketing velocity.
             </p>
           </div>
 
@@ -336,11 +351,11 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
               <h3 className="text-2xl md:text-3xl font-bold mb-4">
-                💰 Cut Costs, Not Capabilities
+                💰 Webflow&apos;s Price + Your Sanity Back
               </h3>
               <p className="text-lg text-muted-foreground mb-6">
-                Replace Webflow + VWO + Mixpanel with one unified platform. Save thousands per year while gaining
-                a seamless workflow that actually accelerates your growth velocity.
+                Pay less than Webflow alone, but get the builder PLUS native A/B testing PLUS analytics.
+                Save $3,000-$10,000 per year eliminating VWO and Mixpanel. Zero integration headaches.
               </p>
               <ul className="space-y-3">
                 <li className="flex items-start">
@@ -358,12 +373,7 @@ export default function Home() {
               </ul>
             </div>
             <div className="relative">
-              <div className="aspect-video rounded-lg border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 flex items-center justify-center">
-                <div className="text-center p-8">
-                  <DollarSign className="h-16 w-16 text-primary mx-auto mb-4" />
-                  <p className="text-sm text-muted-foreground">Pricing Calculator</p>
-                </div>
-              </div>
+              <SavingsCalculator />
             </div>
           </div>
         </div>
@@ -374,10 +384,10 @@ export default function Home() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Built for Growth-Obsessed Teams
+              Marketing Teams Love the Switch
             </h2>
             <p className="text-lg text-muted-foreground">
-              Join SaaS marketers, founders, and agencies who ship winning experiments daily
+              Former Webflow users shipping faster experiments and seeing real ROI
             </p>
           </div>
 
@@ -392,7 +402,7 @@ export default function Home() {
                   ))}
                 </div>
                 <p className="text-muted-foreground mb-4">
-                  &quot;We increased trial signups by 34% in the first month. The native A/B testing saved us from juggling three different tools.&quot;
+                  &quot;Switched from Webflow + VWO and haven&apos;t looked back. Increased trial signups 34% in month one. The native A/B testing is a game-changer.&quot;
                 </p>
               </div>
               <div className="flex items-center">
@@ -509,7 +519,7 @@ export default function Home() {
                 <span className="font-bold">OptiVibe</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                The no-code builder for SaaS growth teams. Build, test, and optimize—all in one place.
+                The vibe code builder for marketing teams. Replace Webflow + VWO + Mixpanel with one platform.
               </p>
             </div>
 
