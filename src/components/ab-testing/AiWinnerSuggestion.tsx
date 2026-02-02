@@ -139,7 +139,7 @@ export default function AiWinnerSuggestion({
                   className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm"
                 >
                   <Trophy className="h-3.5 w-3.5" />
-                  Declare "{suggestion.recommendedVariantName}" as Winner
+                  Declare &ldquo;{suggestion.recommendedVariantName}&rdquo; as Winner
                 </Button>
               </div>
             )}
