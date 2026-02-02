@@ -7,6 +7,9 @@ import { ArrowLeft, Play, Pause, Trophy, AlertCircle } from 'lucide-react';
 import TestResults from '@/components/ab-testing/TestResults';
 import VariantComparison from '@/components/ab-testing/VariantComparison';
 import ConfidenceIndicator from '@/components/ab-testing/ConfidenceIndicator';
+import TestCreator from '@/components/ab-testing/TestCreator';
+import AiVariantGenerator from '@/components/ab-testing/AiVariantGenerator';
+import AiWinnerSuggestion from '@/components/ab-testing/AiWinnerSuggestion';
 
 interface ABTestDetail {
   id: string;
@@ -113,20 +116,70 @@ export default function ABTestDetailPage() {
     }
   };
 
+  // ---------------------------------------------------------------------------
+  // "New test" creation view
+  // ---------------------------------------------------------------------------
+  const [pages, setPages] = useState<{ id: string; title: string }[]>([]);
+  const [pagesLoading, setPagesLoading] = useState(false);
+
+  useEffect(() => {
+    if (testId !== 'new') return;
+
+    const fetchPages = async () => {
+      setPagesLoading(true);
+      try {
+        const res = await fetch(
+          `/api/ab-tests?workspaceSlug=${workspaceSlug}&_listPages=true`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setPages(data.pages || []);
+        }
+      } catch (err) {
+        console.error('Failed to fetch pages:', err);
+      } finally {
+        setPagesLoading(false);
+      }
+    };
+
+    fetchPages();
+  }, [testId, workspaceSlug]);
+
   if (testId === 'new') {
     return (
       <div className="container mx-auto py-8 px-4">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold mb-8">Create New A/B Test</h1>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-gray-600">
-              Test creator component will be implemented here.
-            </p>
-            <p className="text-sm text-gray-500 mt-2">
-              This will include page selection, variant creation, traffic split configuration,
-              and goal setup.
+          <div className="mb-6">
+            <Button
+              variant="ghost"
+              onClick={() => router.push(`/${workspaceSlug}/ab-tests`)}
+              className="mb-2"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Tests
+            </Button>
+            <h1 className="text-3xl font-bold">Create New A/B Test</h1>
+            <p className="text-gray-500 mt-1">
+              Define your test, set up variants, and configure goals.
             </p>
           </div>
+
+          {pagesLoading ? (
+            <div className="flex items-center justify-center h-32">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <TestCreator workspaceSlug={workspaceSlug} pages={pages} />
+              </div>
+
+              <AiVariantGenerator
+                testName="New Test"
+                primaryGoal="conversion"
+              />
+            </div>
+          )}
         </div>
       </div>
     );
@@ -245,6 +298,22 @@ export default function ABTestDetailPage() {
           <VariantComparison variants={test.variants} winningVariantId={test.winningVariantId} />
           <TestResults test={test} />
         </div>
+
+        {/* AI panels — show when the test is active or completed */}
+        {(test.status === 'RUNNING' || test.status === 'PAUSED' || test.status === 'COMPLETED') && (
+          <div className="grid gap-6 mt-6">
+            <AiWinnerSuggestion
+              testId={test.id}
+              hasData={test.variants.some((v) => v.impressions > 0)}
+              onDeclareWinner={declareWinner}
+            />
+            <AiVariantGenerator
+              testName={test.name}
+              testDescription={test.description}
+              primaryGoal={test.primaryGoal}
+            />
+          </div>
+        )}
 
         <div className="mt-6 bg-gray-50 rounded-lg p-6 border border-gray-200">
           <h3 className="font-semibold mb-3">Test Configuration</h3>

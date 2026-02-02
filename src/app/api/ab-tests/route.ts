@@ -41,6 +41,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Workspace not found' }, { status: 404 });
     }
 
+    // If _listPages flag is set, return workspace pages instead of tests
+    if (searchParams.get('_listPages') === 'true') {
+      const pages = await prisma.page.findMany({
+        where: { workspaceId: workspace.id },
+        select: { id: true, title: true },
+        orderBy: { createdAt: 'desc' },
+      });
+      return NextResponse.json({ pages });
+    }
+
     // Get all A/B tests for this workspace
     const tests = await prisma.aBTest.findMany({
       where: {
