@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { CohortAnalysisService, CohortDefinition } from '@/services/analytics/cohort.service';
+import { verifyWorkspaceAccess } from '@/lib/workspace';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,21 +35,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get workspace ID
-    const { prisma } = await import('@/lib/prisma');
-    const workspace = await prisma.workspace.findUnique({
-      where: { slug: workspaceSlug },
-      select: { id: true },
-    });
+    // Verify user has access to this workspace
+    const accessResult = await verifyWorkspaceAccess(session.user.id, workspaceSlug);
 
-    if (!workspace) {
+    if (!accessResult.hasAccess) {
       return NextResponse.json(
-        { error: 'Workspace not found' },
-        { status: 404 }
+        { error: 'Workspace not found or access denied' },
+        { status: 403 }
       );
     }
 
-    const workspaceId = workspace.id;
+    const workspaceId = accessResult.workspaceId!;
 
     // Parse dates
     const now = new Date();

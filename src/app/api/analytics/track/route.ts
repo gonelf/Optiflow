@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { LRUCache } from '@/lib/lru-cache';
+
+// Session cache to reduce database lookups
+// Cache up to 10,000 sessions (about 1-2MB of memory)
+const sessionCache = new LRUCache<string, any>(10000);
 
 /**
  * POST /api/analytics/track
@@ -7,6 +13,25 @@ import { prisma } from '@/lib/prisma';
  */
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting: 300 requests per minute per IP
+    const clientIp = getClientIp(request.headers);
+    const rateLimitResult = checkRateLimit(clientIp, 300, 60000);
+
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded', resetTime: rateLimitResult.resetTime },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': '300',
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': new Date(rateLimitResult.resetTime).toISOString(),
+            'Retry-After': String(Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000)),
+          },
+        }
+      );
+    }
+
     const body = await request.json();
     const { events, workspaceSlug, pageId } = body;
 
@@ -45,33 +70,43 @@ export async function POST(request: NextRequest) {
       let session = sessions.get(sessionId);
 
       if (!session) {
-        // Check if session exists in database
-        const existingSession = await prisma.analyticsSession.findUnique({
-          where: { sessionId },
-        });
+        // Check cache first
+        session = sessionCache.get(sessionId);
 
-        if (existingSession) {
-          session = existingSession;
-        } else {
-          // Create new session
-          const visitorId = eventData?.visitorId || `visitor_${Date.now()}`;
-          const userAgent = request.headers.get('user-agent') || undefined;
-
-          session = await prisma.analyticsSession.create({
-            data: {
-              sessionId,
-              visitorId,
-              pageId,
-              workspaceId: page.workspaceId,
-              variantId: variantId || null,
-              referrer: eventData?.referrer || null,
-              utmSource: eventData?.utmSource || null,
-              utmMedium: eventData?.utmMedium || null,
-              utmCampaign: eventData?.utmCampaign || null,
-              userAgent,
-              startedAt: new Date(),
-            },
+        if (!session) {
+          // Check if session exists in database
+          const existingSession = await prisma.analyticsSession.findUnique({
+            where: { sessionId },
           });
+
+          if (existingSession) {
+            session = existingSession;
+            // Cache the found session
+            sessionCache.set(sessionId, session);
+          } else {
+            // Create new session
+            const visitorId = eventData?.visitorId || `visitor_${Date.now()}`;
+            const userAgent = request.headers.get('user-agent') || undefined;
+
+            session = await prisma.analyticsSession.create({
+              data: {
+                sessionId,
+                visitorId,
+                pageId,
+                workspaceId: page.workspaceId,
+                variantId: variantId || null,
+                referrer: eventData?.referrer || null,
+                utmSource: eventData?.utmSource || null,
+                utmMedium: eventData?.utmMedium || null,
+                utmCampaign: eventData?.utmCampaign || null,
+                userAgent,
+                startedAt: new Date(),
+              },
+            });
+
+            // Cache the new session
+            sessionCache.set(sessionId, session);
+          }
         }
 
         sessions.set(sessionId, session);
@@ -154,7 +189,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true, eventsProcessed: events.length });
+    return NextResponse.json(
+      { success: true, eventsProcessed: events.length },
+      {
+        headers: {
+          'X-RateLimit-Limit': '300',
+          'X-RateLimit-Remaining': String(rateLimitResult.remaining),
+          'X-RateLimit-Reset': new Date(rateLimitResult.resetTime).toISOString(),
+        },
+      }
+    );
   } catch (error) {
     console.error('Failed to track analytics events:', error);
     return NextResponse.json(
