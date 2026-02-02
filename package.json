@@ -12,9 +12,12 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,md,json}\"",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset",
+    "deploy:migrate": "bash scripts/migrate.sh",
+    "vercel-build": "prisma migrate deploy && prisma generate && next build",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:e2e": "playwright test"
