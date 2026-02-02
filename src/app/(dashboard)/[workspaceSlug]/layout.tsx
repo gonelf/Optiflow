@@ -5,7 +5,7 @@ import { useParams, usePathname } from 'next/navigation'
 import { WorkspaceSwitcher } from '@/components/workspace/workspace-switcher'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { Home, FileText, TestTube, BarChart, Settings, LogOut, PanelLeft, Shield } from 'lucide-react'
+import { Home, FileText, TestTube, BarChart, Settings, LogOut, PanelLeft, Shield, ExternalLink } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
 import { cn } from '@/lib/utils'
 
@@ -29,6 +29,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       setIsCollapsed(true)
     }
   }, [isEditorPage])
+
+  // Construct public URL
+  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000'
+  const protocol = rootDomain.includes('localhost') ? 'http' : 'https'
+  const publicUrl = `${protocol}://${workspaceSlug}.${rootDomain}`
 
   const navigation = [
     { name: 'Dashboard', href: `/${workspaceSlug}`, icon: Home },
@@ -98,6 +103,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </Button>
               </Link>
             )}
+
+            {/* Public Site Link */}
+            <a href={publicUrl} target="_blank" rel="noopener noreferrer">
+              <Button
+                variant="ghost"
+                className={cn(
+                  'w-full text-muted-foreground hover:text-foreground',
+                  isCollapsed ? 'justify-center px-2' : 'justify-start'
+                )}
+              >
+                <ExternalLink className={cn('h-4 w-4', !isCollapsed && 'mr-2')} />
+                {!isCollapsed && 'View Site'}
+              </Button>
+            </a>
           </nav>
 
           {/* Footer */}
