@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { PageRenderer } from '@/components/page-renderer';
+import { AnalyticsInit } from '@/components/analytics-init';
 
 // Make this route fully dynamic to avoid build-time database calls
 export const dynamic = 'force-dynamic';
@@ -277,35 +278,15 @@ export default async function WorkspacePage({
 
   return (
     <>
-      {/* Analytics tracking script */}
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-            (function() {
-              const pageId = '${page.id}';
-              const variantId = ${variantId ? `'${variantId}'` : 'null'};
-              const utmSource = ${searchParams.utm_source ? `'${searchParams.utm_source}'` : 'null'};
-              const utmMedium = ${searchParams.utm_medium ? `'${searchParams.utm_medium}'` : 'null'};
-              const utmCampaign = ${searchParams.utm_campaign ? `'${searchParams.utm_campaign}'` : 'null'};
-
-              // Track page view
-              if (typeof window !== 'undefined') {
-                fetch('/api/analytics/track', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    pageId,
-                    variantId,
-                    eventType: 'PAGE_VIEW',
-                    utmSource,
-                    utmMedium,
-                    utmCampaign,
-                  }),
-                  keepalive: true,
-                });
-              }
-            })();
-          `,
+      {/* Initialize analytics tracker */}
+      <AnalyticsInit
+        pageId={page.id}
+        workspaceSlug={workspaceSlug}
+        variantId={variantId}
+        utmParams={{
+          source: searchParams.utm_source,
+          medium: searchParams.utm_medium,
+          campaign: searchParams.utm_campaign,
         }}
       />
 
