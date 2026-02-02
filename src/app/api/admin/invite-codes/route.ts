@@ -12,6 +12,30 @@ function generateCode(length = 10) {
     return result
 }
 
+// Generate a unique invite code with collision handling
+async function generateUniqueInviteCode(maxAttempts = 10): Promise<string> {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        const code = generateCode(10)
+
+        // Check if code already exists
+        const existingCode = await prisma.inviteCode.findUnique({
+            where: { code }
+        })
+
+        if (!existingCode) {
+            return code
+        }
+
+        // If this is the last attempt, throw an error
+        if (attempt === maxAttempts - 1) {
+            throw new Error('Failed to generate unique invite code after multiple attempts')
+        }
+    }
+
+    // This should never be reached, but TypeScript needs it
+    throw new Error('Failed to generate unique invite code')
+}
+
 export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions)
 
@@ -23,9 +47,10 @@ export async function POST(req: NextRequest) {
 
     const codes = []
     for (let i = 0; i < count; i++) {
+        const uniqueCode = await generateUniqueInviteCode()
         codes.push({
             id: crypto.randomUUID(),
-            code: generateCode(10),
+            code: uniqueCode,
             maxUses,
             expiryDate: expiryDate ? new Date(expiryDate) : null,
             createdBy: session.user.id,
