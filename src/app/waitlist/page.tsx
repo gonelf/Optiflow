@@ -114,6 +114,12 @@ function WaitlistContent() {
                             <Button type="submit" className="w-full h-11 text-base font-medium" disabled={isLoading}>
                                 {isLoading ? 'Joining...' : 'Join Waitlist'}
                             </Button>
+                            <div className="text-center text-sm">
+                                <span className="text-muted-foreground">Already have an invite code? </span>
+                                <a href="/signup" className="text-primary hover:underline font-medium">
+                                    Register here
+                                </a>
+                            </div>
                         </form>
                     ) : (
                         <div className="space-y-6">
