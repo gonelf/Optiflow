@@ -18,37 +18,52 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error('Invalid credentials')
-        }
+        try {
+          console.log('[Auth] Authorizing credentials for:', credentials?.email)
 
-        const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email,
-          },
-        })
+          if (!credentials?.email || !credentials?.password) {
+            console.log('[Auth] Missing credentials')
+            throw new Error('Invalid credentials')
+          }
 
-        if (!user) {
-          throw new Error('User not found')
-        }
+          const user = await prisma.user.findUnique({
+            where: {
+              email: credentials.email,
+            },
+          })
 
-        // Validate password
-        if (!user.passwordHash) {
-          throw new Error('Password not set for this account. Please use OAuth login.')
-        }
+          if (!user) {
+            console.log('[Auth] User not found during lookup')
+            throw new Error('User not found')
+          }
 
-        const isPasswordValid = await bcrypt.compare(credentials.password, user.passwordHash)
+          console.log('[Auth] User found:', user.id)
 
-        if (!isPasswordValid) {
-          throw new Error('Invalid password')
-        }
+          // Verify password
+          if (!user.passwordHash) {
+            console.log('[Auth] User missing passwordHash')
+            throw new Error('Please log in with the provider you signed up with (Google/GitHub)')
+          }
 
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          onboarded: user.onboarded,
-          systemRole: user.systemRole as string,
+          console.log('[Auth] passwordHash present, comparing...')
+          const isPasswordValid = await bcrypt.compare(credentials.password, user.passwordHash)
+          console.log('[Auth] Password valid:', isPasswordValid)
+
+          if (!isPasswordValid) {
+            console.log('[Auth] Invalid password')
+            throw new Error('Invalid password')
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            onboarded: user.onboarded,
+            systemRole: user.systemRole as string,
+          }
+        } catch (error) {
+          console.error('[Auth] Authorize error:', error)
+          return null
         }
       },
     }),
