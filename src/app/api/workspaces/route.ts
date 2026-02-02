@@ -21,7 +21,9 @@ export async function GET(req: NextRequest) {
 
     session = await getServerSession(authOptions)
 
-    if (!session?.user?.id) {
+    const userId = session?.user?.id
+
+    if (!userId) {
       logger.warn('Unauthorized workspace access attempt')
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
     }
@@ -40,7 +42,7 @@ export async function GET(req: NextRequest) {
       }
 
       // Verify user has access
-      const hasMembership = workspace.members.some((m: any) => m.userId === session.user.id)
+      const hasMembership = workspace.members.some((m: any) => m.userId === userId)
       if (!hasMembership) {
         return NextResponse.json({ message: 'Access denied' }, { status: 403 })
       }
@@ -49,12 +51,12 @@ export async function GET(req: NextRequest) {
     }
 
     // Otherwise, fetch all user workspaces
-    logger.info('Fetching workspaces for user', { userId: session.user.id })
+    logger.info('Fetching workspaces for user', { userId })
 
-    const workspaces = await WorkspaceService.findUserWorkspaces(session.user.id)
+    const workspaces = await WorkspaceService.findUserWorkspaces(userId)
 
     logger.info('Workspaces fetched successfully', {
-      userId: session.user.id,
+      userId,
       count: workspaces.length,
     })
 
