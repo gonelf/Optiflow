@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams, usePathname } from 'next/navigation'
+import { useParams, usePathname, useSearchParams } from 'next/navigation'
 import { WorkspaceSwitcher } from '@/components/workspace/workspace-switcher'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
@@ -14,16 +14,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [isCollapsed, setIsCollapsed] = useState(false)
   const params = useParams()
   const pathname = usePathname()
+  const searchParams = useSearchParams()
   const workspaceSlug = params.workspaceSlug as string
   const { data: session } = useSession()
 
-  // Auto-collapse on editor pages (e.g. /workspace/pages/pageId)
-  // We check if we are deep enough in the 'pages' route.
-  // /workspace/pages/pageId -> split length 4 (['', 'workspace', 'pages', 'pageId']) if no extra slashes.
-  // But safest is to check if we have a pageId parameter.
-  // Wait, params are available!
+  // Auto-collapse on editor pages (e.g. /workspace/pages/pageId or A/B test editor)
   const pageId = params.pageId
-  const isEditorPage = !!pageId && pathname?.includes('/pages/')
+  const isElementTestEditor = pathname?.endsWith('/ab-tests/new') && searchParams?.get('mode') === 'editor'
+  const isEditorPage = (!!pageId && pathname?.includes('/pages/')) || isElementTestEditor
 
   useEffect(() => {
     if (isEditorPage) {

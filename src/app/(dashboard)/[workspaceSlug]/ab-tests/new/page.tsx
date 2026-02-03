@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,6 +13,9 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { PageEditor } from '@/components/builder/PageEditor';
+import { ExtendedElement } from '@/components/builder/Canvas';
+import { Element } from '@prisma/client';
 
 interface Page {
     id: string;
@@ -77,8 +80,12 @@ const PageCard = ({ page, selected, onClick }: { page: Page; selected: boolean; 
 export default function NewABTestPage() {
     const params = useParams();
     const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
     const { toast } = useToast();
     const workspaceSlug = params.workspaceSlug as string;
+
+    const isEditorMode = searchParams.get('mode') === 'editor';
 
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
@@ -102,6 +109,10 @@ export default function NewABTestPage() {
     const [selectedGoals, setSelectedGoals] = useState<Array<{ id: string, type: string, text?: string, pageId: string }>>([]);
     const [loadingPage, setLoadingPage] = useState(false);
 
+    // Element Test Editor State
+    const [variantElements, setVariantElements] = useState<ExtendedElement[]>([]);
+    const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
+
     // Goal Settings (Defaults)
     const [primaryGoal, setPrimaryGoal] = useState('CONVERSION');
     const [conversionEvent, setConversionEvent] = useState('CLICK');
@@ -121,6 +132,70 @@ export default function NewABTestPage() {
         };
         fetchPages();
     }, [workspaceSlug]);
+
+    // Helper: Build tree structure from flat list (duplicated from Page Editor logic)
+    const buildElementTree = (flatElements: Element[]): ExtendedElement[] => {
+        const elementMap = new Map<string, ExtendedElement>();
+
+        // Create map of all elements
+        flatElements.forEach(el => {
+            elementMap.set(el.id, { ...el, children: [], content: el.content || {}, styles: el.styles || {} });
+        });
+
+        // Build tree
+        const roots: ExtendedElement[] = [];
+        flatElements.forEach(el => {
+            const element = elementMap.get(el.id)!;
+            if (el.parentId) {
+                const parent = elementMap.get(el.parentId);
+                if (parent) {
+                    parent.children = parent.children || [];
+                    parent.children.push(element);
+                }
+            } else {
+                roots.push(element);
+            }
+        });
+
+        // Sort by order
+        const sortByOrder = (arr: ExtendedElement[]) => {
+            arr.sort((a, b) => a.order - b.order);
+            arr.forEach(el => {
+                if (el.children) sortByOrder(el.children);
+            });
+        };
+        sortByOrder(roots);
+
+        return roots;
+    };
+
+    // Helper: Flatten tree back to list
+    const flattenElements = (els: ExtendedElement[], parentId: string | null = null, depth = 0, parentPath = ''): any[] => {
+        let flatElements: any[] = [];
+        els.forEach((el, index) => {
+            const { children, ...elementData } = el;
+
+            // Build path for element
+            const elementPath = parentPath ? `${parentPath}/${el.id}` : el.id;
+
+            flatElements.push({
+                ...elementData,
+                name: elementData.name || elementData.type || 'Unnamed',
+                parentId,
+                order: index,
+                depth,
+                path: elementPath,
+                content: elementData.content || {},
+                styles: elementData.styles || {},
+                className: elementData.className || '',
+            });
+
+            if (children && children.length > 0) {
+                flatElements = [...flatElements, ...flattenElements(children, el.id, depth + 1, elementPath)];
+            }
+        });
+        return flatElements;
+    };
 
     const handleSubmit = async () => {
         try {
@@ -187,10 +262,24 @@ export default function NewABTestPage() {
             });
 
             if (testType === 'ELEMENT_TEST') {
-                // Redirect to editor for the first variant (not control)
+                // Find the non-control variant (Variant B)
+                // And SAVE the changes we made in the editor
                 const variantB = data.test.variants.find((v: any) => !v.isControl);
-                if (variantB) {
-                    router.push(`/${workspaceSlug}/pages/${pageId}?variantId=${variantB.id}`);
+
+                if (variantB && variantElements.length > 0) {
+                    // Save changes to Variant B
+                    const flatElements = flattenElements(variantElements);
+
+                    await fetch(`/api/pages/${pageId}/variants/${variantB.id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            elements: flatElements,
+                        }),
+                    });
+
+                    // Redirect to test dashboard
+                    router.push(`/${workspaceSlug}/ab-tests/${testId}`);
                 } else {
                     router.push(`/${workspaceSlug}/ab-tests/${testId}`);
                 }
@@ -225,28 +314,38 @@ export default function NewABTestPage() {
     };
 
     return (
-        <div className={cn("container mx-auto py-8 px-4", step === 3 ? "max-w-7xl" : "max-w-4xl")}>
-            <Button variant="ghost" className="mb-6 pl-0" onClick={() => router.back()}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Tests
-            </Button>
+        <div className={cn(
+            "flex flex-col",
+            isEditorMode ? "h-full p-0" : "container mx-auto py-8 px-4",
+            !isEditorMode && (step === 3 ? "max-w-7xl" : "max-w-4xl")
+        )}>
+            {!isEditorMode && (
+                <>
+                    <Button variant="ghost" className="mb-6 pl-0" onClick={() => router.back()}>
+                        <ArrowLeft className="h-4 w-4 mr-2" />
+                        Back to Tests
+                    </Button>
 
-            <h1 className="text-3xl font-bold mb-2">Create New A/B Test</h1>
-            <p className="text-gray-600 mb-8">Define your test, set up variants, and configure goals.</p>
+                    <h1 className="text-3xl font-bold mb-2">Create New A/B Test</h1>
+                    <p className="text-gray-600 mb-8">Define your test, set up variants, and configure goals.</p>
 
-            {/* Progress Steps */}
-            <div className="flex items-center mb-8">
-                <div className={cn("flex items-center justify-center w-8 h-8 rounded-full font-medium transition-colors", step >= 1 ? "bg-black text-white" : "bg-gray-200 text-gray-500")}>1</div>
-                <div className={cn("h-1 w-16 mx-2 transition-colors", step >= 2 ? "bg-black" : "bg-gray-200")}></div>
-                <div className={cn("flex items-center justify-center w-8 h-8 rounded-full font-medium transition-colors", step >= 2 ? "bg-black text-white" : "bg-gray-200 text-gray-500")}>2</div>
-                <div className={cn("h-1 w-16 mx-2 transition-colors", step >= 3 ? "bg-black" : "bg-gray-200")}></div>
-                <div className={cn("flex items-center justify-center w-8 h-8 rounded-full font-medium transition-colors", step >= 3 ? "bg-black text-white" : "bg-gray-200 text-gray-500")}>3</div>
-                <span className="ml-3 font-medium text-sm">
-                    {step === 1 ? 'Test Details' : step === 2 ? 'Configuration' : 'Goal Selection'}
-                </span>
-            </div>
+                    {/* Progress Steps */}
+                    <div className="flex items-center mb-8">
+                        <div className={cn("flex items-center justify-center w-8 h-8 rounded-full font-medium transition-colors", step >= 1 ? "bg-black text-white" : "bg-gray-200 text-gray-500")}>1</div>
+                        <div className={cn("h-1 w-16 mx-2 transition-colors", step >= 2 ? "bg-black" : "bg-gray-200")}></div>
+                        <div className={cn("flex items-center justify-center w-8 h-8 rounded-full font-medium transition-colors", step >= 2 ? "bg-black text-white" : "bg-gray-200 text-gray-500")}>2</div>
+                        <div className={cn("h-1 w-16 mx-2 transition-colors", step >= 3 ? "bg-black" : "bg-gray-200")}></div>
+                        <div className={cn("flex items-center justify-center w-8 h-8 rounded-full font-medium transition-colors", step >= 3 ? "bg-black text-white" : "bg-gray-200 text-gray-500")}>3</div>
+                        <span className="ml-3 font-medium text-sm">
+                            {step === 1 ? 'Test Details' : step === 2 ? 'Configuration' : 'Goal Selection'}
+                        </span>
+                    </div>
+                </>
+            )}
 
-            <div className="grid gap-6">
+            <div className={cn(
+                isEditorMode ? "flex flex-col h-full min-h-0" : "grid gap-6"
+            )}>
                 {step === 1 && (
                     <Card className="border-none shadow-none md:border md:shadow-sm">
                         <CardHeader className="px-0 md:px-6">
@@ -447,6 +546,15 @@ export default function NewABTestPage() {
                                             }
                                         }
 
+                                        // For Element Test, initialize editor with control elements
+                                        if (testType === 'ELEMENT_TEST') {
+                                            const tree = buildElementTree(controlData.elements || []);
+                                            setVariantElements(tree);
+                                            // Add mode=editor to URL to collapse sidebar
+                                            // Using replace to avoid adding to history stack unnecessarily for UI toggle
+                                            router.replace(`${pathname}?mode=editor`);
+                                        }
+
                                         setStep(3);
                                     } catch (e) {
                                         toast({ title: 'Error', description: 'Failed to load page data', variant: 'destructive' });
@@ -466,135 +574,174 @@ export default function NewABTestPage() {
                 )}
 
                 {step === 3 && (
-                    <div className="flex gap-6 h-[calc(100vh-200px)]">
-                        {/* Sidebar */}
-                        <Card className="w-1/3 flex flex-col h-full border-none shadow-md">
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Target className="h-5 w-5 text-blue-600" />
-                                    Select Goals
-                                </CardTitle>
-                                <CardDescription>
-                                    Click on elements in the preview to track them as conversion goals.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="flex-1 overflow-hidden flex flex-col p-4">
-                                <div className="bg-blue-50 text-blue-800 p-3 rounded-lg text-sm mb-4 flex gap-2">
-                                    <MousePointer2 className="h-4 w-4 shrink-0 mt-0.5" />
-                                    <p>Interact with the preview on the right to select buttons or links.</p>
+                    <div className={cn("flex gap-6", isEditorMode ? "h-full flex-1" : "h-[calc(100vh-200px)]")}>
+                        {testType === 'ELEMENT_TEST' ? (
+                            <div className="w-full h-full flex flex-col">
+                                <div className="flex justify-between items-center px-4 py-2 border-b bg-white">
+                                    <div className="flex items-center gap-4">
+                                        <Button variant="ghost" size="sm" onClick={() => {
+                                            router.replace(pathname || '/');
+                                            setStep(2);
+                                        }}>
+                                            <ArrowLeft className="h-4 w-4 mr-2" />
+                                            Back
+                                        </Button>
+                                        <div>
+                                            <h3 className="text-sm font-bold">Customize Variant B</h3>
+                                            <p className="text-xs text-gray-500">Visual Editor Mode</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-3">
+                                        <Button onClick={handleSubmit} disabled={loading} size="sm" className="bg-green-600 hover:bg-green-700 text-white h-8">
+                                            {loading ? 'Creating...' : 'Create Test'}
+                                        </Button>
+                                    </div>
                                 </div>
 
-                                <h3 className="font-semibold text-sm text-gray-700 mb-2">Selected Elements ({selectedGoals.length})</h3>
-                                <ScrollArea className="flex-1 pr-4">
-                                    {selectedGoals.length === 0 ? (
-                                        <div className="text-center py-8 text-gray-400 border-2 border-dashed rounded-lg">
-                                            No elements selected
+                                <div className="flex-1 overflow-hidden relative">
+                                    <PageEditor
+                                        elements={variantElements}
+                                        setElements={setVariantElements}
+                                        selectedElementId={selectedElementId}
+                                        setSelectedElementId={setSelectedElementId}
+                                        pageId={pageId}
+                                        mode="ab-test"
+                                    />
+                                </div>
+                            </div>
+                        ) : (
+                            // Original Step 3 for PAGE_REDIRECT (Goal Selection)
+                            <>
+                                {/* Sidebar */}
+                                <Card className="w-1/3 flex flex-col h-full border-none shadow-md">
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center gap-2">
+                                            <Target className="h-5 w-5 text-blue-600" />
+                                            Select Goals
+                                        </CardTitle>
+                                        <CardDescription>
+                                            Click on elements in the preview to track them as conversion goals.
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="flex-1 overflow-hidden flex flex-col p-4">
+                                        <div className="bg-blue-50 text-blue-800 p-3 rounded-lg text-sm mb-4 flex gap-2">
+                                            <MousePointer2 className="h-4 w-4 shrink-0 mt-0.5" />
+                                            <p>Interact with the preview on the right to select buttons or links.</p>
                                         </div>
-                                    ) : (
-                                        <div className="space-y-2">
-                                            {selectedGoals.map((goal, idx) => (
-                                                <div key={`${goal.id}-${idx}`} className="flex items-center justify-between p-3 bg-white border rounded-lg shadow-sm group">
-                                                    <div>
-                                                        <div className="font-medium text-sm flex items-center gap-2">
-                                                            <Badge variant="outline" className="text-[10px] h-5 px-1 uppercase">{goal.type}</Badge>
-                                                            <span className="truncate max-w-[150px]">{goal.text || 'Unnamed Element'}</span>
-                                                        </div>
-                                                        <div className="text-xs text-gray-400 mt-1 font-mono">
-                                                            {/* Show which page is this from if we have multiple pages */}
-                                                            {testType === 'PAGE_REDIRECT' && (
-                                                                <span className="mr-2 text-indigo-500 font-semibold">
-                                                                    {goal.pageId === pageId ? 'Control' : 'Variant B'}
-                                                                </span>
-                                                            )}
-                                                            {goal.id.substring(0, 8)}...
-                                                        </div>
-                                                    </div>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-6 w-6 text-gray-400 hover:text-red-500"
-                                                        onClick={() => setSelectedGoals(prev => prev.filter(g => g.id !== goal.id))}
-                                                    >
-                                                        <X className="h-3 w-3" />
-                                                    </Button>
+
+                                        <h3 className="font-semibold text-sm text-gray-700 mb-2">Selected Elements ({selectedGoals.length})</h3>
+                                        <ScrollArea className="flex-1 pr-4">
+                                            {selectedGoals.length === 0 ? (
+                                                <div className="text-center py-8 text-gray-400 border-2 border-dashed rounded-lg">
+                                                    No elements selected
                                                 </div>
-                                            ))}
+                                            ) : (
+                                                <div className="space-y-2">
+                                                    {selectedGoals.map((goal, idx) => (
+                                                        <div key={`${goal.id}-${idx}`} className="flex items-center justify-between p-3 bg-white border rounded-lg shadow-sm group">
+                                                            <div>
+                                                                <div className="font-medium text-sm flex items-center gap-2">
+                                                                    <Badge variant="outline" className="text-[10px] h-5 px-1 uppercase">{goal.type}</Badge>
+                                                                    <span className="truncate max-w-[150px]">{goal.text || 'Unnamed Element'}</span>
+                                                                </div>
+                                                                <div className="text-xs text-gray-400 mt-1 font-mono">
+                                                                    {/* Show which page is this from if we have multiple pages */}
+                                                                    {testType === 'PAGE_REDIRECT' && (
+                                                                        <span className="mr-2 text-indigo-500 font-semibold">
+                                                                            {goal.pageId === pageId ? 'Control' : 'Variant B'}
+                                                                        </span>
+                                                                    )}
+                                                                    {goal.id.substring(0, 8)}...
+                                                                </div>
+                                                            </div>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-6 w-6 text-gray-400 hover:text-red-500"
+                                                                onClick={() => setSelectedGoals(prev => prev.filter(g => g.id !== goal.id))}
+                                                            >
+                                                                <X className="h-3 w-3" />
+                                                            </Button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </ScrollArea>
+                                    </CardContent>
+                                    <CardFooter className="border-t p-4 bg-gray-50 flex justify-between">
+                                        <Button variant="outline" onClick={() => setStep(2)}>Back</Button>
+                                        <Button onClick={handleSubmit} disabled={loading || selectedGoals.length === 0} className="bg-green-600 hover:bg-green-700 text-white">
+                                            {loading ? 'Creating...' : 'Create Test'}
+                                        </Button>
+                                    </CardFooter>
+                                </Card>
+
+                                {/* Visual Preview */}
+                                <div className="flex-1 flex flex-col gap-4">
+
+                                    {/* Page Switcher for Redirect Tests */}
+                                    {testType === 'PAGE_REDIRECT' && variantPageData && (
+                                        <div className="bg-white p-1 rounded-lg border shadow-sm inline-flex self-start">
+                                            <button
+                                                className={cn(
+                                                    "px-4 py-2 text-sm font-medium rounded-md transition-all",
+                                                    activePreviewPageId === pageId
+                                                        ? "bg-gray-900 text-white shadow-sm"
+                                                        : "text-gray-600 hover:bg-gray-100"
+                                                )}
+                                                onClick={() => switchPreviewPage(pageId)}
+                                            >
+                                                Control Page
+                                            </button>
+                                            <button
+                                                className={cn(
+                                                    "px-4 py-2 text-sm font-medium rounded-md transition-all",
+                                                    activePreviewPageId === variantPageId
+                                                        ? "bg-gray-900 text-white shadow-sm"
+                                                        : "text-gray-600 hover:bg-gray-100"
+                                                )}
+                                                onClick={() => switchPreviewPage(variantPageId)}
+                                            >
+                                                Variant B Page
+                                            </button>
                                         </div>
                                     )}
-                                </ScrollArea>
-                            </CardContent>
-                            <CardFooter className="border-t p-4 bg-gray-50 flex justify-between">
-                                <Button variant="outline" onClick={() => setStep(2)}>Back</Button>
-                                <Button onClick={handleSubmit} disabled={loading || selectedGoals.length === 0} className="bg-green-600 hover:bg-green-700 text-white">
-                                    {loading ? 'Creating...' : 'Create Test'}
-                                </Button>
-                            </CardFooter>
-                        </Card>
 
-                        {/* Visual Preview */}
-                        <div className="flex-1 flex flex-col gap-4">
-
-                            {/* Page Switcher for Redirect Tests */}
-                            {testType === 'PAGE_REDIRECT' && variantPageData && (
-                                <div className="bg-white p-1 rounded-lg border shadow-sm inline-flex self-start">
-                                    <button
-                                        className={cn(
-                                            "px-4 py-2 text-sm font-medium rounded-md transition-all",
-                                            activePreviewPageId === pageId
-                                                ? "bg-gray-900 text-white shadow-sm"
-                                                : "text-gray-600 hover:bg-gray-100"
+                                    <div className={cn(
+                                        "flex-1 bg-gray-100 rounded-xl border overflow-hidden relative shadow-inner",
+                                        testType !== 'PAGE_REDIRECT' ? "h-full" : ""
+                                    )}>
+                                        {selectedPageData ? (
+                                            <div className="absolute inset-0 overflow-y-auto">
+                                                <div className="min-h-full bg-white origin-top transform scale-[0.8] origin-top-left w-[125%]">
+                                                    <PageRenderer
+                                                        pageId={selectedPageData.id}
+                                                        components={selectedPageData.components}
+                                                        elements={selectedPageData.elements}
+                                                        selectionMode={true}
+                                                        selectedElementIds={selectedGoals.filter(g => g.pageId === selectedPageData.id).map(g => g.id)}
+                                                        onElementSelect={(id, type, text) => {
+                                                            if (selectedGoals.find(g => g.id === id)) {
+                                                                setSelectedGoals(prev => prev.filter(g => g.id !== id));
+                                                            } else {
+                                                                setSelectedGoals(prev => [...prev, { id, type, text, pageId: selectedPageData.id }]);
+                                                            }
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center justify-center h-full">
+                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                                            </div>
                                         )}
-                                        onClick={() => switchPreviewPage(pageId)}
-                                    >
-                                        Control Page
-                                    </button>
-                                    <button
-                                        className={cn(
-                                            "px-4 py-2 text-sm font-medium rounded-md transition-all",
-                                            activePreviewPageId === variantPageId
-                                                ? "bg-gray-900 text-white shadow-sm"
-                                                : "text-gray-600 hover:bg-gray-100"
-                                        )}
-                                        onClick={() => switchPreviewPage(variantPageId)}
-                                    >
-                                        Variant B Page
-                                    </button>
+                                    </div>
                                 </div>
-                            )}
-
-                            <div className={cn(
-                                "flex-1 bg-gray-100 rounded-xl border overflow-hidden relative shadow-inner",
-                                testType !== 'PAGE_REDIRECT' ? "h-full" : ""
-                            )}>
-                                {selectedPageData ? (
-                                    <div className="absolute inset-0 overflow-y-auto">
-                                        <div className="min-h-full bg-white origin-top transform scale-[0.8] origin-top-left w-[125%]">
-                                            <PageRenderer
-                                                pageId={selectedPageData.id}
-                                                components={selectedPageData.components}
-                                                elements={selectedPageData.elements}
-                                                selectionMode={true}
-                                                selectedElementIds={selectedGoals.filter(g => g.pageId === selectedPageData.id).map(g => g.id)}
-                                                onElementSelect={(id, type, text) => {
-                                                    if (selectedGoals.find(g => g.id === id)) {
-                                                        setSelectedGoals(prev => prev.filter(g => g.id !== id));
-                                                    } else {
-                                                        setSelectedGoals(prev => [...prev, { id, type, text, pageId: selectedPageData.id }]);
-                                                    }
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center justify-center h-full">
-                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                            </>
+                        )}
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 }

@@ -856,7 +856,7 @@ export function EditorSidebar({
             </div>
 
             {/* Property Tabs */}
-            <Tabs defaultValue="style" className="flex-1 flex flex-col overflow-hidden">
+            <Tabs defaultValue="style" className="flex-1 flex flex-col overflow-hidden min-h-0">
               <div className="border-b px-3">
                 <TabsList className="h-9 w-full justify-start bg-transparent p-0">
                   <TabsTrigger
