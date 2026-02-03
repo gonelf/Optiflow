@@ -12,7 +12,7 @@ async function main() {
     });
 
     console.log('Recent Pages:');
-    pages.forEach(p => {
+    pages.forEach((p: { id: string; title: string; screenshotUrl: string | null }) => {
         console.log(`- ${p.title} (${p.id}): Screenshot length: ${p.screenshotUrl ? p.screenshotUrl.length : 'NULL'}`);
     });
 }

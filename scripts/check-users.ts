@@ -15,7 +15,7 @@ async function main() {
     })
 
     console.log('Found users:', users.length)
-    users.forEach((user) => {
+    users.forEach((user: { id: string; email: string; name: string | null; passwordHash: string | null; systemRole: string }) => {
         console.log('------------------------------------------------')
         console.log(`ID: ${user.id}`)
         console.log(`Email: ${user.email}`)
