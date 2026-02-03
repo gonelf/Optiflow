@@ -22,17 +22,29 @@ interface ToolbarProps {
   onPreview: () => void;
   onSettings: () => void;
   mode?: 'default' | 'ab-test';
+  title?: string;
+  isSaving?: boolean;
 }
 
-export function Toolbar({ onSave, onPreview, onSettings, mode = 'default' }: ToolbarProps) {
-  const { undo, redo, canUndo, canRedo, isSaving, metadata } = useBuilderStore();
+export function Toolbar({
+  onSave,
+  onPreview,
+  onSettings,
+  mode = 'default',
+  title,
+  isSaving: propsIsSaving
+}: ToolbarProps) {
+  const { undo, redo, canUndo, canRedo, isSaving: storeIsSaving, metadata } = useBuilderStore();
   const [viewport, setViewport] = useState<ViewportSize>('desktop');
+
+  const displayTitle = title || metadata.title || 'Untitled Page';
+  const isSaving = propsIsSaving !== undefined ? propsIsSaving : storeIsSaving;
 
   return (
     <div className="flex h-16 items-center justify-between border-b bg-white px-4">
       {/* Left section - Page info */}
       <div className="flex items-center gap-4">
-        <h1 className="text-lg font-semibold">{metadata.title || 'Untitled Page'}</h1>
+        <h1 className="text-lg font-semibold">{displayTitle}</h1>
         {isSaving && (
           <span className="text-sm text-muted-foreground">Saving...</span>
         )}

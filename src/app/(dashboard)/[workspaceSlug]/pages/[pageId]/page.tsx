@@ -636,6 +636,8 @@ export default function BuilderPage() {
           onPreview={handlePreview}
           onSettings={() => setIsSettingsOpen(true)}
           mode={mode}
+          title={pageMetadata?.title}
+          isSaving={isSaving}
         />
 
         {/* Main Content */}
