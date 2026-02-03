@@ -10,6 +10,10 @@ const aiCreatePageSchema = z.object({
     pagePurpose: z.string().min(10, 'Page purpose must be at least 10 characters'),
     designMode: z.enum(['consistent', 'new']).optional().default('consistent'),
     designStyle: z.string().optional(),
+    // Advanced Approach: Optional parameters for enhanced generation with real-world examples
+    pageType: z.enum(['landing', 'pricing', 'about', 'contact', 'blog', 'product', 'dashboard', 'portfolio']).optional(),
+    industry: z.string().optional(), // e.g., 'fintech', 'healthcare', 'e-commerce'
+    useExternalSearch: z.boolean().optional().default(false), // Enable external search for examples
 });
 
 /**
@@ -80,10 +84,14 @@ export async function POST(req: NextRequest) {
             : [];
 
         // Generate the page using AI with context
+        // Advanced Approach: Pass page type, industry, and external search options for enhanced generation
         const generatedPage = await AIGeneratorService.generatePageWithContext({
             pagePurpose: validatedData.pagePurpose,
             existingPages: existingPagesContext.length > 0 ? existingPagesContext : undefined,
             designStyle: validatedData.designStyle,
+            pageType: validatedData.pageType,
+            industry: validatedData.industry,
+            useExternalSearch: validatedData.useExternalSearch,
         });
 
         // Generate a unique slug based on the title
@@ -195,7 +203,7 @@ export async function POST(req: NextRequest) {
             console.error('[AI Create Page] ERROR: No elements or components in generated page!');
         }
 
-        // Log the AI optimization
+        // Log the AI optimization with Advanced Approach parameters
         await prisma.aIOptimization.create({
             data: {
                 type: 'VARIANT_GENERATION',
@@ -206,6 +214,10 @@ export async function POST(req: NextRequest) {
                     hasExistingPages: existingPagesContext.length > 0,
                     designStyle: validatedData.designStyle,
                     existingPageCount: existingPagesContext.length,
+                    // Advanced Approach: Track enhanced generation options
+                    pageType: validatedData.pageType,
+                    industry: validatedData.industry,
+                    usedExternalSearch: validatedData.useExternalSearch,
                 },
                 suggestions: generatedPage as any,
                 applied: true,

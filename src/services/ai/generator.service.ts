@@ -1,9 +1,12 @@
 /**
  * AI Generator Service
  * Handles AI-powered page and component generation with multi-model fallback
+ *
+ * Advanced Approach: Integrates real-world examples for better generation quality
  */
 
 import { getMultiModelService } from './multi-model.service';
+import { getExamplesSearchService, type PageType, type DesignStyle } from './examples-search.service';
 import { generatePagePrompt, generateComponentPrompt, generateOptimizationPrompt } from '@/lib/ai/prompts';
 
 export interface GeneratePageInput {
@@ -82,6 +85,7 @@ export class AIGeneratorService {
 
   /**
    * Generate a page with design context from existing pages
+   * Enhanced with real-world examples for better generation quality (Advanced Approach)
    */
   static async generatePageWithContext(input: {
     pagePurpose: string;
@@ -90,13 +94,33 @@ export class AIGeneratorService {
       components: any[];
     }>;
     designStyle?: string;
+    pageType?: PageType;
+    industry?: string;
+    useExternalSearch?: boolean;
   }): Promise<GeneratedPage> {
     const multiModel = getMultiModelService();
+    const examplesService = getExamplesSearchService();
+
+    // Detect page type from purpose if not provided
+    const detectedPageType = input.pageType || this.detectPageType(input.pagePurpose);
+
+    // Generate real-world examples context (Advanced Approach)
+    const examplesContext = await examplesService.generateExamplesContext(
+      detectedPageType,
+      {
+        designStyle: input.designStyle as DesignStyle | undefined,
+        industry: input.industry,
+        useExternalSearch: input.useExternalSearch ?? false,
+      }
+    );
 
     // Import the prompt function
     const { generatePageWithContextPrompt } = await import('@/lib/ai/prompts');
 
-    const systemPrompt = generatePageWithContextPrompt(input);
+    const systemPrompt = generatePageWithContextPrompt({
+      ...input,
+      examplesContext, // Include real-world examples in the prompt
+    });
     const userPrompt = `Generate a page for: ${input.pagePurpose}`;
 
     const result = await multiModel.generateContent(userPrompt, {
@@ -557,5 +581,55 @@ export class AIGeneratorService {
   static getFallbackHistory(): any[] {
     const multiModel = getMultiModelService();
     return multiModel.getFallbackHistory();
+  }
+
+  /**
+   * Detect page type from the purpose/description text
+   */
+  private static detectPageType(purpose: string): PageType {
+    const lowerPurpose = purpose.toLowerCase();
+
+    // Check for specific page type keywords
+    if (lowerPurpose.includes('pricing') || lowerPurpose.includes('plan') || lowerPurpose.includes('subscription')) {
+      return 'pricing';
+    }
+    if (lowerPurpose.includes('about') || lowerPurpose.includes('team') || lowerPurpose.includes('company') || lowerPurpose.includes('story')) {
+      return 'about';
+    }
+    if (lowerPurpose.includes('contact') || lowerPurpose.includes('get in touch') || lowerPurpose.includes('reach us')) {
+      return 'contact';
+    }
+    if (lowerPurpose.includes('blog') || lowerPurpose.includes('article') || lowerPurpose.includes('news')) {
+      return 'blog';
+    }
+    if (lowerPurpose.includes('product') || lowerPurpose.includes('shop') || lowerPurpose.includes('store') || lowerPurpose.includes('buy')) {
+      return 'product';
+    }
+    if (lowerPurpose.includes('dashboard') || lowerPurpose.includes('analytics') || lowerPurpose.includes('metrics') || lowerPurpose.includes('admin')) {
+      return 'dashboard';
+    }
+    if (lowerPurpose.includes('portfolio') || lowerPurpose.includes('work') || lowerPurpose.includes('project') || lowerPurpose.includes('showcase')) {
+      return 'portfolio';
+    }
+
+    // Default to landing page
+    return 'landing';
+  }
+
+  /**
+   * Get available examples for a page type (for UI display)
+   */
+  static getAvailableExamples(pageType?: PageType) {
+    const examplesService = getExamplesSearchService();
+    const type = pageType || 'landing';
+    return examplesService.getExamplesForPageType(type);
+  }
+
+  /**
+   * Get available design styles (for UI display)
+   */
+  static getAvailableDesignStyles() {
+    const examplesService = getExamplesSearchService();
+    return examplesService.getAvailableDesignStyles();
   }
 }
