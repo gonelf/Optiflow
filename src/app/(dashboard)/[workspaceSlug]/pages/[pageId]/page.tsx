@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Element } from '@prisma/client';
 import { ThemeChanger } from '@/components/builder/ThemeChanger';
 import { EditorSidebar } from '@/components/builder/EditorSidebar';
+import { Toolbar } from '@/components/builder/Toolbar';
 import { PageSettingsDialog } from '@/components/builder/PageSettingsDialog';
 import { sanitizeHtml, isUrlSafe, getIframeSandbox } from '@/lib/embed-security';
 import {
