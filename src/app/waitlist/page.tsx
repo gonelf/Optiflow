@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
 import { motion } from 'framer-motion'
-import { Copy, Check, Users, Zap, Twitter, Linkedin, Mail } from 'lucide-react'
+import { Copy, Check, Users, Twitter, Linkedin, Mail } from 'lucide-react'
 
 function WaitlistContent() {
     const searchParams = useSearchParams()
@@ -84,9 +84,8 @@ function WaitlistContent() {
         <div className="flex min-h-screen items-center justify-center bg-gray-50/50 p-4 dark:bg-gray-950/50">
             <Card className="w-full max-w-md border-border/50 shadow-lg backdrop-blur-sm">
                 <CardHeader className="text-center space-y-2">
-                    <div className="mx-auto mb-4 flex items-center justify-center space-x-2">
-                        <Zap className="h-8 w-8 text-primary fill-current" />
-                        <span className="text-2xl font-bold tracking-tight">Reoptimize</span>
+                    <div className="mx-auto mb-4 flex items-center justify-center">
+                        <img src="/logo.svg" alt="Reoptimize" className="h-16 w-auto" />
                     </div>
                     <CardTitle className="text-3xl font-bold tracking-tight">
                         {user ? 'You are on the list!' : 'Join the Waitlist'}
