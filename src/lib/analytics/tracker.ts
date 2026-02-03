@@ -336,12 +336,12 @@ export function generateVisitorId(): string {
   if (typeof window === 'undefined') return 'unknown';
 
   // Check for existing visitor ID in localStorage
-  const stored = localStorage.getItem('optivibe_visitor_id');
+  const stored = localStorage.getItem('reoptimize_visitor_id');
   if (stored) return stored;
 
   // Create new visitor ID
   const visitorId = `visitor_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
-  localStorage.setItem('optivibe_visitor_id', visitorId);
+  localStorage.setItem('reoptimize_visitor_id', visitorId);
 
   return visitorId;
 }

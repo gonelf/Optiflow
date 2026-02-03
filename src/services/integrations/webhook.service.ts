@@ -171,9 +171,9 @@ export class WebhookService {
       try {
         const headers: Record<string, string> = {
           'Content-Type': 'application/json',
-          'User-Agent': 'OptiVibe-Webhook/1.0',
-          'X-OptiVibe-Event': delivery.event,
-          'X-OptiVibe-Delivery': delivery.id,
+          'User-Agent': 'Reoptimize-Webhook/1.0',
+          'X-Reoptimize-Event': delivery.event,
+          'X-Reoptimize-Delivery': delivery.id,
         };
 
         // Add signature if secret is set
@@ -182,7 +182,7 @@ export class WebhookService {
             JSON.stringify(payload),
             webhook.secret
           );
-          headers['X-OptiVibe-Signature'] = signature;
+          headers['X-Reoptimize-Signature'] = signature;
         }
 
         const response = await fetch(webhook.url, {

@@ -1,7 +1,7 @@
-# OptiVibe System Architecture
+# Reoptimize System Architecture
 
 ## Overview
-OptiVibe is a no-code SaaS marketing site builder with native A/B testing and integrated analytics. Built with Next.js 14, Tailwind CSS, Prisma + PostgreSQL (Supabase), and deployed on Vercel.
+Reoptimize is a no-code SaaS marketing site builder with native A/B testing and integrated analytics. Built with Next.js 14, Tailwind CSS, Prisma + PostgreSQL (Supabase), and deployed on Vercel.
 
 ## System Architecture Diagram
 
@@ -254,9 +254,9 @@ See `prisma/schema.prisma` for complete schema definition.
 ## Deployment Architecture
 
 ### Vercel Deployment
-- Production: `main` branch → optivibe.com
+- Production: `main` branch → reoptimize.com
 - Preview: Pull requests → auto-deploy
-- Development: `develop` branch → dev.optivibe.com
+- Development: `develop` branch → dev.reoptimize.com
 
 ### Environment Strategy
 - `.env.local` - Local development
@@ -338,4 +338,4 @@ Client Event → Beacon API → Validation
 
 **Last Updated**: 2026-01-22
 **Version**: 1.0.0
-**Maintainers**: OptiVibe Team
+**Maintainers**: Reoptimize Team

@@ -2,12 +2,12 @@
 
 ## Required Environment Variables
 
-To deploy OptiVibe on Vercel, you **MUST** add these environment variables in your Vercel project settings:
+To deploy Reoptimize on Vercel, you **MUST** add these environment variables in your Vercel project settings:
 
 ### 1. Go to Vercel Project Settings
 
 1. Open your Vercel dashboard
-2. Select your OptiVibe project
+2. Select your Reoptimize project
 3. Go to **Settings** → **Environment Variables**
 
 ### 2. Add Required Variables
@@ -39,7 +39,7 @@ openssl rand -base64 32
 
 Or use an online generator like: https://generate-secret.vercel.app/32
 
-**Set NEXTAUTH_URL** to your actual Vercel deployment URL (e.g., `https://optivibe-seven.vercel.app`)
+**Set NEXTAUTH_URL** to your actual Vercel deployment URL (e.g., `https://reoptimize-seven.vercel.app`)
 
 ### 3. Optional OAuth Variables
 
@@ -91,7 +91,7 @@ Once deployed, test these endpoints:
    - **Remove this endpoint in production!**
 
 3. **Homepage**: `https://your-app.vercel.app/`
-   - Should show the OptiVibe landing page
+   - Should show the Reoptimize landing page
 
 ## Troubleshooting
 

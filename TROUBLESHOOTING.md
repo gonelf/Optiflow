@@ -1,4 +1,4 @@
-# OptiVibe Troubleshooting Guide
+# Reoptimize Troubleshooting Guide
 
 ## Common Issues and Solutions
 
@@ -125,10 +125,10 @@ vercel logs your-project-name --follow
 
 Look for these logs when the app starts:
 ```
-🚀 OptiVibe Application Starting
+🚀 Reoptimize Application Starting
 Environment variables check
 ✅ Database connection successful
-✅ OptiVibe Application Started Successfully
+✅ Reoptimize Application Started Successfully
 ```
 
 If you don't see these, the instrumentation hook may not be working:
@@ -313,7 +313,7 @@ Use this to trace requests across logs.
 **Good (Working):**
 ```
 ✅ Database connection successful
-✅ OptiVibe Application Started Successfully
+✅ Reoptimize Application Started Successfully
 Auth successful for user: user@example.com
 GET / - 200
 ```
@@ -385,7 +385,7 @@ Run this to verify everything:
 ```bash
 #!/bin/bash
 
-echo "Testing OptiVibe Deployment..."
+echo "Testing Reoptimize Deployment..."
 
 URL="https://your-app.vercel.app"
 

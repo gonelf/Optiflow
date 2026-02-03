@@ -8,7 +8,7 @@ export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     const { logger } = await import('./lib/logger')
 
-    logger.info('🚀 OptiVibe Application Starting', {
+    logger.info('🚀 Reoptimize Application Starting', {
       nodeEnv: process.env.NODE_ENV,
       nextRuntime: process.env.NEXT_RUNTIME,
       vercelEnv: process.env.VERCEL_ENV,
@@ -46,6 +46,6 @@ export async function register() {
       logger.error('❌ Database connection failed', error)
     }
 
-    logger.info('✅ OptiVibe Application Started Successfully')
+    logger.info('✅ Reoptimize Application Started Successfully')
   }
 }

@@ -15,7 +15,7 @@ export async function sendPasswordResetEmail({
 }: SendPasswordResetEmailParams) {
   try {
     const { data, error } = await resend.emails.send({
-      from: process.env.EMAIL_FROM || 'noreply@optivibe.com',
+      from: process.env.EMAIL_FROM || 'noreply@reoptimize.com',
       to,
       subject: 'Reset Your Password - Optiflow',
       html: `

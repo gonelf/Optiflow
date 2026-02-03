@@ -10,7 +10,7 @@ test.describe('Authentication', () => {
     test('should display sign up page', async ({ page }) => {
       await page.goto('/signup');
 
-      await expect(page).toHaveTitle(/Sign Up|OptiVibe/i);
+      await expect(page).toHaveTitle(/Sign Up|Reoptimize/i);
       await expect(page.getByRole('heading', { name: /sign up/i })).toBeVisible();
     });
 
@@ -56,7 +56,7 @@ test.describe('Authentication', () => {
     test('should display login page', async ({ page }) => {
       await page.goto('/login');
 
-      await expect(page).toHaveTitle(/Sign In|Login|OptiVibe/i);
+      await expect(page).toHaveTitle(/Sign In|Login|Reoptimize/i);
       await expect(page.getByRole('heading', { name: /sign in|log in/i })).toBeVisible();
     });
 
@@ -76,7 +76,7 @@ test.describe('Authentication', () => {
       // Note: This test requires a seeded test account
       await page.goto('/login');
 
-      await page.getByLabel(/email/i).fill('test@optivibe.com');
+      await page.getByLabel(/email/i).fill('test@reoptimize.com');
       await page.getByLabel(/password/i).fill('TestPassword123!');
       await page.getByRole('button', { name: /sign in|log in/i }).click();
 
@@ -89,7 +89,7 @@ test.describe('Authentication', () => {
     test('should maintain session across page reloads', async ({ page }) => {
       // Login first
       await page.goto('/login');
-      await page.getByLabel(/email/i).fill('test@optivibe.com');
+      await page.getByLabel(/email/i).fill('test@reoptimize.com');
       await page.getByLabel(/password/i).fill('TestPassword123!');
       await page.getByRole('button', { name: /sign in|log in/i }).click();
 
@@ -112,7 +112,7 @@ test.describe('Authentication', () => {
     test('should logout successfully', async ({ page }) => {
       // Login first
       await page.goto('/login');
-      await page.getByLabel(/email/i).fill('test@optivibe.com');
+      await page.getByLabel(/email/i).fill('test@reoptimize.com');
       await page.getByLabel(/password/i).fill('TestPassword123!');
       await page.getByRole('button', { name: /sign in|log in/i }).click();
 

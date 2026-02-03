@@ -1,7 +1,7 @@
-# OptiVibe API Documentation
+# Reoptimize API Documentation
 
 **Version**: 1.0.0
-**Base URL**: `https://api.optivibe.app` (or `https://yourinstance.com/api`)
+**Base URL**: `https://api.reoptimize.app` (or `https://yourinstance.com/api`)
 
 ## Table of Contents
 
@@ -25,7 +25,7 @@ All API requests require authentication using an API key.
 
 ### Getting Your API Key
 
-1. Log in to OptiVibe
+1. Log in to Reoptimize
 2. Go to **Settings** → **API Keys**
 3. Click **Create API Key**
 4. Copy and store securely
@@ -36,7 +36,7 @@ Include your API key in the `Authorization` header:
 
 ```bash
 curl -H "Authorization: Bearer YOUR_API_KEY" \
-  https://api.optivibe.app/pages
+  https://api.reoptimize.app/pages
 ```
 
 ### API Key Permissions
@@ -133,7 +133,7 @@ Get all pages in a workspace.
 **Example Request**:
 ```bash
 curl -H "Authorization: Bearer YOUR_API_KEY" \
-  "https://api.optivibe.app/pages?workspaceId=ws_123&status=PUBLISHED&limit=10"
+  "https://api.reoptimize.app/pages?workspaceId=ws_123&status=PUBLISHED&limit=10"
 ```
 
 **Example Response**:
@@ -145,7 +145,7 @@ curl -H "Authorization: Bearer YOUR_API_KEY" \
       "title": "Product Launch",
       "slug": "product-launch",
       "status": "PUBLISHED",
-      "publishedUrl": "https://optivibe.app/p/product-launch",
+      "publishedUrl": "https://reoptimize.app/p/product-launch",
       "createdAt": "2024-01-15T10:30:00Z",
       "updatedAt": "2024-01-20T14:22:00Z"
     }
@@ -168,7 +168,7 @@ Get a single page by ID.
 **Example Request**:
 ```bash
 curl -H "Authorization: Bearer YOUR_API_KEY" \
-  https://api.optivibe.app/pages/page_abc123
+  https://api.reoptimize.app/pages/page_abc123
 ```
 
 **Example Response**:
@@ -192,7 +192,7 @@ curl -H "Authorization: Bearer YOUR_API_KEY" \
       }
     }
   ],
-  "publishedUrl": "https://optivibe.app/p/product-launch",
+  "publishedUrl": "https://reoptimize.app/p/product-launch",
   "createdAt": "2024-01-15T10:30:00Z"
 }
 ```
@@ -251,7 +251,7 @@ Publish a draft page.
 {
   "id": "page_abc123",
   "status": "PUBLISHED",
-  "publishedUrl": "https://optivibe.app/p/product-launch",
+  "publishedUrl": "https://reoptimize.app/p/product-launch",
   "publishedAt": "2024-01-22T12:00:00Z"
 }
 ```
@@ -552,7 +552,7 @@ Register a webhook endpoint.
 ```json
 {
   "workspaceId": "ws_123",
-  "url": "https://yourapp.com/webhooks/optivibe",
+  "url": "https://yourapp.com/webhooks/reoptimize",
   "events": [
     "page.published",
     "conversion.created",
@@ -564,7 +564,7 @@ Register a webhook endpoint.
 
 #### Webhook Event Format
 
-When an event occurs, OptiVibe sends a POST request:
+When an event occurs, Reoptimize sends a POST request:
 
 ```json
 {
@@ -603,13 +603,13 @@ function verifyWebhook(payload, signature, secret) {
 ### JavaScript/TypeScript
 
 ```bash
-npm install @optivibe/sdk
+npm install @reoptimize/sdk
 ```
 
 ```typescript
-import OptiVibe from '@optivibe/sdk';
+import Reoptimize from '@reoptimize/sdk';
 
-const client = new OptiVibe({
+const client = new Reoptimize({
   apiKey: 'YOUR_API_KEY'
 });
 
@@ -638,13 +638,13 @@ await client.analytics.track({
 ### Python
 
 ```bash
-pip install optivibe
+pip install reoptimize
 ```
 
 ```python
-from optivibe import OptiVibe
+from reoptimize import Reoptimize
 
-client = OptiVibe(api_key='YOUR_API_KEY')
+client = Reoptimize(api_key='YOUR_API_KEY')
 
 # List pages
 pages = client.pages.list(
@@ -664,10 +664,10 @@ page = client.pages.create(
 
 ## Support
 
-- **Documentation**: [docs.optivibe.app](https://docs.optivibe.app)
-- **API Status**: [status.optivibe.app](https://status.optivibe.app)
-- **Support**: support@optivibe.app
-- **Discord**: [discord.gg/optivibe](https://discord.gg/optivibe)
+- **Documentation**: [docs.reoptimize.app](https://docs.reoptimize.app)
+- **API Status**: [status.reoptimize.app](https://status.reoptimize.app)
+- **Support**: support@reoptimize.app
+- **Discord**: [discord.gg/reoptimize](https://discord.gg/reoptimize)
 
 ---
 

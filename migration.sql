@@ -1,4 +1,4 @@
--- OptiVibe Database Migration
+-- Reoptimize Database Migration
 -- Run this in Supabase SQL Editor
 
 -- Enable necessary extensions

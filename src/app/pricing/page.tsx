@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 
 export const metadata: Metadata = {
-  title: 'Pricing - OptiVibe',
+  title: 'Pricing - Reoptimize',
   description: 'Simple, transparent pricing for teams of all sizes. Start free, scale as you grow. No hidden fees.',
 }
 
@@ -25,7 +25,7 @@ export default function PricingPage() {
             <div className="flex items-center">
               <Link href="/" className="flex items-center space-x-2">
                 <Zap className="h-6 w-6 text-primary" />
-                <span className="text-xl font-bold">OptiVibe</span>
+                <span className="text-xl font-bold">Reoptimize</span>
               </Link>
             </div>
             <div className="hidden md:flex items-center space-x-8">
@@ -33,7 +33,7 @@ export default function PricingPage() {
                 Features
               </Link>
               <Link href="/#benefits" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                Why OptiVibe
+                Why Reoptimize
               </Link>
               <Link href="/pricing" className="text-sm font-medium text-foreground transition-colors">
                 Pricing
@@ -117,7 +117,7 @@ export default function PricingPage() {
               </div>
               <div className="flex items-start">
                 <Check className="h-5 w-5 text-primary mr-3 mt-0.5 flex-shrink-0" />
-                <span className="text-sm">OptiVibe branding</span>
+                <span className="text-sm">Reoptimize branding</span>
               </div>
               <div className="flex items-start">
                 <Check className="h-5 w-5 text-primary mr-3 mt-0.5 flex-shrink-0" />
@@ -186,7 +186,7 @@ export default function PricingPage() {
               </div>
               <div className="flex items-start">
                 <Check className="h-5 w-5 text-primary mr-3 mt-0.5 flex-shrink-0" />
-                <span className="text-sm">Remove OptiVibe branding</span>
+                <span className="text-sm">Remove Reoptimize branding</span>
               </div>
               <div className="flex items-start">
                 <Check className="h-5 w-5 text-primary mr-3 mt-0.5 flex-shrink-0" />
@@ -491,7 +491,7 @@ export default function PricingPage() {
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <Zap className="h-5 w-5 text-primary" />
-                <span className="font-bold">OptiVibe</span>
+                <span className="font-bold">Reoptimize</span>
               </div>
               <p className="text-sm text-muted-foreground">
                 The no-code builder for SaaS growth teams. Build, test, and optimize—all in one place.
@@ -530,7 +530,7 @@ export default function PricingPage() {
           </div>
 
           <div className="border-t pt-8 flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground">
-            <p>© 2026 OptiVibe. All rights reserved.</p>
+            <p>© 2026 Reoptimize. All rights reserved.</p>
             <div className="flex gap-6 mt-4 md:mt-0">
               <Link href="#" className="hover:text-foreground transition-colors">Twitter</Link>
               <Link href="#" className="hover:text-foreground transition-colors">LinkedIn</Link>

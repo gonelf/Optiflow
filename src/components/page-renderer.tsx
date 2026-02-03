@@ -294,7 +294,7 @@ const HeaderComponent = ({ content }: { content: any }) => (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="flex items-center justify-between h-16">
         <div className="font-bold text-xl text-indigo-600">
-          {content?.logo || 'OptiVibe'}
+          {content?.logo || 'Reoptimize'}
         </div>
         <nav className="hidden md:flex items-center gap-8">
           <a href="#" className="text-gray-700 hover:text-indigo-600 font-medium transition-colors">Features</a>
@@ -315,7 +315,7 @@ const FooterComponent = ({ content }: { content: any }) => (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="grid md:grid-cols-4 gap-8 mb-8">
         <div>
-          <div className="font-bold text-xl mb-4">OptiVibe</div>
+          <div className="font-bold text-xl mb-4">Reoptimize</div>
           <p className="text-gray-400">
             Building the future of landing pages
           </p>
@@ -346,7 +346,7 @@ const FooterComponent = ({ content }: { content: any }) => (
         </div>
       </div>
       <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
-        <p>© 2026 OptiVibe. All rights reserved.</p>
+        <p>© 2026 Reoptimize. All rights reserved.</p>
       </div>
     </div>
   </footer>

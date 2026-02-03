@@ -1,5 +1,5 @@
 /**
- * Centralized logging utility for OptiVibe
+ * Centralized logging utility for Reoptimize
  * Provides structured logging with different levels
  */
 
