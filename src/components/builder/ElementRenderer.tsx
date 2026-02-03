@@ -3,6 +3,7 @@
 import React from 'react';
 import { Element } from '@prisma/client';
 import { sanitizeHtml, isUrlSafe, getIframeSandbox } from '@/lib/embed-security';
+import { isVoidElement } from '@/lib/utils';
 
 interface ExtendedElement extends Element {
     children?: ExtendedElement[];
@@ -70,6 +71,9 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({ element, onEle
     switch (type) {
         case 'text':
             // Text elements (h1-h6, p, span)
+            if (isVoidElement(tagName)) {
+                return React.createElement(tagName, props);
+            }
             return React.createElement(
                 tagName,
                 props,
@@ -79,6 +83,9 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({ element, onEle
 
         case 'button':
             // Button elements
+            if (isVoidElement(tagName)) {
+                return React.createElement(tagName, props);
+            }
             return React.createElement(
                 tagName, // usually 'button' or 'a'
                 props,
@@ -196,6 +203,9 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({ element, onEle
         case 'container':
         default:
             // Container elements (div, section, header, footer, etc.)
+            if (isVoidElement(tagName)) {
+                return React.createElement(tagName, props);
+            }
             return React.createElement(
                 tagName,
                 props,

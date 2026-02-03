@@ -1,14 +1,15 @@
 'use client';
 
-import { cn } from '@/lib/utils';
+import { cn, isVoidElement } from '@/lib/utils';
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Save, Eye, ArrowLeft, Globe, GlobeLock, Settings2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Element } from '@prisma/client';
 import { ThemeChanger } from '@/components/builder/ThemeChanger';
 import { EditorSidebar } from '@/components/builder/EditorSidebar';
+import { Toolbar } from '@/components/builder/Toolbar';
 import { PageSettingsDialog } from '@/components/builder/PageSettingsDialog';
 import { sanitizeHtml, isUrlSafe, getIframeSandbox } from '@/lib/embed-security';
 import {
@@ -31,6 +32,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical } from 'lucide-react';
+import html2canvas from 'html2canvas';
 
 interface ExtendedElement extends Element {
   children?: ExtendedElement[];
@@ -38,8 +40,13 @@ interface ExtendedElement extends Element {
 
 export default function BuilderPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
+
+  const variantId = searchParams.get('variantId');
+  const mode = searchParams.get('mode') as 'default' | 'ab-test' || 'default';
+  const testId = searchParams.get('testId');
 
   const [elements, setElements] = useState<ExtendedElement[]>([]);
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
@@ -64,7 +71,13 @@ export default function BuilderPage() {
       const pageId = params.pageId as string;
 
       try {
-        const response = await fetch(`/api/pages/${pageId}`);
+        let response;
+        if (variantId) {
+          response = await fetch(`/api/pages/${pageId}/variants/${variantId}`);
+        } else {
+          response = await fetch(`/api/pages/${pageId}`);
+        }
+
         if (!response.ok) throw new Error('Failed to load page');
 
         const data = await response.json();
@@ -97,7 +110,7 @@ export default function BuilderPage() {
     };
 
     loadPage();
-  }, [params.pageId, toast]);
+  }, [params.pageId, variantId, toast]);
 
   // Build tree structure from flat list
   const buildElementTree = (flatElements: Element[]): ExtendedElement[] => {
@@ -166,11 +179,97 @@ export default function BuilderPage() {
       };
       flatten(elements);
 
-      const response = await fetch(`/api/pages/${params.pageId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ elements: flatElements }),
-      });
+      // Generate screenshot
+      let screenshotUrl: string | undefined = undefined;
+      try {
+        const canvasElement = document.getElementById('canvas-area');
+        if (canvasElement && elements.length > 0) {
+          try {
+            const canvas = await html2canvas(canvasElement, {
+              scale: 1, // Reduced scale for smaller size
+              useCORS: true,
+              logging: false,
+              windowWidth: 1200, // Simulate desktop width
+              ignoreElements: (element) => element.classList.contains('exclude-screenshot'),
+            });
+
+            // Resize and crop image to 16:9 aspect ratio (top aligned)
+            const maxWidth = 800; // Increased resolution slightly
+            const aspectRatio = 16 / 9;
+            const targetHeight = maxWidth / aspectRatio;
+
+            const resizedCanvas = document.createElement('canvas');
+            resizedCanvas.width = maxWidth;
+            resizedCanvas.height = targetHeight;
+
+            const ctx = resizedCanvas.getContext('2d');
+            if (ctx) {
+              // Calculate source dimensions (take full width, crop height to ratio)
+              const sourceWidth = canvas.width;
+              // We want to capture the top part with the correct aspect ratio
+              // So sourceHeight should be proportional to sourceWidth by the aspect ratio
+              let sourceHeight = sourceWidth / aspectRatio;
+
+              // If page is shorter than target ratio, use actual height and fill background
+              if (sourceHeight > canvas.height) {
+                sourceHeight = canvas.height;
+                // We will draw it at the top and let the bottom be empty (or fill white)
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, maxWidth, targetHeight);
+
+                // Calculate dest height to maintain aspect ratio of content
+                const destHeight = (sourceHeight / sourceWidth) * maxWidth;
+                ctx.drawImage(canvas, 0, 0, sourceWidth, sourceHeight, 0, 0, maxWidth, destHeight);
+              } else {
+                // Crop from top
+                ctx.drawImage(canvas, 0, 0, sourceWidth, sourceHeight, 0, 0, maxWidth, targetHeight);
+              }
+
+              screenshotUrl = resizedCanvas.toDataURL('image/jpeg', 0.8); // Slightly better quality
+            } else {
+              // Fallback to simple resize if context fails (unlikely)
+              screenshotUrl = canvas.toDataURL('image/jpeg', 0.7);
+            }
+          } catch (err) {
+            console.error('html2canvas error:', err);
+            // Silent fail for screenshot, but log it
+          }
+        }
+      } catch (error) {
+        console.error('Screenshot generation failed:', error);
+        toast({
+          title: 'Screenshot failed',
+          description: 'Could not generate page preview image',
+          variant: 'destructive',
+        });
+        // Continue saving even if screenshot fails
+      }
+
+      let response;
+      if (variantId) {
+        response = await fetch(`/api/pages/${params.pageId}/variants/${variantId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            elements: flatElements,
+            // variants usually won't update page screenshot, or maybe they should? 
+            // For now, let's skip screenshot for variants to keep it simple or implement if needed.
+            // Actually, showing a screenshot of the VARIANT in the dashboard would be cool.
+            // But the current API structure might expect screenshotUrl on the variant?
+            // The schema doesn't seem to have screenshotUrl on PageVariant.
+            // So let's ignore screenshot for variant save for now.
+          }),
+        });
+      } else {
+        response = await fetch(`/api/pages/${params.pageId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            elements: flatElements,
+            screenshotUrl
+          }),
+        });
+      }
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -182,6 +281,12 @@ export default function BuilderPage() {
         title: 'Saved',
         description: 'Page saved successfully',
       });
+
+      // Handle A/B Test Return
+      if (mode === 'ab-test' && testId) {
+        router.push(`/${params.workspaceSlug}/ab-tests/${testId}`);
+      }
+
     } catch (error) {
       console.error('Save error:', error);
       toast({
@@ -235,7 +340,11 @@ export default function BuilderPage() {
   };
 
   const handleBack = () => {
-    router.push(`/${params.workspaceSlug}/pages`);
+    if (mode === 'ab-test' && testId) {
+      router.push(`/${params.workspaceSlug}/ab-tests/${testId}`);
+    } else {
+      router.push(`/${params.workspaceSlug}/pages`);
+    }
   };
 
   const handleSaveSettings = async (settings: {
@@ -522,61 +631,12 @@ export default function BuilderPage() {
     >
       <div className="flex h-screen flex-col bg-gray-50">
         {/* Toolbar */}
-        <div className="flex items-center justify-between border-b bg-white px-4 py-3">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={handleBack}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-            <div className="h-6 w-px bg-gray-200" />
-            <div>
-              <h1 className="font-semibold text-sm">{pageMetadata?.title}</h1>
-              <p className="text-xs text-muted-foreground">AI Generated Page</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <ThemeChanger
-              currentThemeId={currentTheme}
-              onThemeChange={(themeId, updatedElements) => {
-                setCurrentTheme(themeId);
-                setElements(updatedElements);
-              }}
-              elements={elements}
-            />
-            <Button variant="outline" size="sm" onClick={() => setIsSettingsOpen(true)}>
-              <Settings2 className="h-4 w-4 mr-2" />
-              Settings
-            </Button>
-            <Button variant="outline" size="sm" onClick={handlePreview}>
-              <Eye className="h-4 w-4 mr-2" />
-              Preview
-            </Button>
-            <Button
-              variant={pageStatus === 'PUBLISHED' ? 'outline' : 'default'}
-              size="sm"
-              onClick={handlePublish}
-              disabled={isPublishing}
-              className={pageStatus === 'PUBLISHED' ? '' : 'bg-green-600 hover:bg-green-700'}
-            >
-              {pageStatus === 'PUBLISHED' ? (
-                <>
-                  <GlobeLock className="h-4 w-4 mr-2" />
-                  {isPublishing ? 'Unpublishing...' : 'Unpublish'}
-                </>
-              ) : (
-                <>
-                  <Globe className="h-4 w-4 mr-2" />
-                  {isPublishing ? 'Publishing...' : 'Publish'}
-                </>
-              )}
-            </Button>
-            <Button size="sm" onClick={handleSave} disabled={isSaving}>
-              <Save className="h-4 w-4 mr-2" />
-              {isSaving ? 'Saving...' : 'Save'}
-            </Button>
-          </div>
-        </div>
+        <Toolbar
+          onSave={handleSave}
+          onPreview={handlePreview}
+          onSettings={() => setIsSettingsOpen(true)}
+          mode={mode}
+        />
 
         {/* Main Content */}
         <div className="flex flex-1 overflow-hidden">
@@ -626,6 +686,7 @@ export default function BuilderPage() {
               addElementToState(element, targetId);
             }}
             setElements={setElements}
+            mode={mode}
           />
         </div>
 
@@ -682,6 +743,7 @@ function AICanvas({
 
   return (
     <div
+      id="canvas-area"
       ref={setNodeRef}
       className={cn(
         "p-8 min-h-screen transition-colors",
@@ -834,6 +896,20 @@ function ElementNode({
   switch (element.type) {
     case 'text': {
       const Tag = (content?.tagName || 'p') as any;
+      if (isVoidElement(Tag)) {
+        return (
+          <Tag
+            style={styles}
+            data-label={element.type}
+            className={cn(
+              selectionClasses,
+              element.className || ''
+            )}
+            onClick={handleClick}
+            {...(element.attributes as object || {})}
+          />
+        );
+      }
       return (
         <Tag
           style={styles}
@@ -1032,6 +1108,23 @@ function ElementNode({
     default: {
       const ContainerTag = (content?.tagName || 'div') as any;
       const childElements = element.children || [];
+
+      if (isVoidElement(ContainerTag)) {
+        return (
+          <ContainerTag
+            ref={setNodeRef}
+            style={styles}
+            data-label={element.type}
+            className={cn(
+              selectionClasses,
+              element.className || ''
+            )}
+            onClick={handleClick}
+            {...(element.attributes as object || {})}
+          />
+        );
+      }
+
       return (
         <ContainerTag
           ref={setNodeRef}

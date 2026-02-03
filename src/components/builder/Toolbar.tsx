@@ -21,9 +21,10 @@ interface ToolbarProps {
   onSave: () => void;
   onPreview: () => void;
   onSettings: () => void;
+  mode?: 'default' | 'ab-test';
 }
 
-export function Toolbar({ onSave, onPreview, onSettings }: ToolbarProps) {
+export function Toolbar({ onSave, onPreview, onSettings, mode = 'default' }: ToolbarProps) {
   const { undo, redo, canUndo, canRedo, isSaving, metadata } = useBuilderStore();
   const [viewport, setViewport] = useState<ViewportSize>('desktop');
 
@@ -100,7 +101,7 @@ export function Toolbar({ onSave, onPreview, onSettings }: ToolbarProps) {
         </Button>
         <Button size="sm" onClick={onSave} disabled={isSaving}>
           <Save className="mr-2 h-4 w-4" />
-          {isSaving ? 'Saving...' : 'Save'}
+          {isSaving ? 'Saving...' : (mode === 'ab-test' ? 'Save & Return' : 'Save')}
         </Button>
       </div>
     </div>

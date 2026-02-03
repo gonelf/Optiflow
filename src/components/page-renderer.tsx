@@ -390,10 +390,15 @@ interface PageRendererProps {
   elements?: any[]; // Add support for elements
   pageId: string;
   variantId?: string | null;
+  selectionMode?: boolean;
+  onElementSelect?: (elementId: string, type: string, elementText?: string) => void;
+  selectedElementIds?: string[];
 }
 
-export function PageRenderer({ components, elements, pageId, variantId }: PageRendererProps) {
+export function PageRenderer({ components, elements, pageId, variantId, selectionMode = false, onElementSelect, selectedElementIds = [] }: PageRendererProps) {
   useEffect(() => {
+    if (selectionMode) return; // Don't track analytics in selection mode
+
     // ... existing analytics code ...
     // Track scroll depth for heatmap
     let maxScrollDepth = 0;
@@ -437,9 +442,14 @@ export function PageRenderer({ components, elements, pageId, variantId }: PageRe
       window.removeEventListener('beforeunload', trackTimeOnPage);
       trackTimeOnPage();
     };
-  }, [pageId, variantId]);
+  }, [pageId, variantId, selectionMode]);
 
   const handleComponentClick = (componentId: string, elementType: string, elementText?: string) => {
+    if (selectionMode && onElementSelect) {
+      onElementSelect(componentId, elementType, elementText);
+      return;
+    }
+
     fetch('/api/analytics/track', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -480,7 +490,7 @@ export function PageRenderer({ components, elements, pageId, variantId }: PageRe
     const tree = buildTree(null);
 
     return (
-      <div className="min-h-screen bg-white">
+      <div className={`min-h-screen bg-white ${selectionMode ? 'cursor-pointer' : ''}`}>
         {tree.map(el => (
           <ElementRenderer
             key={el.id}
@@ -494,24 +504,41 @@ export function PageRenderer({ components, elements, pageId, variantId }: PageRe
 
   // Fallback to legacy Component rendering
   return (
-    <div className="min-h-screen bg-white">
+    <div className={`min-h-screen bg-white ${selectionMode ? 'cursor-crosshair' : ''}`}>
       {components.map((component) => {
+        const isSelected = selectedElementIds.includes(component.id);
+
         return (
           <div
             key={component.id}
             data-component-id={component.id}
             data-component-type={component.type}
+            className={`relative transition-all duration-200 ${isSelected ? 'ring-4 ring-blue-500 ring-opacity-50 z-10' : ''} ${selectionMode ? 'hover:ring-2 hover:ring-blue-300' : ''}`}
             onClick={(e) => {
-              const target = e.target as HTMLElement;
-              if (target.tagName === 'BUTTON' || target.tagName === 'A') {
-                handleComponentClick(
-                  component.id,
-                  target.tagName.toLowerCase(),
-                  target.textContent || undefined
-                );
+              if (selectionMode) {
+                e.preventDefault();
+                e.stopPropagation();
+                // For legacy components, we treat the whole component as the clickable target usually, 
+                // or specific internal buttons if targeted.
+                // In selection mode, let's allow selecting the component itself.
+                handleComponentClick(component.id, 'component', component.type);
+              } else {
+                const target = e.target as HTMLElement;
+                if (target.tagName === 'BUTTON' || target.tagName === 'A') {
+                  handleComponentClick(
+                    component.id,
+                    target.tagName.toLowerCase(),
+                    target.textContent || undefined
+                  );
+                }
               }
             }}
           >
+            {isSelected && (
+              <div className="absolute top-2 right-2 z-50 bg-blue-600 text-white rounded-full p-1 shadow-lg pointer-events-none">
+                <Check className="w-4 h-4" />
+              </div>
+            )}
             <ComponentRenderer
               type={component.type}
               content={component.content}
