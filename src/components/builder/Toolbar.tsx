@@ -21,6 +21,7 @@ interface ToolbarProps {
   onSave: () => void;
   onPreview: () => void;
   onSettings: () => void;
+  onBack?: () => void;
   mode?: 'default' | 'ab-test';
   title?: string;
   isSaving?: boolean;
@@ -30,6 +31,7 @@ export function Toolbar({
   onSave,
   onPreview,
   onSettings,
+  onBack,
   mode = 'default',
   title,
   isSaving: propsIsSaving
@@ -44,6 +46,24 @@ export function Toolbar({
     <div className="flex h-16 items-center justify-between border-b bg-white px-4">
       {/* Left section - Page info */}
       <div className="flex items-center gap-4">
+        {onBack && (
+          <Button variant="ghost" size="icon" onClick={onBack}>
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="lucide lucide-arrow-left"
+            >
+              <path d="m12 19-7-7 7-7" />
+              <path d="M19 12H5" />
+            </svg>
+          </Button>
+        )}
         <h1 className="text-lg font-semibold">{displayTitle}</h1>
         {isSaving && (
           <span className="text-sm text-muted-foreground">Saving...</span>
