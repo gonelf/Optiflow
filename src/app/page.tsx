@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import Image from 'next/image'
 import {
   Zap,
   BarChart3,
@@ -31,7 +32,7 @@ export default function Home() {
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center">
               <Link href="/" className="flex items-center space-x-2">
-                <Zap className="h-6 w-6 text-primary" />
+                <Image src="/logo.svg" alt="Reoptimize" width={32} height={32} className="h-8 w-8" />
                 <span className="text-xl font-bold">Reoptimize</span>
               </Link>
             </div>
@@ -515,7 +516,7 @@ export default function Home() {
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <Zap className="h-5 w-5 text-primary" />
+                <Image src="/logo.svg" alt="Reoptimize" width={20} height={20} className="h-5 w-5" />
                 <span className="font-bold">Reoptimize</span>
               </div>
               <p className="text-sm text-muted-foreground">

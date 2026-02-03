@@ -5,6 +5,7 @@ import { useParams, usePathname } from 'next/navigation'
 import { WorkspaceSwitcher } from '@/components/workspace/workspace-switcher'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Home, FileText, TestTube, BarChart, Settings, LogOut, PanelLeft, Shield, ExternalLink } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
 import { cn } from '@/lib/utils'
@@ -55,7 +56,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="flex h-full flex-col">
           {/* Logo & Toggle */}
           <div className="flex h-16 items-center justify-between border-b px-4">
-            {!isCollapsed && <h1 className="text-xl font-bold">Reoptimize</h1>}
+            {!isCollapsed ? (
+              <div className="flex items-center space-x-2">
+                <Image src="/logo.svg" alt="Reoptimize" width={24} height={24} className="h-6 w-6" />
+                <h1 className="text-xl font-bold">Reoptimize</h1>
+              </div>
+            ) : (
+              <Image src="/logo.svg" alt="Reoptimize" width={24} height={24} className="h-6 w-6 mx-auto" />
+            )}
             <Button
               variant="ghost"
               size="icon"

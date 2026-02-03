@@ -7,6 +7,11 @@ export const metadata: Metadata = {
   title: 'Reoptimize - No-Code SaaS Marketing Site Builder',
   description:
     'Build, test, and optimize marketing pages without code. Integrated A/B testing and real-time analytics.',
+  icons: {
+    icon: '/logo.svg',
+    shortcut: '/logo.svg',
+    apple: '/logo.svg',
+  },
 }
 
 export default function RootLayout({
