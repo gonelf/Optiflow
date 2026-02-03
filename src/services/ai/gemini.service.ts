@@ -35,7 +35,7 @@ export class GeminiService {
   private baseURL: string = 'https://generativelanguage.googleapis.com/v1beta';
 
   constructor(config: GeminiConfig) {
-    this.apiKey = config.apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY || '';
+    this.apiKey = config.apiKey || process.env.GEMINI_API_KEY || '';
     this.model = config.model || 'gemini-1.5-flash';
 
     if (!this.apiKey) {

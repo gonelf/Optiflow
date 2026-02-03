@@ -12,6 +12,7 @@ const generatePagesSchema = z.object({
     industry: z.string(),
     targetAudience: z.string(),
     brandVoice: z.string(),
+    useDesignSystem: z.boolean().optional().default(true), // Enable UI/UX Pro Max by default
 })
 
 /**
@@ -51,6 +52,16 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Access denied' }, { status: 403 })
         }
 
+        // Get workspace name for design system
+        const workspace = await prisma.workspace.findUnique({
+            where: { id: validatedData.workspaceId },
+            select: { name: true, slug: true },
+        });
+
+        if (!workspace) {
+            return NextResponse.json({ error: 'Workspace not found' }, { status: 404 });
+        }
+
         // Build a detailed prompt for the page type
         const pageTypeDescriptions: Record<string, string> = {
             landing: 'A landing page with a compelling hero section, key features, social proof, and strong call-to-action',
@@ -70,14 +81,22 @@ Brand Voice: ${validatedData.brandVoice}
 Create ${pageTypeDescriptions[validatedData.pageType]}
 `
 
-        // Generate the page using AI
-        const generatedPage = await AIGeneratorService.generatePage({
-            description: fullDescription,
-            industry: validatedData.industry,
-            targetAudience: validatedData.targetAudience,
-            brandVoice: validatedData.brandVoice,
-            pageType: validatedData.pageType,
-        })
+        // Use the new generatePageWithContext method for better design system integration
+        const generatedPage = validatedData.useDesignSystem
+            ? await AIGeneratorService.generatePageWithContext({
+                pagePurpose: fullDescription,
+                designStyle: validatedData.brandVoice,
+                industry: validatedData.industry,
+                projectName: workspace.name,
+                useDesignSystem: true,
+            })
+            : await AIGeneratorService.generatePage({
+                description: fullDescription,
+                industry: validatedData.industry,
+                targetAudience: validatedData.targetAudience,
+                brandVoice: validatedData.brandVoice,
+                pageType: validatedData.pageType,
+            })
 
         // Generate a unique slug for this page
         const baseSlug = validatedData.pageType
@@ -113,8 +132,61 @@ Create ${pageTypeDescriptions[validatedData.pageType]}
             },
         })
 
-        // Create the components for this page
-        if (generatedPage.components && generatedPage.components.length > 0) {
+        // Recursive function to save elements
+        const saveElementRecursive = async (
+            node: any,
+            pageId: string,
+            parentId: string | null = null,
+            order: number = 0,
+            depth: number = 0,
+            path: string = ''
+        ) => {
+            // Create the element
+            const element = await prisma.element.create({
+                data: {
+                    pageId,
+                    type: node.type,
+                    name: node.tagName || node.type,
+                    order,
+                    parentId,
+                    depth,
+                    path,
+                    content: {
+                        ...(node.content || {}),
+                        tagName: node.tagName,
+                        ...(node.attributes || {})
+                    },
+                    styles: node.styles || {},
+                    aiGenerated: true,
+                    aiPrompt: fullDescription,
+                },
+            });
+
+            // Process children if any
+            if (node.children && Array.isArray(node.children) && node.children.length > 0) {
+                const newPath = path ? `${path}/${element.id}` : element.id;
+
+                for (let i = 0; i < node.children.length; i++) {
+                    await saveElementRecursive(
+                        node.children[i],
+                        pageId,
+                        element.id,
+                        i,
+                        depth + 1,
+                        newPath
+                    );
+                }
+            }
+        };
+
+        // Save elements or components
+        if (generatedPage.elements && generatedPage.elements.length > 0) {
+            // New element-based structure
+            for (let i = 0; i < generatedPage.elements.length; i++) {
+                await saveElementRecursive(generatedPage.elements[i], page.id, null, i, 0, '');
+            }
+        } else if (generatedPage.components && generatedPage.components.length > 0) {
+            // Legacy component-based structure (fallback)
             const componentData = generatedPage.components.map((component, index) => ({
                 pageId: page.id,
                 type: mapComponentType(component.type),

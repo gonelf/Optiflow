@@ -10,6 +10,8 @@ const aiCreatePageSchema = z.object({
     pagePurpose: z.string().min(10, 'Page purpose must be at least 10 characters'),
     designMode: z.enum(['consistent', 'new']).optional().default('consistent'),
     designStyle: z.string().optional(),
+    industry: z.string().optional(),
+    useDesignSystem: z.boolean().optional().default(true), // Enable UI/UX Pro Max by default
 });
 
 /**
@@ -24,11 +26,11 @@ export async function POST(req: NextRequest) {
         }
 
         // Check if Gemini API key is configured
-        if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_AI_API_KEY) {
+        if (!process.env.GEMINI_API_KEY) {
             return NextResponse.json(
                 {
                     error: 'AI service not configured',
-                    hint: 'Please configure GEMINI_API_KEY or GOOGLE_AI_API_KEY in your environment variables.',
+                    hint: 'Please configure GEMINI_API_KEY in your environment variables.',
                 },
                 { status: 500 }
             );
@@ -37,7 +39,7 @@ export async function POST(req: NextRequest) {
         const body = await req.json();
         const validatedData = aiCreatePageSchema.parse(body);
 
-        // Verify user has access to workspace
+        // Verify user has access to workspace and get workspace info
         const membership = await prisma.workspaceMember.findFirst({
             where: {
                 userId: session.user.id,
@@ -47,6 +49,16 @@ export async function POST(req: NextRequest) {
 
         if (!membership) {
             return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+        }
+
+        // Get workspace name for design system
+        const workspace = await prisma.workspace.findUnique({
+            where: { id: validatedData.workspaceId },
+            select: { name: true, slug: true },
+        });
+
+        if (!workspace) {
+            return NextResponse.json({ error: 'Workspace not found' }, { status: 404 });
         }
 
         // Fetch existing pages for design context
@@ -79,11 +91,14 @@ export async function POST(req: NextRequest) {
             }))
             : [];
 
-        // Generate the page using AI with context
+        // Generate the page using AI with context and design system
         const generatedPage = await AIGeneratorService.generatePageWithContext({
             pagePurpose: validatedData.pagePurpose,
             existingPages: existingPagesContext.length > 0 ? existingPagesContext : undefined,
             designStyle: validatedData.designStyle,
+            industry: validatedData.industry,
+            projectName: workspace.name,
+            useDesignSystem: validatedData.useDesignSystem,
         });
 
         // Generate a unique slug based on the title
@@ -144,9 +159,9 @@ export async function POST(req: NextRequest) {
                     depth,
                     path,
                     content: {
-                        ...node.content,
+                        ...(node.content || {}),
                         tagName: node.tagName,
-                        ...node.attributes
+                        ...(node.attributes || {})
                     },
                     styles: node.styles || {},
                     aiGenerated: true,
@@ -213,12 +228,6 @@ export async function POST(req: NextRequest) {
             },
         });
 
-        // Get workspace slug for redirect URL
-        const workspace = await prisma.workspace.findUnique({
-            where: { id: validatedData.workspaceId },
-            select: { slug: true },
-        });
-
         return NextResponse.json({
             success: true,
             page: {
@@ -227,7 +236,7 @@ export async function POST(req: NextRequest) {
                 slug: page.slug,
                 description: page.description,
             },
-            redirectUrl: workspace ? `/${workspace.slug}/ai-pages/${page.id}` : `/ai-pages/${page.id}`,
+            redirectUrl: `/${workspace.slug}/pages/${page.id}`,
         });
     } catch (error) {
         console.error('AI page creation error:', error);

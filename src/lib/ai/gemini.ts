@@ -11,9 +11,9 @@ function getModels(): string[] {
 }
 
 function getClient(): GoogleGenerativeAI {
-  const apiKey = process.env.GOOGLE_AI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    throw new Error('GOOGLE_AI_API_KEY is not configured');
+    throw new Error('GEMINI_API_KEY is not configured');
   }
   return new GoogleGenerativeAI(apiKey);
 }

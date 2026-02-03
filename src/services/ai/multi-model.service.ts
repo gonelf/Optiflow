@@ -56,7 +56,7 @@ export class MultiModelService {
     for (const config of configs) {
       try {
         if (config.provider === 'gemini') {
-          const apiKey = config.apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
+          const apiKey = config.apiKey || process.env.GEMINI_API_KEY;
           if (apiKey) {
             const service = new GeminiService({
               apiKey: apiKey,

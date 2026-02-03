@@ -716,7 +716,7 @@ export function EditorSidebar({
     );
   }
 
-  const content = selectedElement?.content as any;
+  const content = (selectedElement?.content || {}) as any;
   const styles = (selectedElement?.styles || {}) as any;
 
   const handleStyleChange = (newStyles: any) => {

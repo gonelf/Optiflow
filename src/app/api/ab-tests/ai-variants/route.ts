@@ -78,9 +78,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('AI variant generation failed:', error);
 
-    if (error instanceof Error && error.message.includes('GOOGLE_AI_API_KEY')) {
+    if (error instanceof Error && error.message.includes('GEMINI_API_KEY')) {
       return NextResponse.json(
-        { error: 'Google AI API key is not configured' },
+        { error: 'Gemini API key is not configured' },
         { status: 503 }
       );
     }
