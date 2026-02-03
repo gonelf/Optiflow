@@ -4,9 +4,14 @@ import { Providers } from '@/lib/providers'
 import { Toaster } from '@/components/ui/toaster'
 
 export const metadata: Metadata = {
-  title: 'OptiVibe - No-Code SaaS Marketing Site Builder',
+  title: 'Reoptimize - No-Code SaaS Marketing Site Builder',
   description:
     'Build, test, and optimize marketing pages without code. Integrated A/B testing and real-time analytics.',
+  icons: {
+    icon: '/logo.svg',
+    shortcut: '/logo.svg',
+    apple: '/logo.svg',
+  },
 }
 
 export default function RootLayout({

@@ -1,6 +1,6 @@
-# OptiVibe Setup Guide
+# Reoptimize Setup Guide
 
-Complete setup instructions for getting OptiVibe running locally and deploying to production.
+Complete setup instructions for getting Reoptimize running locally and deploying to production.
 
 ## Table of Contents
 
@@ -45,14 +45,14 @@ git --version
 
 ```bash
 # Create Next.js 14 project with TypeScript, Tailwind, App Router
-npx create-next-app@latest optivibe \
+npx create-next-app@latest reoptimize \
   --typescript \
   --tailwind \
   --app \
   --src-dir \
   --import-alias "@/*"
 
-cd optivibe
+cd reoptimize
 ```
 
 ### Step 2: Install Dependencies
@@ -122,7 +122,7 @@ STRIPE_WEBHOOK_SECRET="whsec_your-webhook-secret"
 
 # Email (Resend)
 RESEND_API_KEY="re_your-resend-api-key"
-EMAIL_FROM="noreply@optivibe.com"
+EMAIL_FROM="noreply@reoptimize.com"
 
 # Analytics (Optional)
 POSTHOG_API_KEY="phc_your-posthog-key"
@@ -130,7 +130,7 @@ POSTHOG_HOST="https://app.posthog.com"
 
 # App Config
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
-NEXT_PUBLIC_APP_NAME="OptiVibe"
+NEXT_PUBLIC_APP_NAME="Reoptimize"
 
 # Feature Flags
 ENABLE_AI_FEATURES="true"
@@ -161,7 +161,7 @@ cp .env.local .env.example
 1. Go to [supabase.com](https://supabase.com)
 2. Click "New Project"
 3. Enter project details:
-   - **Name**: optivibe
+   - **Name**: reoptimize
    - **Database Password**: Generate strong password
    - **Region**: Choose closest to users
    - **Pricing Plan**: Free (for development)
@@ -665,7 +665,7 @@ export const config = {
 Complete folder structure (created incrementally during development):
 
 ```
-optivibe/
+reoptimize/
 ├── prisma/
 │   ├── schema.prisma
 │   ├── migrations/

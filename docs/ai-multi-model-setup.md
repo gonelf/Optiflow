@@ -1,6 +1,6 @@
 # Multi-Model AI System Setup Guide
 
-OptiVibe uses a multi-model AI system with automatic fallback between different AI providers. This ensures high availability and cost optimization by prioritizing free-tier services.
+Reoptimize uses a multi-model AI system with automatic fallback between different AI providers. This ensures high availability and cost optimization by prioritizing free-tier services.
 
 ## Supported AI Providers
 
@@ -413,7 +413,7 @@ if (!isHealthy) {
 For issues with:
 - **Gemini API**: [Google AI Support](https://developers.googleblog.com/google-ai)
 - **OpenAI API**: [OpenAI Help Center](https://help.openai.com/)
-- **OptiVibe System**: Check application logs and `/api/ai/status`
+- **Reoptimize System**: Check application logs and `/api/ai/status`
 
 ## Summary
 

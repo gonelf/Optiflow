@@ -172,7 +172,7 @@ export function AIWizard() {
                                 <Label htmlFor="productName">Product Name</Label>
                                 <Input
                                     id="productName"
-                                    placeholder="e.g. OptiVibe"
+                                    placeholder="e.g. Reoptimize"
                                     value={formData.productName}
                                     onChange={(e) => setFormData({ ...formData, productName: e.target.value })}
                                     className="text-base focus-visible:ring-primary/30"

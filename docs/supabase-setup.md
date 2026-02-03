@@ -1,6 +1,6 @@
 # Supabase Setup Guide
 
-This guide will help you set up Supabase as the database for OptiVibe.
+This guide will help you set up Supabase as the database for Reoptimize.
 
 ## 1. Create a Supabase Project
 
@@ -8,7 +8,7 @@ This guide will help you set up Supabase as the database for OptiVibe.
 2. Sign up or log in
 3. Click **New Project**
 4. Fill in the project details:
-   - **Name**: optivibe (or your preferred name)
+   - **Name**: reoptimize (or your preferred name)
    - **Database Password**: Choose a strong password (save this!)
    - **Region**: Choose the region closest to your users
    - **Pricing Plan**: Free tier is fine to start
@@ -152,7 +152,7 @@ Prisma Studio should open at `http://localhost:5555` showing your database table
 
 ### Row Level Security (RLS)
 
-Supabase has built-in RLS. While OptiVibe handles auth with NextAuth, you can add an extra security layer:
+Supabase has built-in RLS. While Reoptimize handles auth with NextAuth, you can add an extra security layer:
 
 ```sql
 -- Enable RLS on sensitive tables
@@ -171,7 +171,7 @@ CREATE POLICY "Users can view their own data"
 If you want to use Supabase Storage for page images:
 
 1. Go to **Storage** in Supabase dashboard
-2. Create a bucket: `optivibe-assets`
+2. Create a bucket: `reoptimize-assets`
 3. Set it to **Public** (or configure policies)
 4. Use Supabase Storage SDK in your app
 

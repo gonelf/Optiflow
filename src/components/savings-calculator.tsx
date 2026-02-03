@@ -151,7 +151,7 @@ export function SavingsCalculator() {
             </div>
 
             <div>
-              <div className="text-sm font-medium mb-3 text-primary">OptiVibe:</div>
+              <div className="text-sm font-medium mb-3 text-primary">Reoptimize:</div>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Vibe Code Builder</span>

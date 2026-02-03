@@ -1,8 +1,8 @@
-# OptiVibe
+# Reoptimize
 
 **No-Code SaaS Marketing Site Builder with Native A/B Testing & Analytics**
 
-OptiVibe is a powerful, modern platform for building, testing, and optimizing marketing pages without code. Built with Next.js 14, it combines an intuitive drag-and-drop builder with integrated A/B testing and real-time analytics.
+Reoptimize is a powerful, modern platform for building, testing, and optimizing marketing pages without code. Built with Next.js 14, it combines an intuitive drag-and-drop builder with integrated A/B testing and real-time analytics.
 
 ## Features
 
@@ -36,8 +36,8 @@ PostgreSQL (Supabase account)
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/optivibe.git
-cd optivibe
+git clone https://github.com/yourusername/reoptimize.git
+cd reoptimize
 
 # Install dependencies
 pnpm install
@@ -84,7 +84,7 @@ Comprehensive documentation is available in the `/docs` folder:
 ## Project Structure
 
 ```
-optivibe/
+reoptimize/
 ├── docs/                      # Documentation
 │   ├── architecture.md        # System architecture
 │   ├── setup-guide.md         # Installation guide
@@ -323,8 +323,8 @@ MIT License - see [LICENSE](LICENSE) file for details.
 ## Support
 
 - **Documentation**: [/docs](docs/)
-- **Issues**: [GitHub Issues](https://github.com/yourusername/optivibe/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/optivibe/discussions)
+- **Issues**: [GitHub Issues](https://github.com/yourusername/reoptimize/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/yourusername/reoptimize/discussions)
 
 ## Roadmap
 

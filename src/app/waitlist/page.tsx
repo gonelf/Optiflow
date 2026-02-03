@@ -86,7 +86,7 @@ function WaitlistContent() {
                 <CardHeader className="text-center space-y-2">
                     <div className="mx-auto mb-4 flex items-center justify-center space-x-2">
                         <Zap className="h-8 w-8 text-primary fill-current" />
-                        <span className="text-2xl font-bold tracking-tight">OptiVibe</span>
+                        <span className="text-2xl font-bold tracking-tight">Reoptimize</span>
                     </div>
                     <CardTitle className="text-3xl font-bold tracking-tight">
                         {user ? 'You are on the list!' : 'Join the Waitlist'}
@@ -94,7 +94,7 @@ function WaitlistContent() {
                     <CardDescription className="text-base">
                         {user
                             ? `You are #${user.position} in line.`
-                            : 'OptiVibe is currently in private beta. Reserve your spot today.'}
+                            : 'Reoptimize is currently in private beta. Reserve your spot today.'}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -158,7 +158,7 @@ function WaitlistContent() {
                                 <div className="grid grid-cols-3 gap-3 pt-2">
                                     <Button variant="outline" className="gap-2" onClick={() => {
                                         const shareUrl = `${window.location.origin}/waitlist?ref=${user.referralCode}`
-                                        const text = "I just joined the waiting list for OptiVibe! Secure your spot now."
+                                        const text = "I just joined the waiting list for Reoptimize! Secure your spot now."
                                         window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`, '_blank')
                                     }} title="Share on Twitter">
                                         <TwitterIcon className="h-4 w-4" />
@@ -173,8 +173,8 @@ function WaitlistContent() {
                                     </Button>
                                     <Button variant="outline" className="gap-2" onClick={() => {
                                         const shareUrl = `${window.location.origin}/waitlist?ref=${user.referralCode}`
-                                        const text = "I just joined the waiting list for OptiVibe! Secure your spot now."
-                                        window.open(`mailto:?subject=${encodeURIComponent("Join me on OptiVibe")}&body=${encodeURIComponent(text + "\n\n" + shareUrl)}`, '_blank')
+                                        const text = "I just joined the waiting list for Reoptimize! Secure your spot now."
+                                        window.open(`mailto:?subject=${encodeURIComponent("Join me on Reoptimize")}&body=${encodeURIComponent(text + "\n\n" + shareUrl)}`, '_blank')
                                     }} title="Share via Email">
                                         <MailIcon className="h-4 w-4" />
                                         Email

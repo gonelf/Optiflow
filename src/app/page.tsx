@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import Image from 'next/image'
 import {
   Zap,
   BarChart3,
@@ -18,7 +19,7 @@ import { Card } from '@/components/ui/card'
 import { SavingsCalculator } from '@/components/savings-calculator'
 
 export const metadata: Metadata = {
-  title: 'OptiVibe - The Webflow Killer for Marketing Teams | Vibe Code Builder with Native A/B Testing',
+  title: 'Reoptimize - The Webflow Killer for Marketing Teams | Vibe Code Builder with Native A/B Testing',
   description: 'Replace Webflow, VWO, and Mixpanel with one powerful platform. Build, test, and optimize marketing pages with vibe code. Native A/B testing and analytics for marketing teams. Lift conversions by 10-50%.',
 }
 
@@ -31,8 +32,8 @@ export default function Home() {
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center">
               <Link href="/" className="flex items-center space-x-2">
-                <Zap className="h-6 w-6 text-primary" />
-                <span className="text-xl font-bold">OptiVibe</span>
+                <Image src="/logo.svg" alt="Reoptimize" width={32} height={32} className="h-8 w-8" />
+                <span className="text-xl font-bold">Reoptimize</span>
               </Link>
             </div>
             <div className="hidden md:flex items-center space-x-8">
@@ -40,7 +41,7 @@ export default function Home() {
                 Features
               </Link>
               <Link href="#benefits" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                Why OptiVibe
+                Why Reoptimize
               </Link>
               <Link href="/pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                 Pricing
@@ -141,7 +142,7 @@ export default function Home() {
               How Much Could You Save?
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              See the real cost of your current Webflow + VWO + Mixpanel stack vs. OptiVibe&apos;s all-in-one platform
+              See the real cost of your current Webflow + VWO + Mixpanel stack vs. Reoptimize&apos;s all-in-one platform
             </p>
           </div>
           <SavingsCalculator />
@@ -188,7 +189,7 @@ export default function Home() {
               Everything You Need, Nothing You Don&apos;t
             </h2>
             <p className="text-lg text-muted-foreground">
-              OptiVibe combines visual page building with native experimentation and analytics—all in one seamless workflow
+              Reoptimize combines visual page building with native experimentation and analytics—all in one seamless workflow
             </p>
           </div>
 
@@ -273,7 +274,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold mb-6">
-              Why Marketing Teams Ditch Webflow for OptiVibe
+              Why Marketing Teams Ditch Webflow for Reoptimize
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               One platform. Zero tool sprawl. Pure marketing velocity.
@@ -515,8 +516,8 @@ export default function Home() {
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <Zap className="h-5 w-5 text-primary" />
-                <span className="font-bold">OptiVibe</span>
+                <Image src="/logo.svg" alt="Reoptimize" width={20} height={20} className="h-5 w-5" />
+                <span className="font-bold">Reoptimize</span>
               </div>
               <p className="text-sm text-muted-foreground">
                 The vibe code builder for marketing teams. Replace Webflow + VWO + Mixpanel with one platform.
@@ -555,7 +556,7 @@ export default function Home() {
           </div>
 
           <div className="border-t pt-8 flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground">
-            <p>© 2026 OptiVibe. All rights reserved.</p>
+            <p>© 2026 Reoptimize. All rights reserved.</p>
             <div className="flex gap-6 mt-4 md:mt-0">
               <Link href="#" className="hover:text-foreground transition-colors">Twitter</Link>
               <Link href="#" className="hover:text-foreground transition-colors">LinkedIn</Link>

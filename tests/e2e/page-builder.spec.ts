@@ -9,7 +9,7 @@ test.describe('Page Builder', () => {
   test.beforeEach(async ({ page }) => {
     // Login before each test
     await page.goto('/login');
-    await page.getByLabel(/email/i).fill('test@optivibe.com');
+    await page.getByLabel(/email/i).fill('test@reoptimize.com');
     await page.getByLabel(/password/i).fill('TestPassword123!');
     await page.getByRole('button', { name: /sign in|log in/i }).click();
     await expect(page).toHaveURL(/\/dashboard/);

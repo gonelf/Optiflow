@@ -1,6 +1,6 @@
 # Gemini Multi-Model AI System
 
-OptiVibe uses Google Gemini with a **3-model fallback chain** for high availability. All models are **100% free** with generous quotas!
+Reoptimize uses Google Gemini with a **3-model fallback chain** for high availability. All models are **100% free** with generous quotas!
 
 ## 🎯 How It Works
 
