@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -57,6 +57,7 @@ interface EditorSidebarProps {
   onElementSelect: (id: string | null) => void;
   onAddElement: (element: any, targetId?: string | null) => void;
   setElements: (elements: ExtendedElement[]) => void;
+  mode?: 'default' | 'ab-test';
 }
 
 // Tailwind elements library
@@ -611,11 +612,20 @@ export function EditorSidebar({
   onElementSelect,
   onAddElement,
   setElements,
+  mode = 'default',
 }: EditorSidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState('elements');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
+
+  // For A/B testing, default to properties tab if available, or just empty state if nothing selected
+  // We want to FORCE properties tab and hide others
+  useEffect(() => {
+    if (mode === 'ab-test') {
+      setActiveTab('properties');
+    }
+  }, [mode]);
 
   const { elementPool, removeFromPool, clearPool } = useBuilderStore();
 
@@ -675,29 +685,33 @@ export function EditorSidebar({
         >
           <Settings2 className="h-4 w-4" />
         </Button>
-        <Button
-          variant={activeTab === 'elements' ? 'secondary' : 'ghost'}
-          size="sm"
-          onClick={() => { setIsCollapsed(false); setActiveTab('elements'); }}
-          className="h-8 w-8 p-0"
-          title="Elements"
-        >
-          <LayoutGrid className="h-4 w-4" />
-        </Button>
-        <Button
-          variant={activeTab === 'saved' ? 'secondary' : 'ghost'}
-          size="sm"
-          onClick={() => { setIsCollapsed(false); setActiveTab('saved'); }}
-          className="h-8 w-8 p-0"
-          title="Saved Elements"
-        >
-          <Bookmark className="h-4 w-4" />
-          {elementPool.length > 0 && (
-            <span className="absolute -top-1 -right-1 h-4 w-4 text-[10px] bg-primary text-white rounded-full flex items-center justify-center">
-              {elementPool.length}
-            </span>
-          )}
-        </Button>
+        {mode !== 'ab-test' && (
+          <>
+            <Button
+              variant={activeTab === 'elements' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => { setIsCollapsed(false); setActiveTab('elements'); }}
+              className="h-8 w-8 p-0"
+              title="Elements"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={activeTab === 'saved' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => { setIsCollapsed(false); setActiveTab('saved'); }}
+              className="h-8 w-8 p-0"
+              title="Saved Elements"
+            >
+              <Bookmark className="h-4 w-4" />
+              {elementPool.length > 0 && (
+                <span className="absolute -top-1 -right-1 h-4 w-4 text-[10px] bg-primary text-white rounded-full flex items-center justify-center">
+                  {elementPool.length}
+                </span>
+              )}
+            </Button>
+          </>
+        )}
       </div>
     );
   }
@@ -739,7 +753,7 @@ export function EditorSidebar({
       {/* Header */}
       <div className="flex items-center justify-between p-3 border-b bg-gray-50/50">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1">
-          <TabsList className="grid grid-cols-3 h-8">
+          <TabsList className={`grid ${mode === 'ab-test' ? 'grid-cols-1' : 'grid-cols-3'} h-8`}>
             <TabsTrigger
               value="properties"
               className="text-xs px-2 data-[state=active]:bg-white"
@@ -748,19 +762,24 @@ export function EditorSidebar({
               <Settings2 className="h-3.5 w-3.5 mr-1" />
               Props
             </TabsTrigger>
-            <TabsTrigger value="elements" className="text-xs px-2 data-[state=active]:bg-white">
-              <LayoutGrid className="h-3.5 w-3.5 mr-1" />
-              Add
-            </TabsTrigger>
-            <TabsTrigger value="saved" className="text-xs px-2 data-[state=active]:bg-white relative">
-              <Bookmark className="h-3.5 w-3.5 mr-1" />
-              Saved
-              {elementPool.length > 0 && (
-                <span className="ml-1 h-4 min-w-4 px-1 text-[10px] bg-primary text-white rounded-full flex items-center justify-center">
-                  {elementPool.length}
-                </span>
-              )}
-            </TabsTrigger>
+
+            {mode !== 'ab-test' && (
+              <>
+                <TabsTrigger value="elements" className="text-xs px-2 data-[state=active]:bg-white">
+                  <LayoutGrid className="h-3.5 w-3.5 mr-1" />
+                  Add
+                </TabsTrigger>
+                <TabsTrigger value="saved" className="text-xs px-2 data-[state=active]:bg-white relative">
+                  <Bookmark className="h-3.5 w-3.5 mr-1" />
+                  Saved
+                  {elementPool.length > 0 && (
+                    <span className="ml-1 h-4 min-w-4 px-1 text-[10px] bg-primary text-white rounded-full flex items-center justify-center">
+                      {elementPool.length}
+                    </span>
+                  )}
+                </TabsTrigger>
+              </>
+            )}
           </TabsList>
         </Tabs>
         <Button
@@ -938,8 +957,8 @@ export function EditorSidebar({
                             content?.type === 'iframe'
                               ? 'https://www.youtube.com/embed/...'
                               : content?.type === 'script'
-                              ? 'console.log("Hello");'
-                              : '<div>Your HTML here</div>'
+                                ? 'console.log("Hello");'
+                                : '<div>Your HTML here</div>'
                           }
                           className="w-full h-32 px-3 py-2 border rounded font-mono text-xs bg-muted/20 resize-none focus:ring-1 focus:ring-primary focus:border-primary"
                         />
@@ -947,8 +966,8 @@ export function EditorSidebar({
                           {content?.type === 'iframe'
                             ? 'Enter the URL of the content to embed'
                             : content?.type === 'script'
-                            ? 'Enter JavaScript code (runs on published page)'
-                            : 'Enter HTML code to embed (forms, widgets, etc.)'}
+                              ? 'Enter JavaScript code (runs on published page)'
+                              : 'Enter HTML code to embed (forms, widgets, etc.)'}
                         </p>
                       </div>
 

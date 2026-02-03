@@ -1,6 +1,6 @@
 'use client';
 
-import { cn } from '@/lib/utils';
+import { cn, isVoidElement } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -44,6 +44,8 @@ export default function BuilderPage() {
   const { toast } = useToast();
 
   const variantId = searchParams.get('variantId');
+  const mode = searchParams.get('mode') as 'default' | 'ab-test' || 'default';
+  const testId = searchParams.get('testId');
 
   const [elements, setElements] = useState<ExtendedElement[]>([]);
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
@@ -278,6 +280,12 @@ export default function BuilderPage() {
         title: 'Saved',
         description: 'Page saved successfully',
       });
+
+      // Handle A/B Test Return
+      if (mode === 'ab-test' && testId) {
+        router.push(`/${params.workspaceSlug}/ab-tests/${testId}`);
+      }
+
     } catch (error) {
       console.error('Save error:', error);
       toast({
@@ -331,7 +339,11 @@ export default function BuilderPage() {
   };
 
   const handleBack = () => {
-    router.push(`/${params.workspaceSlug}/pages`);
+    if (mode === 'ab-test' && testId) {
+      router.push(`/${params.workspaceSlug}/ab-tests/${testId}`);
+    } else {
+      router.push(`/${params.workspaceSlug}/pages`);
+    }
   };
 
   const handleSaveSettings = async (settings: {
@@ -618,64 +630,12 @@ export default function BuilderPage() {
     >
       <div className="flex h-screen flex-col bg-gray-50">
         {/* Toolbar */}
-        <div className="flex items-center justify-between border-b bg-white px-4 py-3">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={handleBack}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-            <div className="h-6 w-px bg-gray-200" />
-            <div>
-              <h1 className="font-semibold text-sm">
-                {pageMetadata?.title}
-                {variantId && <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs">Variant</span>}
-              </h1>
-              <p className="text-xs text-muted-foreground">AI Generated Page</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <ThemeChanger
-              currentThemeId={currentTheme}
-              onThemeChange={(themeId, updatedElements) => {
-                setCurrentTheme(themeId);
-                setElements(updatedElements);
-              }}
-              elements={elements}
-            />
-            <Button variant="outline" size="sm" onClick={() => setIsSettingsOpen(true)}>
-              <Settings2 className="h-4 w-4 mr-2" />
-              Settings
-            </Button>
-            <Button variant="outline" size="sm" onClick={handlePreview}>
-              <Eye className="h-4 w-4 mr-2" />
-              Preview
-            </Button>
-            <Button
-              variant={pageStatus === 'PUBLISHED' ? 'outline' : 'default'}
-              size="sm"
-              onClick={handlePublish}
-              disabled={isPublishing}
-              className={pageStatus === 'PUBLISHED' ? '' : 'bg-green-600 hover:bg-green-700'}
-            >
-              {pageStatus === 'PUBLISHED' ? (
-                <>
-                  <GlobeLock className="h-4 w-4 mr-2" />
-                  {isPublishing ? 'Unpublishing...' : 'Unpublish'}
-                </>
-              ) : (
-                <>
-                  <Globe className="h-4 w-4 mr-2" />
-                  {isPublishing ? 'Publishing...' : 'Publish'}
-                </>
-              )}
-            </Button>
-            <Button size="sm" onClick={handleSave} disabled={isSaving}>
-              <Save className="h-4 w-4 mr-2" />
-              {isSaving ? 'Saving...' : 'Save'}
-            </Button>
-          </div>
-        </div>
+        <Toolbar
+          onSave={handleSave}
+          onPreview={handlePreview}
+          onSettings={() => setIsSettingsOpen(true)}
+          mode={mode}
+        />
 
         {/* Main Content */}
         <div className="flex flex-1 overflow-hidden">
@@ -725,6 +685,7 @@ export default function BuilderPage() {
               addElementToState(element, targetId);
             }}
             setElements={setElements}
+            mode={mode}
           />
         </div>
 
@@ -934,6 +895,20 @@ function ElementNode({
   switch (element.type) {
     case 'text': {
       const Tag = (content?.tagName || 'p') as any;
+      if (isVoidElement(Tag)) {
+        return (
+          <Tag
+            style={styles}
+            data-label={element.type}
+            className={cn(
+              selectionClasses,
+              element.className || ''
+            )}
+            onClick={handleClick}
+            {...(element.attributes as object || {})}
+          />
+        );
+      }
       return (
         <Tag
           style={styles}
@@ -1132,6 +1107,23 @@ function ElementNode({
     default: {
       const ContainerTag = (content?.tagName || 'div') as any;
       const childElements = element.children || [];
+
+      if (isVoidElement(ContainerTag)) {
+        return (
+          <ContainerTag
+            ref={setNodeRef}
+            style={styles}
+            data-label={element.type}
+            className={cn(
+              selectionClasses,
+              element.className || ''
+            )}
+            onClick={handleClick}
+            {...(element.attributes as object || {})}
+          />
+        );
+      }
+
       return (
         <ContainerTag
           ref={setNodeRef}

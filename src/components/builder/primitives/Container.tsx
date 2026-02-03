@@ -9,6 +9,7 @@ import { BuilderElement } from '@/types/builder';
 import { ContainerContent } from '@/types/primitives';
 import { stylesToCSSObject } from '@/lib/styles';
 import { resolveStylesAtBreakpoint } from '@/lib/styles/responsive-utils';
+import { isVoidElement } from '@/lib/utils';
 
 interface ContainerProps {
   element: BuilderElement;
@@ -31,6 +32,17 @@ export function Container({
   // Resolve styles for current breakpoint
   const resolvedStyles = resolveStylesAtBreakpoint(element.styles, breakpoint);
   const styleObject = stylesToCSSObject(resolvedStyles);
+
+  if (isVoidElement(Tag)) {
+    return React.createElement(Tag, {
+      'data-element-id': element.id,
+      'data-element-type': element.type,
+      className: element.className,
+      style: styleObject,
+      onClick: isBuilder ? onClick : undefined,
+      ...element.attributes,
+    });
+  }
 
   return React.createElement(
     Tag,

@@ -76,20 +76,20 @@ export default function TestCreator({ workspaceSlug, pageId, pages = [] }: TestC
       const payload: any = {
         ...formData,
         testType,
+        cloneElements: true, // Enable Element Cloning for Visual Editor
       };
 
       if (testType === 'PAGE_REDIRECT') {
         payload.variantConfigs = pageVariants;
       } else {
-        payload.variantNames = elementVariants.map((v) => v.name);
-        // Store element changes in the first API call or handle separately
-        // For now, we'll pass empty variants and update them later with element changes
+        payload.variantNames = ['Control', 'Variant A'];
       }
 
       const response = await fetch('/api/ab-tests', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-create-status': 'DRAFT'
         },
         body: JSON.stringify(payload),
       });
@@ -101,14 +101,18 @@ export default function TestCreator({ workspaceSlug, pageId, pages = [] }: TestC
 
       const { test } = await response.json();
 
-      // For element tests, we might need to update variants with element changes
-      // This would require additional API calls to update each variant
       if (testType === 'ELEMENT_TEST') {
-        // TODO: Update variants with element changes
-        // This can be done via a separate API endpoint or as part of the test editor
+        // Find the non-control variant (Variant A)
+        const variantA = test.variants.find((v: any) => !v.isControl);
+
+        if (variantA) {
+          // Redirect to the visual editor with variantId and clone mode
+          router.push(`/${workspaceSlug}/pages/${formData.pageId}?variantId=${variantA.id}&mode=ab-test&testId=${test.id}`);
+          return; // Stop execution here to prevent redirecting to details page
+        }
       }
 
-      // Redirect to test detail page
+      // Redirect to test detail page (fallback)
       router.push(`/${workspaceSlug}/ab-tests/${test.id}`);
     } catch (error) {
       console.error('Failed to create A/B test:', error);
@@ -182,7 +186,28 @@ export default function TestCreator({ workspaceSlug, pageId, pages = [] }: TestC
           onChange={setPageVariants}
         />
       ) : (
-        <ElementTestEditor variants={elementVariants} onChange={setElementVariants} />
+        <div className="space-y-6">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
+            <h3 className="text-lg font-medium text-blue-900 mb-2">
+              Customize Variants in Editor
+            </h3>
+            <p className="text-sm text-blue-700 mb-6 max-w-lg mx-auto">
+              Instead of manually defining changes, you will be redirected to the visual editor
+              where you can directly edit the variant page as if it were a normal page.
+            </p>
+
+            <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto text-left mb-6">
+              <div className="bg-white p-3 rounded border border-blue-100 shadow-sm">
+                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Variant A</div>
+                <div className="text-sm">You will edit this variant</div>
+              </div>
+              <div className="bg-gray-50 p-3 rounded border border-gray-200 opacity-75">
+                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Control</div>
+                <div className="text-sm">Remains unchanged</div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Divider */}
@@ -275,7 +300,7 @@ export default function TestCreator({ workspaceSlug, pageId, pages = [] }: TestC
           Cancel
         </Button>
         <Button type="submit" disabled={loading}>
-          {loading ? 'Creating...' : 'Create A/B Test'}
+          {loading ? 'Creating...' : (testType === 'ELEMENT_TEST' ? 'Create & Customize Variant' : 'Create A/B Test')}
         </Button>
       </div>
     </form>
