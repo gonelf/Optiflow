@@ -304,7 +304,7 @@ export default function PagesListPage() {
       setIsAICreateDialogOpen(false);
 
       // Navigate to new AI editor
-      const redirectUrl = data.redirectUrl || `/${workspaceSlug}/ai-pages/${data.page.id}`;
+      const redirectUrl = data.redirectUrl || `/${workspaceSlug}/pages/${data.page.id}`;
       router.push(redirectUrl);
     } catch (error: any) {
       console.error('Error creating page with AI:', error);

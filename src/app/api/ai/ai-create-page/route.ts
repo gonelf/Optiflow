@@ -239,7 +239,7 @@ export async function POST(req: NextRequest) {
                 slug: page.slug,
                 description: page.description,
             },
-            redirectUrl: workspace ? `/${workspace.slug}/ai-pages/${page.id}` : `/ai-pages/${page.id}`,
+            redirectUrl: workspace ? `/${workspace?.slug}/pages/${page.id}` : `/pages/${page.id}`,
         });
     } catch (error) {
         console.error('AI page creation error:', error);

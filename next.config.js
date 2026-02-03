@@ -2,6 +2,18 @@
 const nextConfig = {
   reactStrictMode: true,
 
+
+  // Redirects for legacy routes
+  async redirects() {
+    return [
+      {
+        source: '/:workspaceSlug/ai-pages/:pageId',
+        destination: '/:workspaceSlug/pages/:pageId',
+        permanent: true,
+      },
+    ];
+  },
+
   // Enable instrumentation for startup logging
   experimental: {
     instrumentationHook: true,
