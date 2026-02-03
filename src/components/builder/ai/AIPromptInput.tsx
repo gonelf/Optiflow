@@ -3,15 +3,41 @@
 /**
  * AI Prompt Input Component
  * Allows users to generate pages using AI
+ *
+ * Enhanced with Advanced Approach: Real-world examples and design styles
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { GeneratedPage } from '@/services/ai/generator.service';
+
+// Design styles available for generation
+const DESIGN_STYLES = [
+  { value: 'minimal', label: 'Minimal', description: 'Clean and simple' },
+  { value: 'bold', label: 'Bold', description: 'High-impact and dramatic' },
+  { value: 'corporate', label: 'Corporate', description: 'Professional and trustworthy' },
+  { value: 'playful', label: 'Playful', description: 'Fun and engaging' },
+  { value: 'neobrutalist', label: 'Neobrutalist', description: 'Raw and unconventional' },
+  { value: 'glassmorphism', label: 'Glassmorphism', description: 'Frosted glass effects' },
+  { value: 'dark', label: 'Dark Mode', description: 'Dark theme with accents' },
+  { value: 'gradient', label: 'Gradient', description: 'Colorful gradients' },
+];
+
+// Page types with descriptions
+const PAGE_TYPES = [
+  { value: 'landing', label: 'Landing Page', description: 'Convert visitors to customers' },
+  { value: 'pricing', label: 'Pricing Page', description: 'Display plans and pricing' },
+  { value: 'about', label: 'About Page', description: 'Tell your company story' },
+  { value: 'contact', label: 'Contact Page', description: 'Let visitors reach you' },
+  { value: 'product', label: 'Product Page', description: 'Showcase a product' },
+  { value: 'blog', label: 'Blog Post', description: 'Article or news content' },
+  { value: 'dashboard', label: 'Dashboard', description: 'Data and metrics display' },
+  { value: 'portfolio', label: 'Portfolio', description: 'Showcase your work' },
+];
 
 interface AIPromptInputProps {
   workspaceId: string;
@@ -28,9 +54,26 @@ export function AIPromptInput({
   const [industry, setIndustry] = useState('');
   const [targetAudience, setTargetAudience] = useState('');
   const [brandVoice, setBrandVoice] = useState('');
-  const [pageType, setPageType] = useState<'landing' | 'pricing' | 'about' | 'contact' | 'blog' | 'product'>('landing');
+  const [pageType, setPageType] = useState<string>('landing');
+  const [designStyle, setDesignStyle] = useState<string>('');
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [externalSearchAvailable, setExternalSearchAvailable] = useState(false);
+
+  // Check if external search is available
+  useEffect(() => {
+    fetch('/api/ai/examples')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setExternalSearchAvailable(data.data.externalSearchAvailable);
+        }
+      })
+      .catch(() => {
+        // Ignore errors, default to false
+      });
+  }, []);
 
   const handleGenerate = async () => {
     if (!description.trim()) {
@@ -54,6 +97,8 @@ export function AIPromptInput({
           brandVoice: brandVoice || undefined,
           pageType,
           workspaceId,
+          // Advanced Approach: Include design style for enhanced generation
+          designStyle: designStyle || undefined,
         }),
       });
 
@@ -70,6 +115,7 @@ export function AIPromptInput({
       setIndustry('');
       setTargetAudience('');
       setBrandVoice('');
+      setDesignStyle('');
     } catch (err) {
       console.error('Generation error:', err);
       setError(err instanceof Error ? err.message : 'Failed to generate page');
@@ -78,21 +124,42 @@ export function AIPromptInput({
     }
   };
 
+  // Enhanced examples with design styles (Advanced Approach)
   const examples = [
     {
-      description: 'A landing page for a B2B SaaS project management tool',
+      description: 'A landing page for a B2B SaaS project management tool with features like task boards, team collaboration, and integrations',
       industry: 'Software',
       audience: 'Project managers and team leads',
+      pageType: 'landing',
+      style: 'minimal',
     },
     {
-      description: 'Pricing page for a fitness app with 3 subscription tiers',
+      description: 'Pricing page for a fitness app with 3 subscription tiers (Free, Pro, Enterprise) with feature comparison',
       industry: 'Health & Fitness',
       audience: 'Health-conscious individuals',
+      pageType: 'pricing',
+      style: 'bold',
     },
     {
-      description: 'About page for a sustainable fashion brand',
+      description: 'About page for a sustainable fashion brand telling our story, mission, and team',
       industry: 'E-commerce',
       audience: 'Eco-conscious shoppers',
+      pageType: 'about',
+      style: 'corporate',
+    },
+    {
+      description: 'Dashboard showing analytics metrics with charts, KPIs, and recent activity for a marketing platform',
+      industry: 'Marketing',
+      audience: 'Marketing managers',
+      pageType: 'dashboard',
+      style: 'dark',
+    },
+    {
+      description: 'Portfolio page showcasing web design projects with case studies and client testimonials',
+      industry: 'Design',
+      audience: 'Potential clients',
+      pageType: 'portfolio',
+      style: 'gradient',
     },
   ];
 
@@ -100,6 +167,8 @@ export function AIPromptInput({
     setDescription(example.description);
     setIndustry(example.industry);
     setTargetAudience(example.audience);
+    setPageType(example.pageType);
+    setDesignStyle(example.style);
   };
 
   return (
@@ -149,22 +218,53 @@ export function AIPromptInput({
         </p>
       </div>
 
-      {/* Page Type */}
-      <div className="mb-4">
-        <Label className="mb-2 block">Page Type</Label>
-        <select
-          value={pageType}
-          onChange={(e) => setPageType(e.target.value as any)}
-          disabled={isGenerating}
-          className="w-full px-3 py-2 border rounded-md"
-        >
-          <option value="landing">Landing Page</option>
-          <option value="pricing">Pricing Page</option>
-          <option value="about">About Page</option>
-          <option value="contact">Contact Page</option>
-          <option value="product">Product Page</option>
-          <option value="blog">Blog Post</option>
-        </select>
+      {/* Page Type and Design Style - Side by Side */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        {/* Page Type */}
+        <div>
+          <Label className="mb-2 block">Page Type</Label>
+          <select
+            value={pageType}
+            onChange={(e) => setPageType(e.target.value)}
+            disabled={isGenerating}
+            className="w-full px-3 py-2 border rounded-md bg-white"
+          >
+            {PAGE_TYPES.map((type) => (
+              <option key={type.value} value={type.value}>
+                {type.label}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-gray-500 mt-1">
+            {PAGE_TYPES.find(t => t.value === pageType)?.description}
+          </p>
+        </div>
+
+        {/* Design Style */}
+        <div>
+          <Label className="mb-2 block">
+            Design Style
+            <span className="text-xs text-gray-500 ml-1">(optional)</span>
+          </Label>
+          <select
+            value={designStyle}
+            onChange={(e) => setDesignStyle(e.target.value)}
+            disabled={isGenerating}
+            className="w-full px-3 py-2 border rounded-md bg-white"
+          >
+            <option value="">Auto (AI chooses best style)</option>
+            {DESIGN_STYLES.map((style) => (
+              <option key={style.value} value={style.value}>
+                {style.label} - {style.description}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-gray-500 mt-1">
+            {designStyle
+              ? DESIGN_STYLES.find(s => s.value === designStyle)?.description
+              : 'AI will select a style based on your content'}
+          </p>
+        </div>
       </div>
 
       {/* Optional Fields */}
@@ -236,8 +336,18 @@ export function AIPromptInput({
       {/* Info */}
       <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
         <p className="text-xs text-blue-700">
-          <strong>Note:</strong> AI-generated pages are a starting point. You can
-          customize and refine the content using the visual editor after generation.
+          <strong>Powered by Real-World Examples:</strong> Our AI studies high-converting
+          pages from companies like Stripe, Linear, and Notion to generate better designs.
+          {' '}AI-generated pages are a starting point - customize using the visual editor.
+        </p>
+      </div>
+
+      {/* Advanced Approach Info */}
+      <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-md">
+        <p className="text-xs text-purple-700">
+          <strong>Design Inspirations:</strong> Each page type uses curated examples
+          from top websites. The AI adapts patterns from Stripe (landing pages),
+          Notion (pricing), Figma (about pages), and more for professional results.
         </p>
       </div>
     </Card>

@@ -1,6 +1,9 @@
 /**
  * AI Prompt Templates
  * Prompt engineering for page generation and optimization
+ *
+ * Advanced Approach: These prompts incorporate real-world examples
+ * from high-converting websites to improve generation quality
  */
 
 import { GeneratePageInput } from '@/services/ai/generator.service';
@@ -259,10 +262,11 @@ export interface PageWithContextInput {
     components: any[];
   }>;
   designStyle?: string;
+  examplesContext?: string; // Real-world examples for inspiration
 }
 
 export function generatePageWithContextPrompt(input: PageWithContextInput): string {
-  const { pagePurpose, existingPages, designStyle } = input;
+  const { pagePurpose, existingPages, designStyle, examplesContext } = input;
 
   let contextSection = '';
 
@@ -284,7 +288,7 @@ export function generatePageWithContextPrompt(input: PageWithContextInput): stri
     });
 
     contextSection = `DESIGN CONTEXT (Maintain Consistency):
-You are creating a new page for a workspace that already has ${existingPages.length} page(s). 
+You are creating a new page for a workspace that already has ${existingPages.length} page(s).
 Analyze the existing pages and maintain design consistency.
 
 Existing Pages:
@@ -327,12 +331,23 @@ This is the first page in the workspace. Create a modern, professional design wi
 - Accessible, user-friendly components`;
   }
 
+  // Add real-world examples context if provided (Advanced Approach)
+  const examplesSection = examplesContext ? `
+
+${examplesContext}
+
+IMPORTANT: Study the real-world examples above and incorporate their design patterns,
+layout structures, and conversion optimization techniques into your generation.
+Adapt elements creatively - don't copy directly, but use them as inspiration for a unique, high-quality design.
+` : '';
+
   return `You are a WORLD-CLASS web designer creating PREMIUM, PRODUCTION-READY landing pages. Your designs must be VISUALLY STUNNING and rival the best SaaS landing pages (like Stripe, Linear, Vercel).
 
 PAGE PURPOSE:
 ${pagePurpose}
 
 ${contextSection}
+${examplesSection}
 
 🎨 DESIGN PHILOSOPHY:
 Create a page that makes users say "WOW!" at first glance. Use:
