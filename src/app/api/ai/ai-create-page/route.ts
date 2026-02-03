@@ -26,11 +26,11 @@ export async function POST(req: NextRequest) {
         }
 
         // Check if Gemini API key is configured
-        if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_AI_API_KEY) {
+        if (!process.env.GEMINI_API_KEY) {
             return NextResponse.json(
                 {
                     error: 'AI service not configured',
-                    hint: 'Please configure GEMINI_API_KEY or GOOGLE_AI_API_KEY in your environment variables.',
+                    hint: 'Please configure GEMINI_API_KEY in your environment variables.',
                 },
                 { status: 500 }
             );
