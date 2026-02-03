@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -85,7 +86,7 @@ function WaitlistContent() {
             <Card className="w-full max-w-md border-border/50 shadow-lg backdrop-blur-sm">
                 <CardHeader className="text-center space-y-2">
                     <div className="mx-auto mb-4 flex items-center justify-center">
-                        <img src="/logo.svg" alt="Reoptimize" className="h-16 w-auto" />
+                        <Image src="/logo.svg" alt="Reoptimize" width={64} height={64} className="h-16 w-auto" priority />
                     </div>
                     <CardTitle className="text-3xl font-bold tracking-tight">
                         {user ? 'You are on the list!' : 'Join the Waitlist'}
