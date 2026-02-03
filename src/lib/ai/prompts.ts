@@ -358,7 +358,7 @@ HTML STRUCTURE:
 Generate a single semantic HTML5 \`<body>\` content structure (do not include <head> or <html> tags).
 - Use semantic tags: \`<header>\`, \`<section>\`, \`<nav>\`, \`<footer>\`, \`<article>\`
 - **CRITICAL**: Apply ALL styling using inline \`style="..."\` attributes. Do NOT use classes.
-- Use images with \`src\` placeholders (e.g., https://via.placeholder.com/800x400).
+- Use images with \`src\` placeholders (e.g., https://placehold.co/800x400/png).
 - Include SEO metadata in a special hidden div at the start:
   \`<div id="seo-metadata" data-title="Page Title" data-description="Meta description"></div>\`
 

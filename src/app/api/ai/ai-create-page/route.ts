@@ -159,9 +159,9 @@ export async function POST(req: NextRequest) {
                     depth,
                     path,
                     content: {
-                        ...node.content,
+                        ...(node.content || {}),
                         tagName: node.tagName,
-                        ...node.attributes
+                        ...(node.attributes || {})
                     },
                     styles: node.styles || {},
                     aiGenerated: true,
@@ -236,7 +236,7 @@ export async function POST(req: NextRequest) {
                 slug: page.slug,
                 description: page.description,
             },
-            redirectUrl: workspace ? `/${workspace.slug}/ai-pages/${page.id}` : `/ai-pages/${page.id}`,
+            redirectUrl: `/${workspace.slug}/pages/${page.id}`,
         });
     } catch (error) {
         console.error('AI page creation error:', error);

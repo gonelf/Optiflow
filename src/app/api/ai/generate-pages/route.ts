@@ -152,9 +152,9 @@ Create ${pageTypeDescriptions[validatedData.pageType]}
                     depth,
                     path,
                     content: {
-                        ...node.content,
+                        ...(node.content || {}),
                         tagName: node.tagName,
-                        ...node.attributes
+                        ...(node.attributes || {})
                     },
                     styles: node.styles || {},
                     aiGenerated: true,
