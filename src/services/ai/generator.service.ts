@@ -5,6 +5,7 @@
 
 import { getMultiModelService } from './multi-model.service';
 import { generatePagePrompt, generateComponentPrompt, generateOptimizationPrompt } from '@/lib/ai/prompts';
+import { DesignSystemService } from './design-system.service';
 
 export interface GeneratePageInput {
   productName?: string;
@@ -90,13 +91,37 @@ export class AIGeneratorService {
       components: any[];
     }>;
     designStyle?: string;
+    industry?: string;
+    projectName?: string;
+    useDesignSystem?: boolean; // Enable UI/UX Pro Max design system
   }): Promise<GeneratedPage> {
     const multiModel = getMultiModelService();
 
     // Import the prompt function
     const { generatePageWithContextPrompt } = await import('@/lib/ai/prompts');
 
-    const systemPrompt = generatePageWithContextPrompt(input);
+    // Generate design system if enabled
+    let designSystemPrompt: string | undefined;
+    if (input.useDesignSystem !== false) {
+      // Default to true
+      try {
+        console.log('Generating design system with UI/UX Pro Max...');
+        const designSystem = await DesignSystemService.generateDesignSystem(
+          input.pagePurpose,
+          input.projectName || 'Project',
+          input.industry
+        );
+        designSystemPrompt = DesignSystemService.designSystemToPrompt(designSystem);
+        console.log('Design system generated successfully');
+      } catch (error) {
+        console.warn('Failed to generate design system, continuing without it:', error);
+      }
+    }
+
+    const systemPrompt = generatePageWithContextPrompt({
+      ...input,
+      designSystem: designSystemPrompt,
+    });
     const userPrompt = `Generate a page for: ${input.pagePurpose}`;
 
     const result = await multiModel.generateContent(userPrompt, {
