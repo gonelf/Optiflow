@@ -105,9 +105,9 @@ export async function verifyWorkspaceAuth(
     async () => {
       return prisma.workspaceMember.findUnique({
         where: {
-          workspaceId_userId: {
-            workspaceId,
+          userId_workspaceId: {
             userId,
+            workspaceId,
           },
         },
         select: {
