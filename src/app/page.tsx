@@ -35,7 +35,7 @@ export default function Home() {
                 How Much Could You Save?
               </h2>
               <p className="text-lg text-muted-foreground">
-                See the real cost of your current Webflow + VWO + Mixpanel stack vs. Reoptimize's all-in-one platform
+                See the real cost of your current Webflow + VWO + Mixpanel stack vs. Reoptimize&apos;s all-in-one platform
               </p>
             </div>
             <div className="max-w-4xl mx-auto rounded-3xl border bg-muted/20 p-8 md:p-12 shadow-sm">
