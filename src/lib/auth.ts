@@ -93,7 +93,7 @@ export const authOptions: NextAuthOptions = {
         // For OAuth login, we need to fetch from DB only on initial sign in
         if ('onboarded' in user) {
           // Credentials login - use provided values
-          token.onboarded = user.onboarded
+          token.onboarded = user.onboarded ?? false
           token.systemRole = user.systemRole || 'USER'
         } else {
           // OAuth login - fetch from DB only once on sign in
