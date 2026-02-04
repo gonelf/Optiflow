@@ -134,7 +134,7 @@ export default async function PublishedPage({
 
   if (page.abTests.length > 0 && searchParams.variant) {
     const activeTest = page.abTests[0];
-    const variant = activeTest.variants.find((v) => v.id === searchParams.variant);
+    const variant = activeTest.variants.find((v: { id: string }) => v.id === searchParams.variant);
     if (variant) {
       components = variant.components as any;
       elements = variant.elements as any;
