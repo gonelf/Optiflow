@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
             product: 'A product/services page showcasing offerings with details and benefits',
         }
 
-        const fullDescription = `
+        const pagePurpose = `
 Business: ${validatedData.businessDescription}
 Industry: ${validatedData.industry}
 Target Audience: ${validatedData.targetAudience}
@@ -70,13 +70,12 @@ Brand Voice: ${validatedData.brandVoice}
 Create ${pageTypeDescriptions[validatedData.pageType]}
 `
 
-        // Generate the page using AI
-        const generatedPage = await AIGeneratorService.generatePage({
-            description: fullDescription,
-            industry: validatedData.industry,
-            targetAudience: validatedData.targetAudience,
-            brandVoice: validatedData.brandVoice,
+        // Generate the page using AI with HTML-based context approach
+        const generatedPage = await AIGeneratorService.generatePageWithContext({
+            pagePurpose,
             pageType: validatedData.pageType,
+            industry: validatedData.industry,
+            designStyle: validatedData.brandVoice,
         })
 
         // Generate a unique slug for this page
@@ -113,30 +112,20 @@ Create ${pageTypeDescriptions[validatedData.pageType]}
             },
         })
 
-        // Create the components for this page
-        if (generatedPage.components && generatedPage.components.length > 0) {
-            const componentData = generatedPage.components.map((component, index) => ({
-                pageId: page.id,
-                type: mapComponentType(component.type),
-                name: component.type || `Component ${index + 1}`,
-                order: index,
-                config: component.props || {},
-                styles: {},
-                content: component.content || {},
-                aiGenerated: true,
-                aiPrompt: fullDescription,
-            }))
-
-            await prisma.component.createMany({
-                data: componentData,
-            })
+        // Create the elements from the hierarchical tree structure
+        if (generatedPage.elements && generatedPage.elements.length > 0) {
+            await AIGeneratorService.createElementsFromTree(
+                generatedPage.elements,
+                page.id,
+                prisma
+            );
         }
 
         // Log the AI optimization
         await prisma.aIOptimization.create({
             data: {
                 type: 'VARIANT_GENERATION',
-                prompt: fullDescription,
+                prompt: pagePurpose,
                 context: {
                     pageType: validatedData.pageType,
                     industry: validatedData.industry,
@@ -187,25 +176,3 @@ Create ${pageTypeDescriptions[validatedData.pageType]}
         return NextResponse.json({ error: 'Failed to generate page' }, { status: 500 })
     }
 }
-
-// Map AI-generated component types to our ComponentType enum
-type ComponentType = 'HERO' | 'CTA' | 'PRICING' | 'FEATURES' | 'TESTIMONIALS' | 'FAQ' | 'FORM' | 'NEWSLETTER' | 'HEADER' | 'FOOTER' | 'CUSTOM'
-
-function mapComponentType(type: string): ComponentType {
-    const typeMap: Record<string, ComponentType> = {
-        hero: 'HERO',
-        cta: 'CTA',
-        pricing: 'PRICING',
-        features: 'FEATURES',
-        testimonials: 'TESTIMONIALS',
-        faq: 'FAQ',
-        form: 'FORM',
-        newsletter: 'NEWSLETTER',
-        header: 'HEADER',
-        footer: 'FOOTER',
-    }
-
-    const normalized = type.toLowerCase().replace(/[^a-z]/g, '')
-    return typeMap[normalized] || 'CUSTOM'
-}
-

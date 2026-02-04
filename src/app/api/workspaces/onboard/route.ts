@@ -58,20 +58,26 @@ export async function POST(req: NextRequest) {
         // 2. Generate Page Content via AI
         logger.info('Generating AI page for onboarding', { workspaceId: workspace.id });
 
-        const generatedContent = await AIGeneratorService.generatePage({
-            productName,
-            description: businessDescription,
-            targetAudience,
-            keyBenefits,
-            pageGoal,
-            brandVoice,
+        // Build a detailed description for the AI
+        const pagePurpose = `
+Create a landing page for ${productName}.
+
+Business Description: ${businessDescription}
+Target Audience: ${targetAudience}
+Key Benefits: ${keyBenefits}
+Page Goal: ${pageGoal}
+Brand Voice: ${brandVoice}
+
+Create a compelling landing page with a hero section, key features, benefits, social proof, and strong call-to-action.
+`;
+
+        const generatedContent = await AIGeneratorService.generatePageWithContext({
+            pagePurpose,
             pageType: 'landing',
+            designStyle: brandVoice,
         });
 
         // 3. Persist Page & Elements
-        // Note: AIGeneratorService currently returns legacy components structure.
-        // In Phase 8, we should eventually transform these to Elements, 
-        // but for now we follow the existing pattern in the database.
         const page = await prisma.page.create({
             data: {
                 title: generatedContent.title,
@@ -82,18 +88,17 @@ export async function POST(req: NextRequest) {
                 status: 'DRAFT',
                 seoTitle: generatedContent.seoTitle,
                 seoDescription: generatedContent.seoDescription,
-                components: {
-                    create: (generatedContent.components || []).map((comp, index) => ({
-                        type: comp.type.toUpperCase() as any,
-                        name: comp.type.charAt(0) + comp.type.slice(1).toLowerCase(),
-                        order: index,
-                        config: {},
-                        styles: {},
-                        content: comp.content || comp.props || {},
-                    })),
-                },
             },
         });
+
+        // 4. Create elements from the hierarchical tree structure
+        if (generatedContent.elements && generatedContent.elements.length > 0) {
+            await AIGeneratorService.createElementsFromTree(
+                generatedContent.elements,
+                page.id,
+                prisma
+            );
+        }
 
         logger.info('AI Onboarding completed successfully', {
             workspaceId: workspace.id,
