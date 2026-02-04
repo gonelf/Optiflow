@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { workspaceCache, getOrFetch } from '@/lib/server-cache'
 // import { Role, PlanType } from '@prisma/client'
 type Role = 'OWNER' | 'ADMIN' | 'MEMBER' | 'VIEWER';
 type PlanType = 'FREE' | 'PRO' | 'ENTERPRISE';
@@ -60,59 +61,83 @@ export class WorkspaceService {
   }
 
   static async findBySlug(slug: string) {
-    return prisma.workspace.findUnique({
-      where: { slug },
-      include: {
-        members: {
+    return getOrFetch(
+      workspaceCache,
+      `workspace:slug:${slug}`,
+      async () => {
+        return prisma.workspace.findUnique({
+          where: { slug },
           include: {
-            user: {
+            members: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    avatarUrl: true,
+                  },
+                },
+              },
+            },
+            startingPage: {
               select: {
                 id: true,
-                name: true,
-                email: true,
-                avatarUrl: true,
+                title: true,
+                slug: true,
+                status: true,
               },
             },
           },
-        },
-        startingPage: {
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            status: true,
-          },
-        },
+        })
       },
-    })
+      2 * 60 * 1000 // 2 minute TTL
+    )
   }
 
   static async findById(id: string) {
-    return prisma.workspace.findUnique({
-      where: { id },
-      include: {
-        members: {
+    return getOrFetch(
+      workspaceCache,
+      `workspace:id:${id}`,
+      async () => {
+        return prisma.workspace.findUnique({
+          where: { id },
           include: {
-            user: {
+            members: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    avatarUrl: true,
+                  },
+                },
+              },
+            },
+            startingPage: {
               select: {
                 id: true,
-                name: true,
-                email: true,
-                avatarUrl: true,
+                title: true,
+                slug: true,
+                status: true,
               },
             },
           },
-        },
-        startingPage: {
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            status: true,
-          },
-        },
+        })
       },
-    })
+      2 * 60 * 1000 // 2 minute TTL
+    )
+  }
+
+  // Invalidate workspace cache when workspace is modified
+  static invalidateCache(workspaceId: string, slug?: string) {
+    workspaceCache.delete(`workspace:id:${workspaceId}`)
+    if (slug) {
+      workspaceCache.delete(`workspace:slug:${slug}`)
+    }
+    // Also invalidate any pattern matches for this workspace
+    workspaceCache.invalidatePattern(`workspace:`)
   }
 
   static async findUserWorkspaces(userId: string) {
@@ -172,7 +197,7 @@ export class WorkspaceService {
       }
     }
 
-    return prisma.workspace.update({
+    const result = await prisma.workspace.update({
       where: { id: workspaceId },
       data,
       include: {
@@ -185,6 +210,11 @@ export class WorkspaceService {
         },
       },
     })
+
+    // Invalidate cache after update
+    this.invalidateCache(workspaceId, result.slug)
+
+    return result
   }
 
   static async getStartingPage(workspaceId: string) {
@@ -206,9 +236,20 @@ export class WorkspaceService {
   }
 
   static async delete(workspaceId: string) {
-    return prisma.workspace.delete({
+    // Get workspace first to get slug for cache invalidation
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: workspaceId },
+      select: { slug: true },
+    })
+
+    const result = await prisma.workspace.delete({
       where: { id: workspaceId },
     })
+
+    // Invalidate cache after delete
+    this.invalidateCache(workspaceId, workspace?.slug)
+
+    return result
   }
 
   static async getUserRole(workspaceId: string, userId: string): Promise<Role | null> {

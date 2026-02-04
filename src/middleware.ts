@@ -71,8 +71,29 @@ function isAppDomain(hostname: string): boolean {
 }
 
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  // FAST PATH: Skip middleware entirely for static assets and images
+  // This check runs before any other processing for maximum performance
+  if (
+    pathname.startsWith('/_next/static') ||
+    pathname.startsWith('/_next/image') ||
+    pathname.startsWith('/favicon') ||
+    pathname.endsWith('.ico') ||
+    pathname.endsWith('.png') ||
+    pathname.endsWith('.jpg') ||
+    pathname.endsWith('.jpeg') ||
+    pathname.endsWith('.svg') ||
+    pathname.endsWith('.webp') ||
+    pathname.endsWith('.avif') ||
+    pathname.endsWith('.woff') ||
+    pathname.endsWith('.woff2')
+  ) {
+    return NextResponse.next()
+  }
+
   const startTime = Date.now()
-  const { pathname, search } = request.nextUrl
+  const { search } = request.nextUrl
   const method = request.method
   const fullPath = search ? `${pathname}${search}` : pathname
 

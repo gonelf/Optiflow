@@ -86,17 +86,39 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id
-        // Get onboarded status and system role for existing users or new ones
+        // For credentials login, user object already has onboarded and systemRole
+        // For OAuth login, we need to fetch from DB only on initial sign in
+        if ('onboarded' in user) {
+          // Credentials login - use provided values
+          token.onboarded = user.onboarded ?? false
+          token.systemRole = user.systemRole || 'USER'
+        } else {
+          // OAuth login - fetch from DB only once on sign in
+          const dbUser = await prisma.user.findUnique({
+            where: { id: user.id },
+            select: { onboarded: true, systemRole: true },
+          })
+          token.onboarded = dbUser?.onboarded ?? false
+          token.systemRole = dbUser?.systemRole ?? 'USER'
+        }
+      }
+
+      // Only refresh user data from DB when explicitly triggered (e.g., after onboarding)
+      // This prevents unnecessary DB queries on every token use
+      if (trigger === 'update' && token.id) {
         const dbUser = await prisma.user.findUnique({
-          where: { id: user.id },
+          where: { id: token.id as string },
           select: { onboarded: true, systemRole: true },
         })
-        token.onboarded = dbUser?.onboarded ?? false
-        token.systemRole = dbUser?.systemRole ?? 'USER'
+        if (dbUser) {
+          token.onboarded = dbUser.onboarded
+          token.systemRole = dbUser.systemRole
+        }
       }
+
       return token
     },
     async session({ session, token }) {

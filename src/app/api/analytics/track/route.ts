@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Update variant metrics for conversions
+    // Update variant metrics for conversions - batched using Promise.all
     const variantConversions: Map<string, number> = new Map();
     const variantImpressions: Map<string, number> = new Map();
 
@@ -160,33 +160,36 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Update variant metrics
-    for (const [variantId, impressions] of variantImpressions) {
-      const conversions = variantConversions.get(variantId) || 0;
+    // Batch update variant metrics using transactions for atomicity
+    if (variantImpressions.size > 0) {
+      await prisma.$transaction(async (tx) => {
+        const updatePromises = Array.from(variantImpressions.entries()).map(
+          async ([variantId, impressions]) => {
+            const conversions = variantConversions.get(variantId) || 0;
 
-      await prisma.pageVariant.update({
-        where: { id: variantId },
-        data: {
-          impressions: { increment: impressions },
-          conversions: { increment: conversions },
-        },
+            // Update impressions and conversions
+            const variant = await tx.pageVariant.update({
+              where: { id: variantId },
+              data: {
+                impressions: { increment: impressions },
+                conversions: { increment: conversions },
+              },
+            });
+
+            // Calculate and update conversion rate in same transaction
+            const conversionRate = variant.impressions > 0
+              ? variant.conversions / variant.impressions
+              : 0;
+
+            return tx.pageVariant.update({
+              where: { id: variantId },
+              data: { conversionRate },
+            });
+          }
+        );
+
+        await Promise.all(updatePromises);
       });
-
-      // Recalculate conversion rate
-      const variant = await prisma.pageVariant.findUnique({
-        where: { id: variantId },
-      });
-
-      if (variant) {
-        const conversionRate = variant.impressions > 0
-          ? variant.conversions / variant.impressions
-          : 0;
-
-        await prisma.pageVariant.update({
-          where: { id: variantId },
-          data: { conversionRate },
-        });
-      }
     }
 
     return NextResponse.json(

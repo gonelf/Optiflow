@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { domainCache, getOrFetch } from '@/lib/server-cache'
 
 // Internal endpoint called by middleware to resolve a custom domain to a
 // workspace slug.  Not meant to be called by clients — it runs in Node.js
@@ -11,15 +12,24 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const customDomain = await prisma.customDomain.findUnique({
-      where: { domain },
-      select: {
-        workspace: { select: { slug: true } },
+    // Use cache to avoid hitting database on every request
+    const workspaceSlug = await getOrFetch(
+      domainCache,
+      `domain:${domain}`,
+      async () => {
+        const customDomain = await prisma.customDomain.findUnique({
+          where: { domain },
+          select: {
+            workspace: { select: { slug: true } },
+          },
+        })
+        return customDomain?.workspace.slug || null
       },
-    })
+      5 * 60 * 1000 // 5 minute TTL
+    )
 
     return NextResponse.json({
-      workspaceSlug: customDomain?.workspace.slug || null,
+      workspaceSlug,
     })
   } catch {
     return NextResponse.json({ workspaceSlug: null })
