@@ -4,13 +4,14 @@ import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
 import { ArrowRight, Play, Sparkles } from "lucide-react"
 import Link from "next/link"
+import { GradientBackground } from "./gradient-background"
 
 export function Hero() {
     return (
-        <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden">
-            {/* Background gradients */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-primary/20 rounded-full blur-[100px] -z-10 opacity-50" />
-            <div className="absolute bottom-0 right-0 w-[800px] h-[600px] bg-purple-500/10 rounded-full blur-[120px] -z-10" />
+        <section className="relative pt-32 pb-20 md:pt-48 md:pb-48 overflow-hidden">
+            <div className="absolute inset-0 -skew-y-6 origin-top-left bg-background overflow-hidden -z-10 h-[120%]">
+                <GradientBackground />
+            </div>
 
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center max-w-4xl mx-auto mb-16">
