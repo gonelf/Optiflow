@@ -6,7 +6,7 @@ import { WorkspaceSwitcher } from '@/components/workspace/workspace-switcher'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Home, FileText, TestTube, BarChart, Settings, LogOut, PanelLeft, Shield, ExternalLink } from 'lucide-react'
+import { Home, FileText, TestTube, BarChart, Settings, LogOut, PanelLeft, Shield, ExternalLink, User } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
 import { cn } from '@/lib/utils'
 
@@ -40,6 +40,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { name: 'A/B Tests', href: `/${workspaceSlug}/ab-tests`, icon: TestTube },
     { name: 'Analytics', href: `/${workspaceSlug}/analytics`, icon: BarChart },
     { name: 'Settings', href: `/${workspaceSlug}/settings`, icon: Settings },
+  ]
+
+  const accountNavigation = [
+    { name: 'Account Settings', href: `/${workspaceSlug}/account-settings`, icon: User },
   ]
 
   return (
@@ -123,6 +127,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {!isCollapsed && 'View Site'}
               </Button>
             </a>
+
+            {/* Divider */}
+            <div className="my-2 border-t" />
+
+            {/* Account Navigation */}
+            {accountNavigation.map((item) => (
+              <Link key={item.name} href={item.href}>
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    'w-full',
+                    isCollapsed ? 'justify-center px-2' : 'justify-start'
+                  )}
+                >
+                  <item.icon className={cn('h-4 w-4', !isCollapsed && 'mr-2')} />
+                  {!isCollapsed && item.name}
+                </Button>
+              </Link>
+            ))}
           </nav>
 
           {/* Footer */}
