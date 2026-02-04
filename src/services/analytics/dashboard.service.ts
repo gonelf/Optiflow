@@ -50,6 +50,7 @@ export interface TimeSeriesData {
 export class AnalyticsDashboardService {
   /**
    * Get real-time metrics for dashboard
+   * Optimized to batch queries using Promise.all for better performance
    */
   static async getDashboardMetrics(
     workspaceId: string,
@@ -60,6 +61,7 @@ export class AnalyticsDashboardService {
     const now = new Date();
     const defaultStartDate = startDate || new Date(now.getTime() - 24 * 60 * 60 * 1000); // Last 24 hours
     const defaultEndDate = endDate || now;
+    const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
 
     // Build base filter
     const baseFilter: any = {
@@ -74,83 +76,75 @@ export class AnalyticsDashboardService {
       baseFilter.pageId = pageId;
     }
 
-    // Current visitors (active in last 5 minutes)
-    const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
-    const currentVisitors = await prisma.analyticsSession.count({
-      where: {
-        ...baseFilter,
-        startedAt: {
-          gte: fiveMinutesAgo,
-        },
+    const eventSessionFilter = {
+      workspaceId,
+      startedAt: {
+        gte: defaultStartDate,
+        lte: defaultEndDate,
       },
-    });
+      ...(pageId ? { pageId } : {}),
+    };
 
-    // Total sessions
-    const sessions = await prisma.analyticsSession.findMany({
-      where: baseFilter,
-      select: {
-        id: true,
-        visitorId: true,
-        duration: true,
-      },
-    });
-
-    // Total pageviews
-    const pageviews = await prisma.analyticsEvent.count({
-      where: {
-        session: {
-          workspaceId,
+    // Batch all queries using Promise.all for parallel execution
+    const [
+      currentVisitors,
+      sessionsWithEvents,
+      pageviews,
+      conversions,
+    ] = await Promise.all([
+      // Current visitors (active in last 5 minutes)
+      prisma.analyticsSession.count({
+        where: {
+          ...baseFilter,
           startedAt: {
-            gte: defaultStartDate,
-            lte: defaultEndDate,
+            gte: fiveMinutesAgo,
           },
-          ...(pageId ? { pageId } : {}),
         },
-        eventType: 'PAGE_VIEW',
-      },
-    });
+      }),
 
-    // Total conversions
-    const conversions = await prisma.analyticsEvent.count({
-      where: {
-        session: {
-          workspaceId,
-          startedAt: {
-            gte: defaultStartDate,
-            lte: defaultEndDate,
+      // Sessions with events and duration - single query for sessions, bounce rate, and duration
+      prisma.analyticsSession.findMany({
+        where: baseFilter,
+        select: {
+          id: true,
+          visitorId: true,
+          duration: true,
+          _count: {
+            select: {
+              events: true,
+            },
           },
-          ...(pageId ? { pageId } : {}),
         },
-        isConversion: true,
-      },
-    });
+      }),
 
-    // Unique visitors
-    const uniqueVisitorIds = new Set(sessions.map((s: any) => s.visitorId));
+      // Total pageviews
+      prisma.analyticsEvent.count({
+        where: {
+          session: eventSessionFilter,
+          eventType: 'PAGE_VIEW',
+        },
+      }),
+
+      // Total conversions
+      prisma.analyticsEvent.count({
+        where: {
+          session: eventSessionFilter,
+          isConversion: true,
+        },
+      }),
+    ]);
+
+    // Calculate metrics from batched results
+    const uniqueVisitorIds = new Set(sessionsWithEvents.map((s: any) => s.visitorId));
     const uniqueVisitors = uniqueVisitorIds.size;
 
-    // Calculate bounce rate (sessions with only 1 pageview)
-    const sessionsWithEvents = await prisma.analyticsSession.findMany({
-      where: baseFilter,
-      select: {
-        id: true,
-        events: {
-          where: {
-            eventType: 'PAGE_VIEW',
-          },
-          select: {
-            id: true,
-          },
-        },
-      },
-    });
-
-    const bouncedSessions = sessionsWithEvents.filter((s: any) => s.events.length <= 1).length;
-    const bounceRate = sessions.length > 0 ? (bouncedSessions / sessions.length) * 100 : 0;
+    // Calculate bounce rate (sessions with 0 or 1 events)
+    const bouncedSessions = sessionsWithEvents.filter((s: any) => s._count.events <= 1).length;
+    const bounceRate = sessionsWithEvents.length > 0 ? (bouncedSessions / sessionsWithEvents.length) * 100 : 0;
 
     // Calculate average session duration
-    const totalDuration = sessions.reduce((sum: number, s: any) => sum + (s.duration || 0), 0);
-    const avgSessionDuration = sessions.length > 0 ? totalDuration / sessions.length : 0;
+    const totalDuration = sessionsWithEvents.reduce((sum: number, s: any) => sum + (s.duration || 0), 0);
+    const avgSessionDuration = sessionsWithEvents.length > 0 ? totalDuration / sessionsWithEvents.length : 0;
 
     // Calculate conversion rate
     const conversionRate = uniqueVisitors > 0 ? (conversions / uniqueVisitors) * 100 : 0;

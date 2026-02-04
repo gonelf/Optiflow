@@ -2,12 +2,69 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { PageRenderer } from '@/components/page-renderer';
+import { publishedPageCache, getOrFetch } from '@/lib/server-cache';
 
 // Make this route fully dynamic to avoid build-time database calls
 export const dynamic = 'force-dynamic';
 
 // ISR: Revalidate every hour
 export const revalidate = 3600;
+
+// Fetch full page data with caching - single query for both metadata and render
+async function getPublishedPage(slug: string) {
+  return getOrFetch(
+    publishedPageCache,
+    `page:${slug}`,
+    async () => {
+      return prisma.page.findFirst({
+        where: {
+          slug,
+          status: 'PUBLISHED',
+        },
+        include: {
+          components: {
+            where: {
+              variantId: null,
+            },
+            orderBy: {
+              order: 'asc',
+            },
+          },
+          elements: {
+            where: {
+              variantId: null,
+            },
+            orderBy: {
+              order: 'asc',
+            },
+          },
+          abTests: {
+            where: {
+              status: 'RUNNING',
+            },
+            include: {
+              variants: {
+                include: {
+                  components: {
+                    orderBy: {
+                      order: 'asc',
+                    },
+                  },
+                  elements: {
+                    orderBy: {
+                      order: 'asc',
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+    },
+    5 * 60 * 1000 // 5 minute TTL
+  );
+}
 
 // Generate metadata for SEO
 export async function generateMetadata({
@@ -16,19 +73,7 @@ export async function generateMetadata({
   params: { slug: string };
 }): Promise<Metadata> {
   try {
-    const page = await prisma.page.findFirst({
-      where: {
-        slug: params.slug,
-        status: 'PUBLISHED',
-      },
-      select: {
-        seoTitle: true,
-        seoDescription: true,
-        ogImage: true,
-        title: true,
-        description: true,
-      },
-    });
+    const page = await getPublishedPage(params.slug);
 
     if (!page) {
       return {
@@ -75,52 +120,8 @@ export default async function PublishedPage({
   params,
   searchParams,
 }: PublishedPageProps) {
-  // Fetch page with components
-  const page = await prisma.page.findFirst({
-    where: {
-      slug: params.slug,
-      status: 'PUBLISHED',
-    },
-    include: {
-      components: {
-        where: {
-          variantId: null, // Get base components
-        },
-        orderBy: {
-          order: 'asc',
-        },
-      },
-      elements: {
-        where: {
-          variantId: null, // Get base elements
-        },
-        orderBy: {
-          order: 'asc',
-        },
-      },
-      abTests: {
-        where: {
-          status: 'RUNNING',
-        },
-        include: {
-          variants: {
-            include: {
-              components: {
-                orderBy: {
-                  order: 'asc',
-                },
-              },
-              elements: {
-                orderBy: {
-                  order: 'asc',
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  });
+  // Fetch page with components - uses cache from getPublishedPage
+  const page = await getPublishedPage(params.slug);
 
   if (!page) {
     notFound();
@@ -133,7 +134,7 @@ export default async function PublishedPage({
 
   if (page.abTests.length > 0 && searchParams.variant) {
     const activeTest = page.abTests[0];
-    const variant = activeTest.variants.find((v) => v.id === searchParams.variant);
+    const variant = activeTest.variants.find((v: { id: string }) => v.id === searchParams.variant);
     if (variant) {
       components = variant.components as any;
       elements = variant.elements as any;
