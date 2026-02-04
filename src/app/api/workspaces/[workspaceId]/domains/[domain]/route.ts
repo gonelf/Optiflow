@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { WorkspaceService } from '@/services/workspace.service'
 import { VercelDomainsService } from '@/services/vercel-domains.service'
 import { prisma } from '@/lib/prisma'
+import { domainCache } from '@/lib/server-cache'
 
 type Role = 'OWNER' | 'ADMIN' | 'MEMBER' | 'VIEWER'
 
@@ -91,6 +92,9 @@ export async function DELETE(
 
     // Then remove from our database
     await prisma.customDomain.delete({ where: { id: customDomain.id } })
+
+    // Invalidate domain cache
+    domainCache.delete(`domain:${params.domain}`)
 
     return NextResponse.json({ message: 'Domain removed successfully' })
   } catch (error) {

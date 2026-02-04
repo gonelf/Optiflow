@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { WorkspaceService } from '@/services/workspace.service'
 import { VercelDomainsService } from '@/services/vercel-domains.service'
 import { prisma } from '@/lib/prisma'
+import { domainCache } from '@/lib/server-cache'
 import { z } from 'zod'
 
 type Role = 'OWNER' | 'ADMIN' | 'MEMBER' | 'VIEWER'
@@ -95,6 +96,9 @@ export async function POST(
         verifiedAt: vercelDomain.verified ? new Date() : null,
       },
     })
+
+    // Invalidate domain cache
+    domainCache.delete(`domain:${normalizedDomain}`)
 
     return NextResponse.json({ domain: customDomain }, { status: 201 })
   } catch (error) {
