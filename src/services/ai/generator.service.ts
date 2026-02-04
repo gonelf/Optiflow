@@ -632,4 +632,117 @@ export class AIGeneratorService {
     const examplesService = getExamplesSearchService();
     return examplesService.getAvailableDesignStyles();
   }
+
+  /**
+   * Flatten a hierarchical element tree into a flat array for database storage
+   * Assigns parentId, order, depth, and path to each element
+   */
+  static flattenElementTree(
+    elements: GeneratedElement[],
+    parentId: string | null = null,
+    depth: number = 0,
+    path: string = ''
+  ): Array<{
+    type: string;
+    tagName?: string;
+    name: string;
+    order: number;
+    parentId: string | null;
+    depth: number;
+    path: string;
+    content: any;
+    styles: Record<string, string>;
+    className?: string;
+  }> {
+    const flattened: any[] = [];
+
+    elements.forEach((element, index) => {
+      const currentPath = path ? `${path}.${index}` : `${index}`;
+
+      // Extract children before creating the flat element
+      const children = element.children || [];
+
+      // Create the flat element (without children property)
+      const flatElement = {
+        type: element.type,
+        tagName: element.tagName,
+        name: element.tagName || element.type || 'Element',
+        order: index,
+        parentId,
+        depth,
+        path: currentPath,
+        content: element.content || {},
+        styles: element.styles || {},
+        className: element.attributes?.class,
+      };
+
+      // Add to flattened array
+      flattened.push(flatElement);
+
+      // Recursively process children
+      // Note: We use a placeholder ID here. In actual database insertion,
+      // we'll need to create elements top-down and use the generated IDs
+      if (children.length > 0) {
+        const childElements = this.flattenElementTree(
+          children,
+          `PLACEHOLDER_${currentPath}`, // Will be replaced with actual ID during insertion
+          depth + 1,
+          currentPath
+        );
+        flattened.push(...childElements);
+      }
+    });
+
+    return flattened;
+  }
+
+  /**
+   * Create elements in database from hierarchical tree structure
+   * Handles parent-child relationships correctly by creating parents first
+   */
+  static async createElementsFromTree(
+    elements: GeneratedElement[],
+    pageId: string,
+    prisma: any,
+    parentId: string | null = null,
+    depth: number = 0,
+    path: string = ''
+  ): Promise<void> {
+    for (let index = 0; index < elements.length; index++) {
+      const element = elements[index];
+      const currentPath = path ? `${path}.${index}` : `${index}`;
+
+      // Extract children before creating the element
+      const children = element.children || [];
+
+      // Create the element in database
+      const createdElement = await prisma.element.create({
+        data: {
+          pageId,
+          type: element.type,
+          tagName: element.tagName,
+          name: element.tagName || element.type || 'Element',
+          order: index,
+          parentId,
+          depth,
+          path: currentPath,
+          content: element.content || {},
+          styles: element.styles || {},
+          className: element.attributes?.class,
+        },
+      });
+
+      // Recursively create children with the actual parent ID
+      if (children.length > 0) {
+        await this.createElementsFromTree(
+          children,
+          pageId,
+          prisma,
+          createdElement.id,
+          depth + 1,
+          currentPath
+        );
+      }
+    }
+  }
 }
