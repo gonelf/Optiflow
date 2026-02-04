@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast'
 import { motion } from 'framer-motion'
 import { Copy, Check, Users, Twitter, Linkedin, Mail } from 'lucide-react'
+import { GradientBackground } from '@/components/landing/gradient-background'
 
 function WaitlistContent() {
     const searchParams = useSearchParams()
@@ -82,8 +83,12 @@ function WaitlistContent() {
     }
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-gray-50/50 p-4 dark:bg-gray-950/50">
-            <Card className="w-full max-w-md border-border/50 shadow-lg backdrop-blur-sm">
+        <div className="flex min-h-screen items-center justify-center relative overflow-hidden bg-background p-4">
+            <div className="absolute inset-0">
+                <GradientBackground />
+            </div>
+
+            <Card className="w-full max-w-md border-border/50 shadow-lg backdrop-blur-sm relative z-10">
                 <CardHeader className="text-center space-y-2">
                     <div className="mx-auto mb-4 flex items-center justify-center">
                         <Image src="/logo.svg" alt="Reoptimize" width={64} height={64} className="h-16 w-auto" priority />
@@ -186,8 +191,6 @@ function WaitlistContent() {
                 </CardContent>
             </Card>
 
-            {/* Background decoration */}
-            <div className="fixed inset-0 -z-10 h-full w-full bg-white dark:bg-black bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
         </div>
     )
 }

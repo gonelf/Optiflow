@@ -29,13 +29,8 @@ export function CTA() {
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <Link href="/waitlist">
                                 <Button size="lg" variant="secondary" className="h-14 px-8 text-lg w-full sm:w-auto">
-                                    Start Free Trial
+                                    Join the Waitlist
                                     <ArrowRight className="ml-2 h-5 w-5" />
-                                </Button>
-                            </Link>
-                            <Link href="/demo">
-                                <Button size="lg" variant="outline" className="h-14 px-8 text-lg bg-transparent text-primary-foreground border-primary-foreground/20 hover:bg-primary-foreground/10 w-full sm:w-auto">
-                                    Book a Demo
                                 </Button>
                             </Link>
                         </div>

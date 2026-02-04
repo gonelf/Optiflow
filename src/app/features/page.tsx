@@ -65,8 +65,8 @@ export default function FeaturesPage() {
               <Link href="/login">
                 <Button variant="ghost" size="sm">Log In</Button>
               </Link>
-              <Link href="/signup">
-                <Button size="sm">Get Started Free</Button>
+              <Link href="/waitlist">
+                <Button size="sm">Join the Waitlist</Button>
               </Link>
             </div>
           </div>
@@ -84,9 +84,9 @@ export default function FeaturesPage() {
             Reoptimize combines powerful page building, native A/B testing, and deep analytics
             in one seamless platform. No integrations, no friction—just results.
           </p>
-          <Link href="/signup">
+          <Link href="/waitlist">
             <Button size="lg" className="text-lg px-8 py-6 h-auto">
-              Start Building Free
+              Join the Waitlist
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </Link>
@@ -558,9 +558,9 @@ export default function FeaturesPage() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/signup">
+            <Link href="/waitlist">
               <Button size="lg" variant="secondary" className="text-lg px-8 py-6 h-auto">
-                Start Building Free
+                Join the Waitlist
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>

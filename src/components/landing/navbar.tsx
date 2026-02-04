@@ -52,7 +52,7 @@ export function Navbar() {
                     </Link>
                     <Link href="/waitlist">
                         <Button size="sm" className="rounded-full px-6">
-                            Get Started
+                            Join the Waitlist
                         </Button>
                     </Link>
                 </div>

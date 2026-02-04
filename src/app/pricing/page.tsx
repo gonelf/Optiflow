@@ -46,8 +46,8 @@ export default function PricingPage() {
               <Link href="/login">
                 <Button variant="ghost" size="sm">Log In</Button>
               </Link>
-              <Link href="/signup">
-                <Button size="sm">Get Started Free</Button>
+              <Link href="/waitlist">
+                <Button size="sm">Join the Waitlist</Button>
               </Link>
             </div>
           </div>
@@ -84,9 +84,9 @@ export default function PricingPage() {
               <p className="text-sm text-muted-foreground">Forever free</p>
             </div>
 
-            <Link href="/signup" className="block mb-6">
+            <Link href="/waitlist" className="block mb-6">
               <Button variant="outline" className="w-full" size="lg">
-                Start Free
+                Join Waitlist
               </Button>
             </Link>
 
@@ -144,9 +144,9 @@ export default function PricingPage() {
               <p className="text-sm text-muted-foreground">Or $63/mo billed annually (save 20%)</p>
             </div>
 
-            <Link href="/signup" className="block mb-6">
+            <Link href="/waitlist" className="block mb-6">
               <Button className="w-full" size="lg">
-                Start Free Trial
+                Join Waitlist
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
@@ -469,9 +469,9 @@ export default function PricingPage() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/signup">
+            <Link href="/waitlist">
               <Button size="lg" className="text-lg px-8 py-6 h-auto">
-                Start Building Free
+                Join the Waitlist
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>

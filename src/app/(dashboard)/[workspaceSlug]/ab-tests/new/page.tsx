@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter, usePathname, useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -41,10 +42,12 @@ const PageCard = ({ page, selected, onClick }: { page: Page; selected: boolean; 
     >
         <div className="aspect-video bg-gray-100 relative overflow-hidden">
             {page.screenshotUrl ? (
-                <img
+                <Image
                     src={page.screenshotUrl}
                     alt={page.title}
-                    className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
                 />
             ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 via-gray-50 to-gray-100">

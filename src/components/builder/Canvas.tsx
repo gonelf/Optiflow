@@ -19,18 +19,22 @@ interface CanvasProps {
   elements: ExtendedElement[];
   selectedId: string | null;
   hoveredId: string | null;
+  isDragActive?: boolean;
   onSelect: (id: string) => void;
   onHover: (id: string | null) => void;
   onReorder: (elements: ExtendedElement[]) => void;
+  depth?: number;
 }
 
 export function AICanvas({
   elements,
   selectedId,
   hoveredId,
+  isDragActive,
   onSelect,
   onHover,
   onReorder,
+  depth = 0,
 }: CanvasProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: 'canvas-root',
@@ -55,9 +59,11 @@ export function AICanvas({
             element={el}
             selectedId={selectedId}
             hoveredId={hoveredId}
+            isDragActive={isDragActive}
             onSelect={onSelect}
             onHover={onHover}
             onReorder={onReorder}
+            depth={depth}
           />
         ))}
       </SortableContext>
@@ -69,16 +75,20 @@ function SortableElementNode({
   element,
   selectedId,
   hoveredId,
+  isDragActive,
   onSelect,
   onHover,
   onReorder,
+  depth,
 }: {
   element: ExtendedElement;
   selectedId: string | null;
   hoveredId: string | null;
+  isDragActive?: boolean;
   onSelect: (id: string) => void;
   onHover: (id: string | null) => void;
   onReorder: (elements: ExtendedElement[]) => void;
+  depth: number;
 }) {
   const {
     attributes,
@@ -89,6 +99,9 @@ function SortableElementNode({
     isDragging,
   } = useSortable({
     id: element.id,
+    data: {
+      isContainer: element.type === 'container'
+    }
   });
 
   const style = {
@@ -133,9 +146,11 @@ function SortableElementNode({
         element={element}
         selectedId={selectedId}
         hoveredId={hoveredId}
+        isDragActive={isDragActive}
         onSelect={onSelect}
         onHover={onHover}
         onReorder={onReorder}
+        depth={depth}
       />
     </div>
   );
@@ -145,16 +160,20 @@ function ElementNode({
   element,
   selectedId,
   hoveredId,
+  isDragActive,
   onSelect,
   onHover,
   onReorder,
+  depth,
 }: {
   element: ExtendedElement;
   selectedId: string | null;
   hoveredId: string | null;
+  isDragActive?: boolean;
   onSelect: (id: string) => void;
   onHover: (id: string | null) => void;
   onReorder: (elements: ExtendedElement[]) => void;
+  depth: number;
 }) {
   const isSelected = selectedId === element.id;
   const content = element.content || {};
@@ -163,10 +182,21 @@ function ElementNode({
   // Make containers droppable
   const { setNodeRef, isOver } = useDroppable({
     id: element.id,
-    disabled: element.type !== 'container', // Only containers can accept drops directly
+    disabled: element.type !== 'container',
     data: {
       elementId: element.id,
       isContainer: element.type === 'container'
+    }
+  });
+
+  // Drop zone overlay for containers - appears during drag to make them targetable
+  const { setNodeRef: setOverlayRef, isOver: isOverlayOver } = useDroppable({
+    id: `${element.id}-dropzone`,
+    disabled: element.type !== 'container' || !isDragActive,
+    data: {
+      elementId: element.id,
+      isContainer: element.type === 'container',
+      isDropZone: true
     }
   });
 
@@ -175,6 +205,24 @@ function ElementNode({
     e.stopPropagation();
     onSelect(element.id);
   };
+
+  // Calculate depth-based expansion
+  // OUTER containers expand MORE to create ledges for inner ones
+  const expansionStyles = isDragActive && element.type === 'container'
+    ? (element.children?.length || 0) === 0
+      ? 'border-primary/30 bg-primary/5' // Colors only here
+      : ''
+    : '';
+
+  const dynamicPadding = isDragActive && element.type === 'container'
+    ? (element.children?.length || 0) === 0
+      ? '32px'
+      : `${Math.max(8, 32 - (depth * 8))}px`
+    : styles.padding || '';
+
+  const dynamicMinHeight = isDragActive && element.type === 'container'
+    ? '80px'
+    : styles.minHeight || '';
 
   // Base selection classes
   const selectionClasses = cn(
@@ -186,8 +234,15 @@ function ElementNode({
     isSelected &&
     'before:content-[attr(data-label)] before:absolute before:-top-6 before:left-0 before:bg-blue-500 before:text-white before:text-[10px] before:px-1.5 before:py-0.5 before:rounded-t before:font-medium before:whitespace-nowrap before:z-[60] before:shadow-sm before:pointer-events-none',
     // Drop target feedback
-    isOver && 'ring-2 ring-primary ring-offset-2'
+    isOver && 'ring-2 ring-primary ring-offset-2 bg-primary/5',
+    expansionStyles
   );
+
+  const combinedStyles = {
+    ...styles,
+    padding: dynamicPadding,
+    minHeight: dynamicMinHeight,
+  };
 
   // Render based on type
   switch (element.type) {
@@ -196,7 +251,7 @@ function ElementNode({
       if (isVoidElement(Tag)) {
         return (
           <Tag
-            style={styles}
+            style={combinedStyles}
             data-label={element.type}
             className={cn(
               selectionClasses,
@@ -209,7 +264,7 @@ function ElementNode({
       }
       return (
         <Tag
-          style={styles}
+          style={combinedStyles}
           data-label={element.type}
           className={cn(
             selectionClasses,
@@ -225,7 +280,7 @@ function ElementNode({
     case 'button': {
       return (
         <button
-          style={styles}
+          style={combinedStyles}
           data-label={element.type}
           className={cn(
             selectionClasses,
@@ -247,7 +302,7 @@ function ElementNode({
             isSelected && "z-50"
           )}
           onClick={handleClick}
-          style={{ width: styles.width, height: styles.height }}
+          style={{ width: combinedStyles.width, height: combinedStyles.height }}
         >
           {isSelected && (
             <div className="absolute -top-6 left-0 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded-t font-medium whitespace-nowrap z-[60] shadow-sm pointer-events-none">
@@ -258,7 +313,7 @@ function ElementNode({
           <img
             src={content?.src || 'https://via.placeholder.com/150'}
             alt={content?.alt || ''}
-            style={styles}
+            style={combinedStyles}
             className={cn(
               'transition-all cursor-pointer block', // Block inside wrapper
               element.className || '',
@@ -279,7 +334,7 @@ function ElementNode({
       if (!embedContent?.code) {
         return (
           <div
-            style={styles}
+            style={combinedStyles}
             data-label={element.type}
             className={cn(
               selectionClasses,
@@ -410,7 +465,7 @@ function ElementNode({
         return (
           <ContainerTag
             ref={setNodeRef}
-            style={styles}
+            style={combinedStyles}
             data-label={element.type}
             className={cn(
               selectionClasses,
@@ -423,33 +478,72 @@ function ElementNode({
       }
 
       return (
-        <ContainerTag
-          ref={setNodeRef}
-          style={styles}
-          data-label={element.type}
-          className={cn(
-            selectionClasses,
-            element.className || ''
-          )}
-          onClick={handleClick}
-        >
-          <SortableContext
-            items={childElements.map(c => c.id)}
-            strategy={verticalListSortingStrategy}
+        <div className="relative">
+          <ContainerTag
+            ref={setNodeRef}
+            style={combinedStyles}
+            data-label={element.type}
+            className={cn(
+              selectionClasses,
+              element.className || '',
+              childElements.length === 0 && (isDragActive ? 'min-h-[100px] p-8' : 'min-h-[60px] p-4'),
+              childElements.length === 0 && 'border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center'
+            )}
+            onClick={handleClick}
           >
-            {childElements.map(child => (
-              <SortableChildElement
-                key={child.id}
-                element={child}
-                selectedId={selectedId}
-                hoveredId={hoveredId}
-                onSelect={onSelect}
-                onHover={onHover}
-                onReorder={onReorder}
-              />
-            ))}
-          </SortableContext>
-        </ContainerTag>
+            <SortableContext
+              items={childElements.map(c => c.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {childElements.length === 0 ? (
+                <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
+                  {isDragActive ? 'Drop here' : 'Empty Container'}
+                </span>
+              ) : (
+                childElements.map(child => (
+                  <SortableChildElement
+                    key={child.id}
+                    element={child}
+                    selectedId={selectedId}
+                    hoveredId={hoveredId}
+                    isDragActive={isDragActive}
+                    onSelect={onSelect}
+                    onHover={onHover}
+                    onReorder={onReorder}
+                    depth={depth + 1}
+                  />
+                ))
+              )}
+            </SortableContext>
+          </ContainerTag>
+
+          {/* Drop Zone Overlay - appears during drag to make container targetable */}
+          {isDragActive && childElements.length > 0 && (
+            <div
+              ref={setOverlayRef}
+              className={cn(
+                "absolute inset-0 pointer-events-auto z-[100] transition-all",
+                "border-4 rounded-lg",
+                isOverlayOver
+                  ? "border-blue-500 bg-blue-500/20 shadow-lg"
+                  : "border-blue-300/50 bg-blue-300/5 hover:border-blue-400 hover:bg-blue-400/10"
+              )}
+              style={{
+                pointerEvents: 'auto'
+              }}
+            >
+              {/* Label to show drop target */}
+              <div className={cn(
+                "absolute top-2 left-2 px-2 py-1 rounded text-xs font-medium transition-all",
+                isOverlayOver
+                  ? "bg-blue-500 text-white shadow-md"
+                  : "bg-blue-300/80 text-blue-900"
+              )}>
+                {isOverlayOver ? "Drop here" : "Drop zone"}
+              </div>
+            </div>
+          )}
+        </div>
       );
     }
   }
@@ -459,16 +553,20 @@ function SortableChildElement({
   element,
   selectedId,
   hoveredId,
+  isDragActive,
   onSelect,
   onHover,
   onReorder,
+  depth,
 }: {
   element: ExtendedElement;
   selectedId: string | null;
   hoveredId: string | null;
+  isDragActive?: boolean;
   onSelect: (id: string) => void;
   onHover: (id: string | null) => void;
   onReorder: (elements: ExtendedElement[]) => void;
+  depth: number;
 }) {
   const {
     attributes,
@@ -479,6 +577,9 @@ function SortableChildElement({
     isDragging,
   } = useSortable({
     id: element.id,
+    data: {
+      isContainer: element.type === 'container'
+    }
   });
 
   const style = {
@@ -523,9 +624,11 @@ function SortableChildElement({
         element={element}
         selectedId={selectedId}
         hoveredId={hoveredId}
+        isDragActive={isDragActive}
         onSelect={onSelect}
         onHover={onHover}
         onReorder={onReorder}
+        depth={depth}
       />
     </div>
   );
