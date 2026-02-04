@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+
+export const dynamic = 'force-dynamic';
 import { getExamplesSearchService } from '@/services/ai/examples-search.service';
 
 /**
