@@ -13,6 +13,27 @@ export const metadata: Metadata = {
     shortcut: '/logo.svg',
     apple: '/logo.svg',
   },
+  openGraph: {
+    title: 'Reoptimize - No-Code SaaS Marketing Site Builder',
+    description:
+      'Build, test, and optimize marketing pages without code. Integrated A/B testing and real-time analytics.',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Reoptimize - The Webflow Killer for Marketing Teams',
+      },
+    ],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Reoptimize - No-Code SaaS Marketing Site Builder',
+    description:
+      'Build, test, and optimize marketing pages without code. Integrated A/B testing and real-time analytics.',
+    images: ['/og-image.png'],
+  },
 }
 
 const inter = Inter({ subsets: ['latin'] })
