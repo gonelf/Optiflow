@@ -10,7 +10,8 @@ import {
     useSensor,
     useSensors,
     MouseSensor,
-    TouchSensor
+    TouchSensor,
+    pointerWithin
 } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import { EditorSidebar } from '@/components/builder/EditorSidebar';
@@ -24,6 +25,7 @@ interface PageEditorProps {
     pageId: string;
     mode?: 'default' | 'ab-test';
     toolbar?: React.ReactNode;
+    showAI?: boolean;
 }
 
 export function PageEditor({
@@ -33,10 +35,13 @@ export function PageEditor({
     setSelectedElementId,
     pageId,
     mode = 'default',
-    toolbar
+    toolbar,
+    showAI = true
 }: PageEditorProps) {
     const [hoveredElementId, setHoveredElementId] = useState<string | null>(null);
     const [draggedElement, setDraggedElement] = useState<any>(null);
+    const [activeDraggingId, setActiveDraggingId] = useState<string | null>(null);
+    const isDragging = !!draggedElement || !!activeDraggingId;
 
     const sensors = useSensors(
         useSensor(MouseSensor, { activationConstraint: { distance: 10 } }),
@@ -63,7 +68,7 @@ export function PageEditor({
             updatedAt: new Date(),
         };
 
-        if (!targetId) {
+        if (!targetId || targetId === 'canvas-root') {
             setElements(prev => [...prev, { ...newElement, order: prev.length }]);
             return;
         }
@@ -91,8 +96,6 @@ export function PageEditor({
                                 }
                             ]
                         };
-                    } else {
-                        return node;
                     }
                 }
 
@@ -157,60 +160,56 @@ export function PageEditor({
         const clone = (data: ExtendedElement[]): ExtendedElement[] =>
             JSON.parse(JSON.stringify(data));
 
-        const findElementAndParent = (
-            nodes: ExtendedElement[],
-            id: string,
-            parent: ExtendedElement | null = null
-        ): { element: ExtendedElement | null; parent: ExtendedElement | null; siblings: ExtendedElement[] | null } => {
-            for (const node of nodes) {
-                if (node.id === id) {
-                    return { element: node, parent, siblings: parent ? parent.children! : nodes };
+        const tree = clone(elements);
+
+        let movedElement: ExtendedElement | null = null;
+        const removeElement = (nodes: ExtendedElement[]): ExtendedElement[] => {
+            for (let i = 0; i < nodes.length; i++) {
+                if (nodes[i].id === activeId) {
+                    movedElement = nodes[i];
+                    nodes.splice(i, 1);
+                    return nodes;
                 }
-                if (node.children && node.children.length > 0) {
-                    const result = findElementAndParent(node.children, id, node);
-                    if (result.element) return result;
+                if (nodes[i].children) {
+                    nodes[i].children = removeElement(nodes[i].children!);
                 }
             }
-            return { element: null, parent: null, siblings: null };
+            return nodes;
         };
 
-        const activeResult = findElementAndParent(elements, activeId);
-        const overResult = findElementAndParent(elements, overId);
+        const treeWithoutActive = removeElement(tree);
+        if (!movedElement) return;
 
-        if (!activeResult.element || !overResult.element) return;
-        if (activeResult.parent?.id !== overResult.parent?.id) return;
+        const insertElement = (nodes: ExtendedElement[], parentId: string | null): boolean => {
+            const overIndex = nodes.findIndex(n => n.id === overId);
+            if (overIndex !== -1) {
+                const finalMoved = {
+                    ...movedElement!,
+                    parentId,
+                    order: overIndex
+                };
+                nodes.splice(overIndex, 0, finalMoved);
+                nodes.forEach((n, i) => n.order = i);
+                return true;
+            }
 
-        const reorderInArray = (arr: ExtendedElement[], fromId: string, toId: string): ExtendedElement[] => {
-            const oldIndex = arr.findIndex(el => el.id === fromId);
-            const newIndex = arr.findIndex(el => el.id === toId);
-            if (oldIndex === -1 || newIndex === -1) return arr;
-            return arrayMove(arr, oldIndex, newIndex);
+            for (const node of nodes) {
+                if (node.children) {
+                    if (insertElement(node.children, node.id)) return true;
+                }
+            }
+            return false;
         };
 
-        if (!activeResult.parent) {
-            const newElements = reorderInArray(clone(elements), activeId, overId);
-            setElements(newElements.map((el, i) => ({ ...el, order: i })));
+        if (insertElement(treeWithoutActive, null)) {
+            setElements(treeWithoutActive);
         } else {
-            const updateChildrenRecursively = (nodes: ExtendedElement[]): ExtendedElement[] => {
-                return nodes.map(node => {
-                    if (node.id === activeResult.parent!.id) {
-                        const newChildren = reorderInArray(node.children || [], activeId, overId);
-                        return {
-                            ...node,
-                            children: newChildren.map((c, i) => ({ ...c, order: i })),
-                        };
-                    }
-                    if (node.children && node.children.length > 0) {
-                        return { ...node, children: updateChildrenRecursively(node.children) };
-                    }
-                    return node;
-                });
-            };
-            setElements(updateChildrenRecursively(clone(elements)));
+            setElements([...treeWithoutActive, { ...(movedElement as any), parentId: null, order: treeWithoutActive.length }]);
         }
     };
 
     const handleDragStart = (event: DragStartEvent) => {
+        setActiveDraggingId(event.active.id as string);
         if (event.active.data.current?.isFromPool) {
             setDraggedElement(event.active.data.current.element);
         }
@@ -219,32 +218,157 @@ export function PageEditor({
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
         setDraggedElement(null);
+        setActiveDraggingId(null);
 
         if (!over) return;
 
+        let activeId = active.id as string;
+        let overId = over.id as string;
+
+        // Handle drop zone overlay IDs (strip -dropzone suffix to get actual container ID)
+        if (overId.endsWith('-dropzone')) {
+            overId = overId.replace('-dropzone', '');
+        }
+
         const elementData = active.data.current?.element;
-        if (active.data.current?.isFromPool && elementData) {
-            const targetId = over.id === 'canvas-root' ? null : (over.id as string);
+        if ((active.data.current?.isFromPool || activeId.startsWith('sidebar-') || activeId.startsWith('pool-')) && elementData) {
+            const targetId = overId === 'canvas-root' ? null : overId;
             addElementToState(elementData, targetId);
             return;
         }
 
-        if (active.id !== over.id) {
-            reorderElements(active.id as string, over.id as string);
+        if (activeId !== overId) {
+            if (overId === 'canvas-root') {
+                const clone = (data: ExtendedElement[]): ExtendedElement[] => JSON.parse(JSON.stringify(data));
+                const tree = clone(elements);
+                let movedElement: ExtendedElement | null = null;
+                const removeElement = (nodes: ExtendedElement[]): ExtendedElement[] => {
+                    for (let i = 0; i < nodes.length; i++) {
+                        if (nodes[i].id === activeId) {
+                            movedElement = nodes[i];
+                            nodes.splice(i, 1);
+                            return nodes;
+                        }
+                        if (nodes[i].children) {
+                            nodes[i].children = removeElement(nodes[i].children!);
+                        }
+                    }
+                    return nodes;
+                };
+                const treeWithoutActive = removeElement(tree);
+                if (movedElement) {
+                    setElements([...treeWithoutActive, { ...(movedElement as any), parentId: null, order: treeWithoutActive.length }]);
+                }
+            } else {
+                const overData = over.data.current;
+                const isOverContainer = overData?.isContainer || false;
+
+                const clone = (data: ExtendedElement[]): ExtendedElement[] => JSON.parse(JSON.stringify(data));
+                const tree = clone(elements);
+
+                let movedElement: ExtendedElement | null = null;
+                const findElement = (nodes: ExtendedElement[]): ExtendedElement | null => {
+                    for (const node of nodes) {
+                        if (node.id === activeId) return node;
+                        if (node.children) {
+                            const found = findElement(node.children);
+                            if (found) return found;
+                        }
+                    }
+                    return null;
+                };
+
+                movedElement = findElement(tree);
+                if (!movedElement) return;
+
+                const isActiveAlreadyChild = movedElement.parentId === overId;
+
+                if (isOverContainer && isActiveAlreadyChild) {
+                    // ESCAPE LOGIC: dropping onto own parent container moves it to the grandparent lvl (sibling of parent)
+                    const removeElement = (nodes: ExtendedElement[]): ExtendedElement[] => {
+                        for (let i = 0; i < nodes.length; i++) {
+                            if (nodes[i].id === activeId) {
+                                nodes.splice(i, 1);
+                                return nodes;
+                            }
+                            if (nodes[i].children) {
+                                nodes[i].children = removeElement(nodes[i].children!);
+                            }
+                        }
+                        return nodes;
+                    };
+                    const treeWithoutActive = removeElement(tree);
+                    const insertAfterParent = (nodes: ExtendedElement[]): boolean => {
+                        const parentIndex = nodes.findIndex(n => n.id === overId);
+                        if (parentIndex !== -1) {
+                            nodes.splice(parentIndex + 1, 0, {
+                                ...movedElement!,
+                                parentId: nodes[parentIndex].parentId,
+                                order: nodes[parentIndex].order + 1
+                            });
+                            nodes.forEach((n, i) => n.order = i);
+                            return true;
+                        }
+                        for (const node of nodes) {
+                            if (node.children) {
+                                if (insertAfterParent(node.children)) return true;
+                            }
+                        }
+                        return false;
+                    };
+                    if (insertAfterParent(treeWithoutActive)) {
+                        setElements(treeWithoutActive);
+                    }
+                } else if (isOverContainer && !isActiveAlreadyChild) {
+                    const removeElement = (nodes: ExtendedElement[]): ExtendedElement[] => {
+                        for (let i = 0; i < nodes.length; i++) {
+                            if (nodes[i].id === activeId) {
+                                nodes.splice(i, 1);
+                                return nodes;
+                            }
+                            if (nodes[i].children) {
+                                nodes[i].children = removeElement(nodes[i].children!);
+                            }
+                        }
+                        return nodes;
+                    };
+                    const treeWithoutActive = removeElement(tree);
+                    const insertIntoContainer = (nodes: ExtendedElement[]): boolean => {
+                        for (const node of nodes) {
+                            if (node.id === overId) {
+                                node.children = [...(node.children || []), {
+                                    ...(movedElement as any),
+                                    parentId: node.id,
+                                    order: node.children?.length || 0
+                                }];
+                                return true;
+                            }
+                            if (node.children) {
+                                if (insertIntoContainer(node.children)) return true;
+                            }
+                        }
+                        return false;
+                    };
+                    if (insertIntoContainer(treeWithoutActive)) {
+                        setElements(treeWithoutActive);
+                    }
+                } else {
+                    reorderElements(activeId, overId);
+                }
+            }
         }
     };
 
     return (
         <DndContext
             sensors={sensors}
+            collisionDetection={pointerWithin}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
         >
             <div className="flex h-full flex-col bg-gray-50">
                 {toolbar}
-
                 <div className="flex flex-1 overflow-hidden">
-                    {/* Canvas */}
                     <div className="flex-1 overflow-auto p-8">
                         <div className="mx-auto max-w-5xl bg-white shadow-lg min-h-screen">
                             {elements.length === 0 ? (
@@ -259,6 +383,7 @@ export function PageEditor({
                                     elements={elements}
                                     selectedId={selectedElementId}
                                     hoveredId={hoveredElementId}
+                                    isDragActive={isDragging}
                                     onSelect={setSelectedElementId}
                                     onHover={setHoveredElementId}
                                     onReorder={setElements}
@@ -266,34 +391,26 @@ export function PageEditor({
                             )}
                         </div>
                     </div>
-
-                    {/* Right Sidebar */}
                     <EditorSidebar
                         selectedElementId={selectedElementId}
                         elements={elements}
                         onElementUpdate={(id, updates) => {
                             const updateInTree = (els: ExtendedElement[]): ExtendedElement[] => {
                                 return els.map(el => {
-                                    if (el.id === id) {
-                                        return { ...el, ...updates };
-                                    }
-                                    if (el.children) {
-                                        return { ...el, children: updateInTree(el.children) };
-                                    }
+                                    if (el.id === id) return { ...el, ...updates };
+                                    if (el.children) return { ...el, children: updateInTree(el.children) };
                                     return el;
                                 });
                             };
                             setElements(updateInTree(elements));
                         }}
                         onElementSelect={setSelectedElementId}
-                        onAddElement={(element, targetId) => {
-                            addElementToState(element, targetId);
-                        }}
+                        onAddElement={(element, targetId) => addElementToState(element, targetId)}
                         setElements={setElements}
                         mode={mode}
+                        showAI={showAI}
                     />
                 </div>
-
                 <DragOverlay>
                     {draggedElement ? (
                         <div className="border rounded-lg p-3 bg-white shadow-xl opacity-90 w-48 pointer-events-none">

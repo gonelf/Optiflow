@@ -13,10 +13,10 @@ export function SavingsCalculator() {
   const webflowCost = 42 + (monthlyVisitors > 100000 ? 84 : 0) // Business plan + CMS add-on for high traffic
   const vwoCost = monthlyVisitors < 10000 ? 0 : monthlyVisitors < 50000 ? 199 : monthlyVisitors < 100000 ? 449 : 799
   const mixpanelCost = monthlyVisitors < 20000 ? 0 : monthlyVisitors < 100000 ? 89 : 299
-  const optiVibeCost = monthlyVisitors < 10000 ? 0 : monthlyVisitors < 50000 ? 49 : monthlyVisitors < 100000 ? 99 : 199
+  const reoptimizeCost = monthlyVisitors < 10000 ? 0 : monthlyVisitors < 50000 ? 49 : monthlyVisitors < 100000 ? 99 : 199
 
   const traditionalStackCost = webflowCost + vwoCost + mixpanelCost
-  const monthlySavings = traditionalStackCost - optiVibeCost
+  const monthlySavings = traditionalStackCost - reoptimizeCost
   const annualSavings = monthlySavings * 12
 
   // Time savings calculation (hours per month)
@@ -167,7 +167,7 @@ export function SavingsCalculator() {
                 </div>
                 <div className="flex justify-between pt-2 border-t font-semibold">
                   <span>Total</span>
-                  <span className="text-primary">${optiVibeCost}/mo</span>
+                  <span className="text-primary">${reoptimizeCost}/mo</span>
                 </div>
               </div>
             </div>

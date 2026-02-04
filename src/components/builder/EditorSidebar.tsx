@@ -58,6 +58,7 @@ interface EditorSidebarProps {
   onAddElement: (element: any, targetId?: string | null) => void;
   setElements: (elements: ExtendedElement[]) => void;
   mode?: 'default' | 'ab-test';
+  showAI?: boolean;
 }
 
 // Tailwind elements library
@@ -526,6 +527,50 @@ const ELEMENT_CATEGORIES = [
   { id: 'embeds', name: 'Embeds' },
 ];
 
+// Draggable sidebar item component
+function DraggableSidebarItem({ element, onAdd }: {
+  element: TailwindElement;
+  onAdd: (template: any) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `sidebar-${element.id}`,
+    data: {
+      type: element.type,
+      isPrimitive: true,
+      isFromPool: true,
+      element: element.template,
+    },
+  });
+
+  const style = {
+    transform: transform ? CSS.Translate.toString(transform) : undefined,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      className={cn(
+        "w-full text-left p-2.5 border border-gray-200 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors group cursor-grab active:cursor-grabbing",
+        isDragging && "opacity-50 ring-2 ring-primary ring-offset-1 z-[100]"
+      )}
+      onClick={() => onAdd(element.template)}
+    >
+      <div className="flex items-start gap-2.5">
+        <div className="p-1.5 bg-gray-100 rounded group-hover:bg-primary/10 transition-colors pointer-events-none">
+          <element.icon className="h-3.5 w-3.5 text-gray-600 group-hover:text-primary" />
+        </div>
+        <div className="flex-1 min-w-0 pointer-events-none">
+          <h4 className="text-sm font-medium text-gray-900 font-sans">{element.name}</h4>
+          <p className="text-xs text-gray-500 mt-0.5 truncate font-sans">{element.preview}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Draggable pool item component
 function DraggablePoolItem({ element, onAdd, onRemove }: {
   element: any;
@@ -543,7 +588,7 @@ function DraggablePoolItem({ element, onAdd, onRemove }: {
   });
 
   const style = {
-    transform: CSS.Translate.toString(transform),
+    transform: transform ? CSS.Translate.toString(transform) : undefined,
   };
 
   return (
@@ -613,6 +658,7 @@ export function EditorSidebar({
   onAddElement,
   setElements,
   mode = 'default',
+  showAI = true,
 }: EditorSidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState('elements');
@@ -621,11 +667,14 @@ export function EditorSidebar({
 
   // For A/B testing, default to properties tab if available, or just empty state if nothing selected
   // We want to FORCE properties tab and hide others
+  // Also auto-switch to properties tab when a NEW element is selected
   useEffect(() => {
     if (mode === 'ab-test') {
       setActiveTab('properties');
+    } else if (selectedElementId) {
+      setActiveTab('properties');
     }
-  }, [mode]);
+  }, [mode, selectedElementId]);
 
   const { elementPool, removeFromPool, clearPool } = useBuilderStore();
 
@@ -643,16 +692,10 @@ export function EditorSidebar({
 
   const selectedElement = selectedElementId ? findElement(elements) : null;
 
-  // Auto-switch to properties tab when element is selected
+  // Manual tab change
   const handleTabChange = (value: string) => {
     setActiveTab(value);
   };
-
-  // Switch to properties when an element is selected
-  if (selectedElement && activeTab !== 'properties') {
-    // Delay the switch to avoid render issues
-    setTimeout(() => setActiveTab('properties'), 0);
-  }
 
   // Filter elements for the library
   const filteredElements = TAILWIND_ELEMENTS.filter(element => {
@@ -805,7 +848,7 @@ export function EditorSidebar({
                   <p className="text-sm font-medium truncate">{selectedElement.name || selectedElement.type}</p>
                   <p className="text-xs text-muted-foreground capitalize">{selectedElement.type}</p>
                 </div>
-                <AIEditPopover element={selectedElement} onUpdate={handleAIUpdate} />
+                {showAI && <AIEditPopover element={selectedElement} onUpdate={handleAIUpdate} />}
               </div>
               <div className="flex items-center gap-1">
                 <ElementActions
@@ -1191,21 +1234,11 @@ export function EditorSidebar({
                   </div>
                 ) : (
                   filteredElements.map(element => (
-                    <button
+                    <DraggableSidebarItem
                       key={element.id}
-                      onClick={() => onAddElement(element.template, selectedElementId)}
-                      className="w-full text-left p-2.5 border border-gray-200 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors group"
-                    >
-                      <div className="flex items-start gap-2.5">
-                        <div className="p-1.5 bg-gray-100 rounded group-hover:bg-primary/10 transition-colors">
-                          <element.icon className="h-3.5 w-3.5 text-gray-600 group-hover:text-primary" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-medium text-gray-900">{element.name}</h4>
-                          <p className="text-xs text-gray-500 mt-0.5 truncate">{element.preview}</p>
-                        </div>
-                      </div>
-                    </button>
+                      element={element}
+                      onAdd={(template) => onAddElement(template, selectedElementId)}
+                    />
                   ))
                 )}
               </div>
