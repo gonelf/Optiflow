@@ -93,13 +93,13 @@ export async function generateMetadata({
       openGraph: {
         title: page.seoTitle || page.title,
         description: page.seoDescription || page.description || undefined,
-        images: page.ogImage ? [page.ogImage] : undefined,
+        images: [page.ogImage || '/og-image.png'],
       },
       twitter: {
         card: 'summary_large_image',
         title: page.seoTitle || page.title,
         description: page.seoDescription || page.description || undefined,
-        images: page.ogImage ? [page.ogImage] : undefined,
+        images: [page.ogImage || '/og-image.png'],
       },
     };
   } catch (error) {
