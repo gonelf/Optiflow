@@ -22,7 +22,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       status: 'ok',
-      message: 'OptiFlow API is running',
+      message: 'Reoptimize API is running',
       timestamp: new Date().toISOString(),
       environment: envCheck,
       logging: {

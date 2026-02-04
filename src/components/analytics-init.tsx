@@ -23,7 +23,7 @@ function getOrCreateSessionId(): string {
     return `session_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
   }
 
-  const storageKey = 'optiflow_session_id';
+  const storageKey = 'reoptimize_session_id';
   let sessionId = sessionStorage.getItem(storageKey);
 
   if (!sessionId) {

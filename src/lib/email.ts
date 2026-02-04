@@ -15,9 +15,9 @@ export async function sendPasswordResetEmail({
 }: SendPasswordResetEmailParams) {
   try {
     const { data, error } = await resend.emails.send({
-      from: process.env.EMAIL_FROM || 'noreply@reoptimize.com',
+      from: process.env.EMAIL_FROM || 'noreply@reoptimize.xyz',
       to,
-      subject: 'Reset Your Password - Optiflow',
+      subject: 'Reset Your Password - Reoptimize',
       html: `
         <!DOCTYPE html>
         <html>
@@ -28,7 +28,7 @@ export async function sendPasswordResetEmail({
           </head>
           <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-              <h1 style="color: white; margin: 0; font-size: 28px;">Optiflow</h1>
+              <h1 style="color: white; margin: 0; font-size: 28px;">Reoptimize</h1>
             </div>
 
             <div style="background: #ffffff; padding: 40px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 10px 10px;">
@@ -36,7 +36,7 @@ export async function sendPasswordResetEmail({
 
               ${userName ? `<p>Hi ${userName},</p>` : '<p>Hi there,</p>'}
 
-              <p>We received a request to reset your password for your Optiflow account. Click the button below to create a new password:</p>
+              <p>We received a request to reset your password for your Reoptimize account. Click the button below to create a new password:</p>
 
               <div style="text-align: center; margin: 30px 0;">
                 <a href="${resetUrl}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: 600; font-size: 16px;">Reset Password</a>
@@ -54,7 +54,7 @@ export async function sendPasswordResetEmail({
               <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 30px 0;">
 
               <p style="color: #999; font-size: 12px; margin: 0;">
-                This is an automated email from Optiflow. Please do not reply to this message.
+                This is an automated email from Reoptimize. Please do not reply to this message.
               </p>
             </div>
           </body>

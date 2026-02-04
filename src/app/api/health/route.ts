@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   const health: any = {
     status: 'ok',
     timestamp: new Date().toISOString(),
-    message: 'OptiFlow API is running',
+    message: 'Reoptimize API is running',
     checks: {
       api: 'healthy'
     }
