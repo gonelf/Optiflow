@@ -4,37 +4,25 @@ import { Inter } from 'next/font/google'
 import { Providers } from '@/lib/providers'
 import { Toaster } from '@/components/ui/toaster'
 
-export const metadata: Metadata = {
-  title: 'Reoptimize - No-Code SaaS Marketing Site Builder',
-  description:
-    'Build, test, and optimize marketing pages without code. Integrated A/B testing and real-time analytics.',
-  icons: {
-    icon: '/logo.svg',
-    shortcut: '/logo.svg',
-    apple: '/logo.svg',
-  },
-  openGraph: {
-    title: 'Reoptimize - No-Code SaaS Marketing Site Builder',
-    description:
-      'Build, test, and optimize marketing pages without code. Integrated A/B testing and real-time analytics.',
-    images: [
-      {
-        url: '/og-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'Reoptimize - The Webflow Killer for Marketing Teams',
-      },
-    ],
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Reoptimize - No-Code SaaS Marketing Site Builder',
-    description:
-      'Build, test, and optimize marketing pages without code. Integrated A/B testing and real-time analytics.',
-    images: ['/og-image.png'],
-  },
-}
+import { generateMetadata as genMeta, getOrganizationSchema, SITE_NAME, SITE_DESCRIPTION } from '@/lib/seo'
+
+export const metadata = genMeta({
+  title: `${SITE_NAME} - No-Code SaaS Marketing Site Builder`,
+  description: SITE_DESCRIPTION,
+  path: '/',
+  keywords: [
+    'no-code builder',
+    'marketing site builder',
+    'A/B testing',
+    'conversion optimization',
+    'landing page builder',
+    'SaaS marketing',
+    'visual page builder',
+    'analytics platform',
+    'webflow alternative',
+    'marketing automation',
+  ],
+})
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -51,6 +39,14 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://api.openai.com" />
         <link rel="dns-prefetch" href="https://api.stripe.com" />
+
+        {/* Organization Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(getOrganizationSchema()),
+          }}
+        />
       </head>
       <body className={`${inter.className} font-sans antialiased`} suppressHydrationWarning>
         <Providers>

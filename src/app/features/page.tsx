@@ -29,14 +29,31 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-export const metadata: Metadata = {
+import { generateMetadata as genMeta, getSoftwareApplicationSchema } from '@/lib/seo'
+import { StructuredData } from '@/components/structured-data'
+
+export const metadata = genMeta({
   title: 'Features - Reoptimize | Native A/B Testing & Analytics Builder',
-  description: 'Explore Reoptimize\'s comprehensive features: visual page builder, native A/B testing, integrated analytics, AI optimizations, and more. Everything you need to optimize SaaS conversions.',
-}
+  description: "Explore Reoptimize's comprehensive features: visual page builder, native A/B testing, integrated analytics, AI optimizations, and more. Everything you need to optimize SaaS conversions.",
+  path: '/features',
+  keywords: [
+    'page builder features',
+    'A/B testing features',
+    'analytics platform',
+    'conversion optimization tools',
+    'marketing automation features',
+    'no-code features',
+  ],
+})
 
 export default function FeaturesPage() {
+  const softwareSchema = getSoftwareApplicationSchema()
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+      {/* Structured Data for SEO and LLM Search */}
+      <StructuredData data={softwareSchema} />
+
       {/* Navigation */}
       <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">

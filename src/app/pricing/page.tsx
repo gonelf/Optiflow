@@ -10,14 +10,59 @@ import {
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 
-export const metadata: Metadata = {
+import { generateMetadata as genMeta, getProductSchema, getFAQSchema } from '@/lib/seo'
+import { StructuredData } from '@/components/structured-data'
+
+export const metadata = genMeta({
   title: 'Pricing - Reoptimize',
   description: 'Simple, transparent pricing for teams of all sizes. Start free, scale as you grow. No hidden fees.',
-}
+  path: '/pricing',
+  keywords: [
+    'reoptimize pricing',
+    'no-code builder pricing',
+    'A/B testing pricing',
+    'marketing platform cost',
+    'webflow alternative pricing',
+  ],
+})
 
 export default function PricingPage() {
+  // Product schemas for each pricing tier
+  const starterProduct = getProductSchema({
+    name: 'Reoptimize Starter',
+    description: 'Perfect for side projects and testing the waters',
+    price: 0,
+    features: ['1 workspace', 'Up to 3 pages', '5,000 monthly visitors', 'Basic A/B testing', 'Core analytics dashboard'],
+  })
+
+  const growthProduct = getProductSchema({
+    name: 'Reoptimize Growth',
+    description: 'For growing teams serious about optimization',
+    price: 79,
+    features: ['5 workspaces', 'Unlimited pages', '100,000 monthly visitors', 'Unlimited A/B tests', 'Advanced analytics', 'AI-powered optimizations'],
+  })
+
+  // FAQ schema from the pricing page FAQs
+  const pricingFAQs = getFAQSchema([
+    {
+      question: 'Do you offer a free trial?',
+      answer: 'Yes! Our Starter plan is free forever, and Growth plan includes a 14-day free trial. No credit card required to start.',
+    },
+    {
+      question: 'What happens if I exceed my visitor limit?',
+      answer: "We'll notify you when you're approaching your limit. You can upgrade your plan anytime, or we'll automatically pause new sessions until the next billing cycle to avoid surprise charges.",
+    },
+    {
+      question: 'Can I change plans later?',
+      answer: "Absolutely! You can upgrade or downgrade at any time. When upgrading, you'll get immediate access to new features. When downgrading, changes take effect at the next billing cycle.",
+    },
+  ])
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+      {/* Structured Data for SEO and LLM Search */}
+      <StructuredData data={[starterProduct, growthProduct, pricingFAQs]} />
+
       {/* Navigation */}
       <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">

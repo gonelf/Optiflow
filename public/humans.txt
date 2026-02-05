@@ -1,0 +1,20 @@
+/* TEAM */
+
+Team: Reoptimize Development Team
+Site: https://reoptimize-seven.vercel.app
+Contact: hello@reoptimize.com
+
+/* THANKS */
+
+Next.js - The React Framework
+Tailwind CSS - Utility-first CSS framework
+Radix UI - Accessible component primitives
+Vercel - Deployment and hosting
+
+/* SITE */
+
+Last update: 2026-02-05
+Language: English
+Standards: HTML5, CSS3, ES2020+
+Components: React, TypeScript
+Software: Next.js 14, Prisma, PostgreSQL

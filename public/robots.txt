@@ -1,5 +1,26 @@
 # https://www.robotstxt.org/robotstxt.html
+
+# Allow all crawlers to access public pages
 User-agent: *
 Allow: /
+Allow: /pricing
+Allow: /features
+Allow: /waitlist
 
+# Disallow private/authenticated routes
+Disallow: /api/
+Disallow: /admin/
+Disallow: /(dashboard)/
+Disallow: /(auth)/
+
+# Disallow dynamic workspace routes (private content)
+Disallow: /w/
+
+# Allow public workspace pages if they exist
+# Allow: /p/
+
+# Crawl delay (be polite to the server)
+Crawl-delay: 1
+
+# Sitemap location
 Sitemap: https://reoptimize-seven.vercel.app/sitemap.xml
