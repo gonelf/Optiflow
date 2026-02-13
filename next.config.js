@@ -161,40 +161,13 @@ const nextConfig = {
   swcMinify: true,
   poweredByHeader: false,
 
-  webpack: (config, { isServer, webpack }) => {
+  webpack: (config, { isServer }) => {
     // Handle Prisma client gracefully during build
     if (isServer) {
       config.externals = config.externals || []
       config.externals.push({
         '@prisma/client': 'commonjs @prisma/client',
       })
-    }
-
-    // Optimize bundle size and code splitting
-    config.optimization = {
-      ...config.optimization,
-      moduleIds: 'deterministic',
-      splitChunks: {
-        ...config.optimization.splitChunks,
-        chunks: 'all',
-        cacheGroups: {
-          ...config.optimization.splitChunks?.cacheGroups,
-          // Separate vendor chunks for better caching
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            chunks: 'all',
-            priority: 10,
-          },
-          // Separate UI components
-          ui: {
-            test: /[\\/]components[\\/]ui[\\/]/,
-            name: 'ui-components',
-            chunks: 'all',
-            priority: 20,
-          },
-        },
-      },
     }
 
     return config

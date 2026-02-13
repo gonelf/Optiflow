@@ -7,8 +7,7 @@ import { AnalyticsInit } from '@/components/analytics-init';
 // Make this route fully dynamic to avoid build-time database calls
 export const dynamic = 'force-dynamic';
 
-// ISR: Revalidate every hour
-export const revalidate = 3600;
+
 
 interface WorkspacePageParams {
   workspaceSlug: string;

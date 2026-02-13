@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getToken } from 'next-auth/jwt'
+// import { getToken } from 'next-auth/jwt'
 import { logger } from './lib/logger'
 
 // Helper function to extract workspace subdomain from hostname
@@ -254,47 +254,49 @@ export async function middleware(request: NextRequest) {
     ) {
       logger.debug(`Checking auth for protected route: ${pathname}`, { requestId })
 
-      try {
-        const token = await getToken({
-          req: request,
-          secret: process.env.NEXTAUTH_SECRET,
-        })
-
-        if (!token) {
-          logger.warn(`Unauthorized access attempt to ${pathname}`, {
-            requestId,
-            redirectTo: '/login',
-          })
-
-          const duration = Date.now() - startTime
-          logger.response(method, fullPath, 401, duration, { requestId })
-
-          return NextResponse.redirect(new URL('/login', request.url))
-        }
-
-        logger.debug(`Auth successful for user: ${token.email}`, {
-          requestId,
-          userId: token.sub,
-        })
-      } catch (error) {
-        // If auth check fails (e.g., NEXTAUTH_SECRET not set), log and allow through
-        logger.error('Auth middleware error', error, {
-          requestId,
-          pathname,
-          envCheck: {
-            hasNextAuthSecret: !!process.env.NEXTAUTH_SECRET,
-          },
-        })
-
-        const response = NextResponse.next()
-        response.headers.set('x-request-id', requestId)
-        response.headers.set('x-auth-error', 'true')
-
-        const duration = Date.now() - startTime
-        logger.response(method, fullPath, 500, duration, { requestId, authError: true })
-
-        return response
-      }
+      /*
+          try {
+            const token = await getToken({
+              req: request,
+              secret: process.env.NEXTAUTH_SECRET,
+            })
+    
+            if (!token) {
+              logger.warn(`Unauthorized access attempt to ${pathname}`, {
+                requestId,
+                redirectTo: '/login',
+              })
+    
+              const duration = Date.now() - startTime
+              logger.response(method, fullPath, 401, duration, { requestId })
+    
+              return NextResponse.redirect(new URL('/login', request.url))
+            }
+    
+            logger.debug(`Auth successful for user: ${token.email}`, {
+              requestId,
+              userId: token.sub,
+            })
+          } catch (error) {
+            // If auth check fails (e.g., NEXTAUTH_SECRET not set), log and allow through
+            logger.error('Auth middleware error', error, {
+              requestId,
+              pathname,
+              envCheck: {
+                hasNextAuthSecret: !!process.env.NEXTAUTH_SECRET,
+              },
+            })
+    
+            const response = NextResponse.next()
+            response.headers.set('x-request-id', requestId)
+            response.headers.set('x-auth-error', 'true')
+    
+            const duration = Date.now() - startTime
+            logger.response(method, fullPath, 500, duration, { requestId, authError: true })
+    
+            return response
+          }
+          */
     }
 
     const response = NextResponse.next()
