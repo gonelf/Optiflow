@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 // import { getToken } from 'next-auth/jwt'
 import { logger } from './lib/logger'
+import { shouldBlockBot, getBotInfo } from './lib/bot-detection'
 
 // Helper function to extract workspace subdomain from hostname
 function getWorkspaceSubdomain(hostname: string): string | null {
@@ -66,7 +67,8 @@ function isAppDomain(hostname: string): boolean {
   return (
     hostnameClean === 'localhost' ||
     hostnameClean.endsWith('.vercel.app') ||
-    hostnameClean === rootDomain
+    hostnameClean === rootDomain ||
+    hostnameClean.endsWith(`.${rootDomain}`)
   )
 }
 
@@ -103,13 +105,41 @@ export async function middleware(request: NextRequest) {
   // Get the hostname from the request
   const hostname = request.headers.get('host') || request.nextUrl.hostname
 
-  // Log incoming request
-  logger.request(method, fullPath, {
-    requestId,
-    userAgent: request.headers.get('user-agent'),
-    referer: request.headers.get('referer'),
-    hostname,
-  })
+  // Check for bot traffic and block if necessary
+  const userAgent = request.headers.get('user-agent')
+  if (shouldBlockBot(userAgent, pathname)) {
+    const botInfo = getBotInfo(userAgent)
+    logger.info('Bot blocked', {
+      requestId,
+      botType: botInfo.botType,
+      botName: botInfo.botName,
+      pathname,
+      hostname,
+    })
+
+    const duration = Date.now() - startTime
+    logger.response(method, fullPath, 403, duration, { requestId, reason: 'bot_blocked' })
+
+    return new NextResponse('Forbidden', { status: 403 })
+  }
+
+  // Log incoming request (only for non-bot traffic)
+  const botInfo = getBotInfo(userAgent)
+  if (botInfo.isBot) {
+    logger.debug('Bot allowed', {
+      requestId,
+      botType: botInfo.botType,
+      botName: botInfo.botName,
+      pathname,
+    })
+  } else {
+    logger.request(method, fullPath, {
+      requestId,
+      userAgent,
+      referer: request.headers.get('referer'),
+      hostname,
+    })
+  }
 
   try {
     // Check for workspace subdomain
@@ -159,6 +189,13 @@ export async function middleware(request: NextRequest) {
     // Custom domain check: only fires for hostnames that are not the app's own
     // domain (i.e. not localhost / *.vercel.app / root domain).
     if (!isAppDomain(hostname)) {
+      // Prevent infinite loops when the middleware fetches the resolve route
+      if (pathname === '/api/domains/resolve') {
+        const response = NextResponse.next()
+        response.headers.set('x-request-id', requestId)
+        return response
+      }
+
       try {
         const hostnameClean = hostname.split(':')[0]
 
