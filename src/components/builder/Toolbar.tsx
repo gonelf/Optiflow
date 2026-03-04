@@ -1,7 +1,6 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { useBuilderStore } from '@/store/builder.store';
 import {
   Save,
   Undo,
@@ -22,6 +21,9 @@ interface ToolbarProps {
   onPreview: () => void;
   onSettings: () => void;
   onBack?: () => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  onViewportChange?: (viewport: ViewportSize) => void;
   mode?: 'default' | 'ab-test';
   title?: string;
   isSaving?: boolean;
@@ -32,19 +34,25 @@ export function Toolbar({
   onPreview,
   onSettings,
   onBack,
+  onUndo,
+  onRedo,
+  onViewportChange,
   mode = 'default',
   title,
-  isSaving: propsIsSaving
+  isSaving = false,
 }: ToolbarProps) {
-  const { undo, redo, canUndo, canRedo, isSaving: storeIsSaving, metadata } = useBuilderStore();
   const [viewport, setViewport] = useState<ViewportSize>('desktop');
 
-  const displayTitle = title || metadata.title || 'Untitled Page';
-  const isSaving = propsIsSaving !== undefined ? propsIsSaving : storeIsSaving;
+  const handleViewport = (v: ViewportSize) => {
+    setViewport(v);
+    onViewportChange?.(v);
+  };
+
+  const displayTitle = title || 'Untitled Page';
 
   return (
-    <div className="flex h-16 items-center justify-between border-b bg-white px-4">
-      {/* Left section - Page info */}
+    <div className="flex h-16 items-center justify-between border-b bg-white px-4 shrink-0">
+      {/* Left — Page info */}
       <div className="flex items-center gap-4">
         {onBack && (
           <Button variant="ghost" size="icon" onClick={onBack}>
@@ -57,7 +65,6 @@ export function Toolbar({
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="lucide lucide-arrow-left"
             >
               <path d="m12 19-7-7 7-7" />
               <path d="M19 12H5" />
@@ -70,13 +77,14 @@ export function Toolbar({
         )}
       </div>
 
-      {/* Center section - Viewport controls */}
+      {/* Center — Viewport controls */}
       <div className="flex items-center gap-1 rounded-lg border bg-gray-50 p-1">
         <Button
           variant="ghost"
           size="sm"
           className={cn(viewport === 'desktop' && 'bg-white shadow-sm')}
-          onClick={() => setViewport('desktop')}
+          onClick={() => handleViewport('desktop')}
+          title="Desktop"
         >
           <Monitor className="h-4 w-4" />
         </Button>
@@ -84,7 +92,8 @@ export function Toolbar({
           variant="ghost"
           size="sm"
           className={cn(viewport === 'tablet' && 'bg-white shadow-sm')}
-          onClick={() => setViewport('tablet')}
+          onClick={() => handleViewport('tablet')}
+          title="Tablet"
         >
           <Tablet className="h-4 w-4" />
         </Button>
@@ -92,37 +101,35 @@ export function Toolbar({
           variant="ghost"
           size="sm"
           className={cn(viewport === 'mobile' && 'bg-white shadow-sm')}
-          onClick={() => setViewport('mobile')}
+          onClick={() => handleViewport('mobile')}
+          title="Mobile"
         >
           <Smartphone className="h-4 w-4" />
         </Button>
       </div>
 
-      {/* Right section - Actions */}
+      {/* Right — Actions */}
       <div className="flex items-center gap-2">
-        {/* Undo/Redo */}
+        {/* Undo / Redo */}
         <div className="flex items-center gap-1 border-r pr-2">
           <Button
             variant="ghost"
             size="sm"
-            onClick={undo}
-            disabled={!canUndo()}
-            title="Undo"
+            onClick={onUndo}
+            title="Undo (Ctrl+Z)"
           >
             <Undo className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            onClick={redo}
-            disabled={!canRedo()}
-            title="Redo"
+            onClick={onRedo}
+            title="Redo (Ctrl+Y)"
           >
             <Redo className="h-4 w-4" />
           </Button>
         </div>
 
-        {/* Actions */}
         <Button variant="outline" size="sm" onClick={onPreview}>
           <Eye className="mr-2 h-4 w-4" />
           Preview
@@ -133,7 +140,7 @@ export function Toolbar({
         </Button>
         <Button size="sm" onClick={onSave} disabled={isSaving}>
           <Save className="mr-2 h-4 w-4" />
-          {isSaving ? 'Saving...' : (mode === 'ab-test' ? 'Save & Return' : 'Save')}
+          {isSaving ? 'Saving…' : mode === 'ab-test' ? 'Save & Return' : 'Save'}
         </Button>
       </div>
     </div>
