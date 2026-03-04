@@ -258,6 +258,7 @@ export default function BuilderPage() {
             v === 'desktop' ? 'Desktop' : v === 'tablet' ? 'Tablet' : 'Mobile'
           )
         }
+        pageId={params.pageId as string}
       />
 
       {/* ── GrapesJS editor ── */}

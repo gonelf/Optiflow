@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { DeployButton } from '@/components/builder/DeployButton';
 
 type ViewportSize = 'desktop' | 'tablet' | 'mobile';
 
@@ -27,6 +28,7 @@ interface ToolbarProps {
   mode?: 'default' | 'ab-test';
   title?: string;
   isSaving?: boolean;
+  pageId?: string;
 }
 
 export function Toolbar({
@@ -40,6 +42,7 @@ export function Toolbar({
   mode = 'default',
   title,
   isSaving = false,
+  pageId,
 }: ToolbarProps) {
   const [viewport, setViewport] = useState<ViewportSize>('desktop');
 
@@ -130,6 +133,7 @@ export function Toolbar({
           </Button>
         </div>
 
+        {pageId && <DeployButton pageId={pageId} />}
         <Button variant="outline" size="sm" onClick={onPreview}>
           <Eye className="mr-2 h-4 w-4" />
           Preview

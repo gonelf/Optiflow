@@ -123,6 +123,7 @@ model Page {
   translations          PageTranslation[]
   variants              PageVariant[]
   versions              PageVersion[]
+  deployments           Deployment[]
   startingForWorkspaces Workspace[]        @relation("StartingPage")
 
   @@unique([workspaceId, slug])
@@ -780,4 +781,30 @@ enum CustomDomainStatus {
   FAILED
 }
 
+enum DeploymentStatus {
+  PENDING
+  CREATING_REPO
+  PUSHING_CODE
+  TRIGGERING_DEPLOY
+  DEPLOYED
+  FAILED
+}
+
+model Deployment {
+  id              String           @id @default(cuid())
+  pageId          String
+  userId          String
+  status          DeploymentStatus @default(PENDING)
+  githubRepoUrl   String?
+  githubRepoName  String?
+  vercelProjectId String?
+  vercelDeployUrl String?
+  errorMessage    String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  page            Page             @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@index([pageId])
+  @@index([userId])
+}
 
