@@ -1,7 +1,7 @@
 # Reoptimize System Architecture
 
 ## Overview
-Reoptimize is a no-code SaaS marketing site builder with native A/B testing and integrated analytics. Built with Next.js 14, Tailwind CSS, Prisma + PostgreSQL (Supabase), and deployed on Vercel.
+Reoptimize is a no-code SaaS marketing site builder with native A/B testing and integrated analytics. Built with Next.js 14, Tailwind CSS, Prisma + PostgreSQL (Tacobase), and deployed on Vercel.
 
 ## System Architecture Diagram
 
@@ -41,7 +41,7 @@ Reoptimize is a no-code SaaS marketing site builder with native A/B testing and 
         │                 │                 │
 ┌───────▼────────┐ ┌──────▼──────┐ ┌────────▼────────┐
 │ DATABASE LAYER │ │ CACHE LAYER │ │ EXTERNAL APIS   │
-│  (Supabase)    │ │  (Vercel    │ │                 │
+│  (Tacobase)    │ │  (Vercel    │ │                 │
 │                │ │   Edge)     │ │ • OpenAI        │
 │ Postgres DB    │ │             │ │ • Stripe        │
 │ via Prisma ORM │ │ • Sessions  │ │ • HubSpot       │
@@ -105,12 +105,12 @@ Page → Build static/ISR → Deploy to edge → Custom domain
 ### Backend
 - **Next.js API Routes** & Server Actions
 - **Prisma ORM** for database access
-- **PostgreSQL** (Supabase)
+- **PostgreSQL** (Tacobase)
 - **NextAuth.js** for authentication
 
 ### External Services
 - **Vercel** for hosting & edge functions
-- **Supabase** for PostgreSQL + Auth
+- **Tacobase** for PostgreSQL + Auth
 - **OpenAI** for AI generation
 - **Stripe** for payments
 - **Resend** for transactional email
@@ -125,7 +125,7 @@ Page → Build static/ISR → Deploy to edge → Custom domain
 | **Zustand** for state | Simpler than Redux, works well with server components |
 | **Prisma** | Type-safe ORM, great DX, migration system |
 | **Edge Middleware** | A/B variant routing without server latency |
-| **Supabase** | Managed PostgreSQL with RLS, real-time subscriptions |
+| **Tacobase** | Managed PostgreSQL with RLS, real-time subscriptions |
 | **ISR** | Fast page loads for published sites with auto-revalidation |
 
 ## Security Architecture
@@ -137,7 +137,7 @@ Page → Build static/ISR → Deploy to edge → Custom domain
 - Role-based access control (OWNER, ADMIN, MEMBER, VIEWER)
 
 ### Database Security
-- Row Level Security (RLS) policies in Supabase
+- Row Level Security (RLS) policies in Tacobase
 - Workspace-level data isolation
 - API key authentication for headless access
 
@@ -330,7 +330,7 @@ Client Event → Beacon API → Validation
 
 - [Next.js 14 Documentation](https://nextjs.org/docs)
 - [Prisma Documentation](https://www.prisma.io/docs)
-- [Supabase Documentation](https://supabase.com/docs)
+- [Tacobase Documentation](https://tacobase.com/docs)
 - [Vercel Documentation](https://vercel.com/docs)
 - [Tailwind CSS](https://tailwindcss.com/docs)
 

@@ -63,7 +63,7 @@ const nextConfig = {
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
       img-src 'self' data: https: blob:;
       font-src 'self' https://fonts.gstatic.com;
-      connect-src 'self' https://api.openai.com https://api.stripe.com https://api.supabase.co;
+      connect-src 'self' https://api.openai.com https://api.stripe.com https://api.tacobase.co;
       frame-src 'self' https://js.stripe.com;
       object-src 'none';
       base-uri 'self';

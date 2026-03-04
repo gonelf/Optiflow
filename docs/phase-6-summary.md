@@ -145,7 +145,7 @@ Phase 6 focused on production readiness, performance optimization, security hard
 - Script sources: self, unsafe-eval, unsafe-inline, CDN
 - Style sources: self, unsafe-inline, Google Fonts
 - Image sources: self, data, https, blob
-- Connect sources: self, OpenAI, Stripe, Supabase
+- Connect sources: self, OpenAI, Stripe, Tacobase
 - Frame sources: self, Stripe
 - Object sources: none
 - Base URI: self

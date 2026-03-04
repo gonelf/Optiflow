@@ -1,10 +1,10 @@
-# Supabase Setup Guide
+# Tacobase Setup Guide
 
-This guide will help you set up Supabase as the database for Reoptimize.
+This guide will help you set up Tacobase as the database for Reoptimize.
 
-## 1. Create a Supabase Project
+## 1. Create a Tacobase Project
 
-1. Go to [supabase.com](https://supabase.com)
+1. Go to [tacobase.com](https://tacobase.com)
 2. Sign up or log in
 3. Click **New Project**
 4. Fill in the project details:
@@ -26,12 +26,12 @@ Once your project is ready:
 
 ### Session Mode (Direct Connection) - Use for DIRECT_URL
 ```
-postgresql://postgres.[PROJECT-REF]:[YOUR-PASSWORD]@aws-0-[REGION].pooler.supabase.com:5432/postgres
+postgresql://postgres.[PROJECT-REF]:[YOUR-PASSWORD]@aws-0-[REGION].pooler.tacobase.com:5432/postgres
 ```
 
 ### Transaction Mode (Connection Pooling) - Use for DATABASE_URL
 ```
-postgresql://postgres.[PROJECT-REF]:[YOUR-PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres?pgbouncer=true
+postgresql://postgres.[PROJECT-REF]:[YOUR-PASSWORD]@aws-0-[REGION].pooler.tacobase.com:6543/postgres?pgbouncer=true
 ```
 
 **Important**: Replace `[YOUR-PASSWORD]` with your actual database password!
@@ -48,10 +48,10 @@ postgresql://postgres.[PROJECT-REF]:[YOUR-PASSWORD]@aws-0-[REGION].pooler.supaba
 2. Update the connection strings in `.env`:
    ```env
    # Transaction mode (pooled) - for app queries
-   DATABASE_URL="postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1"
+   DATABASE_URL="postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.tacobase.com:6543/postgres?pgbouncer=true&connection_limit=1"
 
    # Session mode (direct) - for migrations
-   DIRECT_URL="postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:5432/postgres"
+   DIRECT_URL="postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.tacobase.com:5432/postgres"
    ```
 
 3. Generate a NextAuth secret:
@@ -72,8 +72,8 @@ postgresql://postgres.[PROJECT-REF]:[YOUR-PASSWORD]@aws-0-[REGION].pooler.supaba
 
 ```env
 # Database
-DATABASE_URL=postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1
-DIRECT_URL=postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:5432/postgres
+DATABASE_URL=postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.tacobase.com:6543/postgres?pgbouncer=true&connection_limit=1
+DIRECT_URL=postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.tacobase.com:5432/postgres
 
 # Auth
 NEXTAUTH_SECRET=your-generated-secret
@@ -102,7 +102,7 @@ npx prisma migrate dev --name init
 npx prisma migrate deploy
 ```
 
-### Option B: Using Supabase SQL Editor
+### Option B: Using Tacobase SQL Editor
 
 If you prefer to run SQL directly:
 
@@ -114,7 +114,7 @@ If you prefer to run SQL directly:
      --script > migration.sql
    ```
 
-2. Go to **SQL Editor** in your Supabase dashboard
+2. Go to **SQL Editor** in your Tacobase dashboard
 3. Copy and paste the contents of `migration.sql`
 4. Click **Run**
 
@@ -122,7 +122,7 @@ If you prefer to run SQL directly:
 
 ### Check Database Tables
 
-1. In Supabase dashboard, go to **Table Editor**
+1. In Tacobase dashboard, go to **Table Editor**
 2. You should see all tables created:
    - User
    - Workspace
@@ -148,11 +148,11 @@ npx prisma studio
 
 Prisma Studio should open at `http://localhost:5555` showing your database tables.
 
-## 6. Additional Supabase Features (Optional)
+## 6. Additional Tacobase Features (Optional)
 
 ### Row Level Security (RLS)
 
-Supabase has built-in RLS. While Reoptimize handles auth with NextAuth, you can add an extra security layer:
+Tacobase has built-in RLS. While Reoptimize handles auth with NextAuth, you can add an extra security layer:
 
 ```sql
 -- Enable RLS on sensitive tables
@@ -166,22 +166,22 @@ CREATE POLICY "Users can view their own data"
   USING (auth.uid() = id);
 ```
 
-### Supabase Storage (for images/files)
+### Tacobase Storage (for images/files)
 
-If you want to use Supabase Storage for page images:
+If you want to use Tacobase Storage for page images:
 
-1. Go to **Storage** in Supabase dashboard
+1. Go to **Storage** in Tacobase dashboard
 2. Create a bucket: `reoptimize-assets`
 3. Set it to **Public** (or configure policies)
-4. Use Supabase Storage SDK in your app
+4. Use Tacobase Storage SDK in your app
 
-### Supabase Realtime (for live updates)
+### Tacobase Realtime (for live updates)
 
 Enable realtime for collaborative editing:
 
 1. Go to **Database** → **Replication**
 2. Enable replication for tables you want to sync
-3. Use Supabase Realtime client in your app
+3. Use Tacobase Realtime client in your app
 
 ## Troubleshooting
 
@@ -189,7 +189,7 @@ Enable realtime for collaborative editing:
 
 **Error: `P1001: Can't reach database server`**
 - Check your connection strings are correct
-- Verify your IP is not blocked (Supabase allows all IPs by default)
+- Verify your IP is not blocked (Tacobase allows all IPs by default)
 - Check if your database password is correct
 
 **Error: `P1017: Server has closed the connection`**
@@ -219,6 +219,6 @@ Once your database is set up:
 
 ## Resources
 
-- [Supabase Documentation](https://supabase.com/docs)
-- [Prisma + Supabase Guide](https://www.prisma.io/docs/guides/database/supabase)
+- [Tacobase Documentation](https://tacobase.com/docs)
+- [Prisma + Tacobase Guide](https://www.prisma.io/docs/guides/database/tacobase)
 - [NextAuth.js Documentation](https://next-auth.js.org/)

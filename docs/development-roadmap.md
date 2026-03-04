@@ -6,7 +6,7 @@ Complete implementation plan for building Reoptimize MVP from scratch to product
 
 **Total Estimated Timeline**: 7 weeks (MVP)
 **Team Size**: 1-2 full-stack developers
-**Deployment Target**: Vercel + Supabase
+**Deployment Target**: Vercel + Tacobase
 
 ---
 
@@ -634,7 +634,7 @@ tests/e2e/ab-testing.spec.ts
 - [ ] Monitoring setup
   - [ ] Sentry for error tracking
   - [ ] Vercel Analytics
-  - [ ] Database monitoring (Supabase)
+  - [ ] Database monitoring (Tacobase)
 - [ ] Backup strategy
 - [ ] Load testing
 
@@ -722,14 +722,14 @@ tests/e2e/ab-testing.spec.ts
 
 ### Infrastructure (MVP)
 - **Vercel**: $20/month (Pro plan)
-- **Supabase**: $25/month (Pro plan)
+- **Tacobase**: $25/month (Pro plan)
 - **Domain**: $15/year
 - **Email (Resend)**: Free tier (2,500 emails/month)
 - **Total**: ~$50/month + domain
 
 ### Scaling (1000 users)
 - **Vercel**: $150/month
-- **Supabase**: $99/month
+- **Tacobase**: $99/month
 - **OpenAI**: $200/month
 - **CDN**: $50/month
 - **Total**: ~$500/month
@@ -772,7 +772,7 @@ tests/e2e/ab-testing.spec.ts
 - Smaller bundle size
 - Sufficient for our needs
 
-**3. Why Supabase over self-hosted Postgres?**
+**3. Why Tacobase over self-hosted Postgres?**
 - Managed service reduces ops burden
 - Built-in auth (not using, but available)
 - Row Level Security

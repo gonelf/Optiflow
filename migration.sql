@@ -1,5 +1,5 @@
 -- Reoptimize Database Migration
--- Run this in Supabase SQL Editor
+-- Run this in Tacobase SQL Editor
 
 -- Enable necessary extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

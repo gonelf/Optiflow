@@ -17,7 +17,7 @@ Reoptimize is a powerful, modern platform for building, testing, and optimizing 
 ### Tech Stack
 - **Frontend**: Next.js 14 (App Router), Tailwind CSS, Radix UI
 - **Backend**: Next.js API Routes, Prisma ORM
-- **Database**: PostgreSQL (Supabase)
+- **Database**: PostgreSQL (Tacobase)
 - **Auth**: NextAuth.js
 - **AI**: OpenAI GPT-4
 - **Deployment**: Vercel
@@ -29,7 +29,7 @@ Reoptimize is a powerful, modern platform for building, testing, and optimizing 
 ```bash
 Node.js 18.17+
 pnpm 8+
-PostgreSQL (Supabase account)
+PostgreSQL (Tacobase account)
 ```
 
 ### Installation
@@ -70,7 +70,7 @@ Comprehensive documentation is available in the `/docs` folder:
 ### 🛠️ [Setup Guide](docs/setup-guide.md)
 - Complete installation instructions
 - Environment configuration
-- Database setup (Supabase)
+- Database setup (Tacobase)
 - Authentication setup (NextAuth)
 - Deployment guide
 
@@ -228,7 +228,7 @@ Required environment variables (see `.env.example`):
 
 ```bash
 # Database
-DATABASE_URL=              # Supabase connection string
+DATABASE_URL=              # Tacobase connection string
 
 # Authentication
 NEXTAUTH_URL=              # App URL
@@ -349,7 +349,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
-**Built with ❤️ using Next.js 14, Tailwind CSS, and Supabase**
+**Built with ❤️ using Next.js 14, Tailwind CSS, and Tacobase**
 
 **Version**: 1.0.0 (MVP)
 **Last Updated**: 2026-01-22

@@ -14,12 +14,12 @@ To deploy Reoptimize on Vercel, you **MUST** add these environment variables in 
 
 #### Database (Required)
 ```env
-DATABASE_URL=postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1
+DATABASE_URL=postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.tacobase.com:6543/postgres?pgbouncer=true&connection_limit=1
 
-DIRECT_URL=postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:5432/postgres
+DIRECT_URL=postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.tacobase.com:5432/postgres
 ```
 
-Get these from your Supabase project:
+Get these from your Tacobase project:
 - Go to **Project Settings** → **Database** → **Connection string**
 - Use **Transaction mode** for `DATABASE_URL` (port 6543)
 - Use **Session mode** for `DIRECT_URL` (port 5432)
@@ -128,7 +128,7 @@ Common fixes:
    DATABASE_URL="your-connection-string" npx prisma db push
    ```
 
-2. Check Supabase:
+2. Check Tacobase:
    - Project is not paused
    - Password is correct
    - Connection pooling is enabled

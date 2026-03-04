@@ -233,13 +233,13 @@ Auth successful for user: user@example.com
 Test both URLs:
 ```bash
 # Test pooled connection (DATABASE_URL)
-psql "postgresql://postgres.[REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres?pgbouncer=true"
+psql "postgresql://postgres.[REF]:[PASSWORD]@aws-0-[REGION].pooler.tacobase.com:6543/postgres?pgbouncer=true"
 
 # Test direct connection (DIRECT_URL)
-psql "postgresql://postgres.[REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:5432/postgres"
+psql "postgresql://postgres.[REF]:[PASSWORD]@aws-0-[REGION].pooler.tacobase.com:5432/postgres"
 ```
 
-**2. Check Supabase Project**
+**2. Check Tacobase Project**
 
 - Project is not paused (free tier pauses after 7 days inactivity)
 - Password is correct

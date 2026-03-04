@@ -7,7 +7,7 @@ Complete setup instructions for getting Reoptimize running locally and deploying
 1. [Prerequisites](#prerequisites)
 2. [Project Initialization](#project-initialization)
 3. [Environment Configuration](#environment-configuration)
-4. [Supabase Setup](#supabase-setup)
+4. [Tacobase Setup](#tacobase-setup)
 5. [Prisma Setup](#prisma-setup)
 6. [NextAuth Configuration](#nextauth-configuration)
 7. [Tailwind Configuration](#tailwind-configuration)
@@ -26,7 +26,7 @@ Ensure you have the following installed:
 ```bash
 Node.js 18.17+ or 20+
 pnpm 8+ (recommended) or npm
-PostgreSQL 14+ (via Supabase)
+PostgreSQL 14+ (via Tacobase)
 Git
 ```
 
@@ -98,9 +98,9 @@ pnpm add -D tsx
 Create `.env.local` in project root:
 
 ```bash
-# Database (Supabase)
-DATABASE_URL="postgresql://postgres:[PASSWORD]@db.[PROJECT-ID].supabase.co:5432/postgres?schema=public"
-DIRECT_URL="postgresql://postgres:[PASSWORD]@db.[PROJECT-ID].supabase.co:5432/postgres?schema=public"
+# Database (Tacobase)
+DATABASE_URL="postgresql://postgres:[PASSWORD]@db.[PROJECT-ID].tacobase.co:5432/postgres?schema=public"
+DIRECT_URL="postgresql://postgres:[PASSWORD]@db.[PROJECT-ID].tacobase.co:5432/postgres?schema=public"
 
 # NextAuth.js
 NEXTAUTH_URL="http://localhost:3000"
@@ -154,11 +154,11 @@ cp .env.local .env.example
 
 ---
 
-## Supabase Setup
+## Tacobase Setup
 
-### Step 4: Create Supabase Project
+### Step 4: Create Tacobase Project
 
-1. Go to [supabase.com](https://supabase.com)
+1. Go to [tacobase.com](https://tacobase.com)
 2. Click "New Project"
 3. Enter project details:
    - **Name**: reoptimize
@@ -174,12 +174,12 @@ cp .env.local .env.example
 
 Example:
 ```
-DATABASE_URL="postgresql://postgres.xxxx:password@aws-0-us-west-1.pooler.supabase.com:5432/postgres"
+DATABASE_URL="postgresql://postgres.xxxx:password@aws-0-us-west-1.pooler.tacobase.com:5432/postgres"
 ```
 
 ### Step 6: Enable Row Level Security
 
-In Supabase SQL Editor, run:
+In Tacobase SQL Editor, run:
 
 ```sql
 -- Enable RLS on all tables (run after migrations)
@@ -830,7 +830,7 @@ vercel
 
 ### Production Database
 
-1. Upgrade Supabase to paid plan (if needed)
+1. Upgrade Tacobase to paid plan (if needed)
 2. Update connection strings in Vercel
 3. Run migrations:
 
